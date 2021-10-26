@@ -1,4 +1,4 @@
-# Tarpon-Installer
+# ><###> Tarpon-Installer <###><
 Tarpon Installer allows for local and remote installations based on a configuration file.  
 It is command line based. Currently it supports remote installs from Windows to Linux, 
 Linux to Linux and Local Windows and Local Linux installs.
@@ -20,7 +20,7 @@ Perhaps not the best name, but this field is used as the Remote IP that will be 
 as well as used to update hosts files and other configuration files that is needed.  You can use the %host% 
 to use as a variable to the host field.
 
-### [BUILD] # buildtype:(WINDOWS OR LINUX) -- installtype:(LOCAL OR REMOTE) -- Relative or Full
+### [BUILD] # buildtype:(WINDOWS OR LINUX) -- installtype:(LOCAL OR REMOTE) -- resources: (Relative or Full path)
 **buildtype** = *Used to determine if the installed files are going on a LINUX or WINDOWS system.  Use upper case!*\
 **installtype** =	*# Used to determine if it is a LOCAL or REMOTE style install.*\
 **resources** = *# Used to tell the installer where the resource directory is it can be either a*\
