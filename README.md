@@ -24,7 +24,7 @@ to use as a variable to the host field.
 **buildtype** = *Used to determine if the installed files are going on a LINUX or WINDOWS system.  Use upper case!*\
 **installtype** =	*# Used to determine if it is a LOCAL or REMOTE style install.*\
 **resources** = *# Used to tell the installer where the resource directory is it can be either a*\
-*# full path such as C:\Resources or a relative path to the executable '/resources'*\
+*full path such as C:\Resources or a relative path to the executable '/resources'*\
 **Example: repo.tar.gz** = /root/repo*\
 **Example: installpkg.sh** = /root*\
 **Example: resources** = c:\support\resources
@@ -34,7 +34,7 @@ to use as a variable to the host field.
 **installpkg.sh** =	*# Path to the installpkg.sh file*\
 *There are two utility scripts included called getpackage.sh and installpkg.sh.  getpackage.sh downloads*\
 *a package to the repo folder, while installpkg.sh will install that package.*\
-*The repo folder should then be zipped up unzip the linux gzip command.  The name **HAS TO BE** **repo.tar.gz**
+*The repo folder should then be zipped up using the linux gzip command.  The name **HAS TO BE** **repo.tar.gz**
 
 ### [RPM] #RPMs (name/command) that need to be installed prior to softare installation
 **unzip = unzip**	*# this will install the unzip RPM from the local repo*\
