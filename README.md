@@ -42,28 +42,28 @@ as well as used to update hosts files and other configuration files that is need
 ### [FILES] # Copies files from the resource folder to the paths and unzips if necessary.
 *if a specified directory does not exists it will create it.  It will unzip in the specified folder*
 *as well as keeping the subdirectories.  BUT it will ignore an initial folder in the zip file if one exists*
-**Simple Copy Example:**&nbsp;*httpd.conf = c:/support/httpd/Apache24/conf*\
-**Rename copy Example:**&nbsp;*myappsettings.json = c:/support/thing/appsettings.json*\
-**Unzip file Example:**&nbsp;*transformer.zip = c:/support/newtransform*\
+**Simple Copy Example: **&nbsp;*httpd.conf = c:/support/httpd/Apache24/conf*\
+**Rename copy Example: **&nbsp;*myappsettings.json = c:/support/thing/appsettings.json*\
+**Unzip file Example: **&nbsp;*transformer.zip = c:/support/newtransform*\
 
 ### [ACTIONS] # Actions executed at the command level (both Linux and Windows), each action has to be uniquely named
 *Most anything that can be done from a command line can be done with this*\
-**Echo Example:**&nbsp;*echo1 = echo THIS IS A TEST*\
-**Windows Timeout Example:**&nbsp;*timeout1 = timeout /t 3*\
-**Delete Example:**&nbsp;*cleanzip1 = del /Q c:\support\washere.zip
+**Echo Example: **&nbsp;*echo1 = echo THIS IS A TEST*\
+**Windows Timeout Example: **&nbsp;*timeout1 = timeout /t 3*\
+**Delete Example: **&nbsp;*cleanzip1 = del /Q c:\support\washere.zip
 
 ### [MODIFY] {LINUX ONLY} # Used to modify files - MUST USE 1,2,3,ETC.. DESIGNATORS
 *usage: (number-)filepath+filename = keyword||replaceword (this only works in strings without "", /, \)*\
-**Example**&nbsp;*1-/var/lib/pgsql/12/data/postgresql.conf = #listen_addresses = 'localhost'||listen_addresses = '*'*\
-**Example**&nbsp;*2-/var/lib/pgsql/12/data/postgresql.conf = log_timezone =||log_timezone = 'UTC' #changed#*\
-**Example**&nbsp;*3-/opt/webconfigurationmanager/appsettings.json = localhost:55001||*:55001*\
+**Example: **&nbsp;*1-/var/lib/pgsql/12/data/postgresql.conf = #listen_addresses = 'localhost'||listen_addresses = '*'*\
+**Example: **&nbsp;*2-/var/lib/pgsql/12/data/postgresql.conf = log_timezone =||log_timezone = 'UTC' #changed#*\
+**Example: **&nbsp;*3-/opt/webconfigurationmanager/appsettings.json = localhost:55001||*:55001*\
 
 ### [FINAL] # Same as Actions but is the last things done, each action has to be uniquely named
-**Example**&nbsp;*statusjaardcm = systemctl status jaardcm | grep Active:*\
-**Example**&nbsp;*statusjaarwcm = systemctl status jaarwcm | grep Active:*\
-**Example**&nbsp;*rebootmachine = echo "********* FINISHED AND REBOOTING IN 10 SECONDS *********"*\
-**Example**&nbsp;*starttimer = timeout /t 10*\
-**Example**&nbsp;*shutitdown = shutdown /r*\
+**Example: **&nbsp;*statusjaardcm = systemctl status jaardcm | grep Active:*\
+**Example: **&nbsp;*statusjaarwcm = systemctl status jaarwcm | grep Active:*\
+**Example: **&nbsp;*rebootmachine = echo "********* FINISHED AND REBOOTING IN 10 SECONDS *********"*\
+**Example: **&nbsp;*starttimer = timeout /t 10*\
+**Example: **&nbsp;*shutitdown = shutdown /r*
 
 # FINAL NOTES:
-*I like using pyinstaller with it so I only have the executable, config file and resource folder.
+*I like using pyinstaller with it so I only have the executable, config file and resource folder.*
