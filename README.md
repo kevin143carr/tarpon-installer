@@ -59,11 +59,11 @@ as well as used to update hosts files and other configuration files that is need
 **Example: **&nbsp;*3-/opt/webconfigurationmanager/appsettings.json = localhost:55001||*:55001*\
 
 ### [FINAL] # Same as Actions but is the last things done, each action has to be uniquely named
-**Example: **&nbsp;*statusjaardcm = systemctl status jaardcm | grep Active:*\
-**Example: **&nbsp;*statusjaarwcm = systemctl status jaarwcm | grep Active:*\
-**Example: **&nbsp;*rebootmachine = echo "********* FINISHED AND REBOOTING IN 10 SECONDS *********"*\
-**Example: **&nbsp;*starttimer = timeout /t 10*\
-**Example: **&nbsp;*shutitdown = shutdown /r*
+**Example:**&nbsp;*statusjaardcm = systemctl status jaardcm | grep Active:*\
+**Example:**&nbsp;*statusjaarwcm = systemctl status jaarwcm | grep Active:*\
+**Example:**&nbsp;*rebootmachine = echo "********* FINISHED AND REBOOTING IN 10 SECONDS *********"*\
+**Example:**&nbsp;*starttimer = timeout /t 10*\
+**Example:**&nbsp;*shutitdown = shutdown /r*
 
 # FINAL NOTES:
 *I like using pyinstaller with it so I only have the executable, config file and resource folder.*
