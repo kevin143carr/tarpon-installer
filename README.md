@@ -68,4 +68,10 @@ as well as used to update hosts files and other configuration files that is need
 **Example:** *shutitdown = shutdown /r*
 
 # FINAL NOTES:
-*I like using pyinstaller with it so I only have the executable, config file and resource folder.*
+*I like using pyinstaller with it so I only have the executable, config file and resource folder.*\
+*A typical **REMOTE LINUX INSTALL** looks like this from a **WINDOWS** box:*\
+*D:\installer*\
+*D:\installer\config.ini*\
+*D:\installer\tarpon_installer.exe* (using pyinstall)*\
+*D:\installer\resources*\ (make sure installpkg.sh is in there)
+
