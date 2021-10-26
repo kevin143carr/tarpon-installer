@@ -1,7 +1,7 @@
 # Tarpon-Installer
 Tarpon Installer allows for local and remote installations based on a configuration file.  
 It is command line based. Currently it supports remote installs from Windows to Linux, 
-Linux to Linux and Local Windows and Linux installs.
+Linux to Linux and Local Windows and Local Linux installs.
 
 I originally developed it to distribute different kinds of builds to raspberry pi(s), but
 ended up using it at my work for many different purposes, including providing updates.
@@ -19,19 +19,21 @@ box when doing a "Remote Linux Install".
 Perhaps not the best name, but this field is used as the Remote IP that will be ssh(d) into
 as well as used to update hosts files and other configuration files that is needed.
 
-### [BUILD] # buildtype:(WINDOWS OR LINUX) -- installtype:(LOCAL OR REMOTE) -- resources:example shows relative folder
+### [BUILD] # buildtype:(WINDOWS OR LINUX) -- installtype:(LOCAL OR REMOTE) -- Relative and Full
 **buildtype** = *Used to determine if the installed files are going on a LINUX or WINDOWS system.  Use upper case!*\
 **installtype** =	*# Used to determine if it is a LOCAL or REMOTE style install.*\
 **resources** = *# Used to tell the installer where the resource directory is it can be either a*\
-   *# full path such as C:\Resources or a relative path to the executable '/resources'*\
-  *Example: repo.tar.gz = /root/repo*\
-  *Example: installpkg.sh = /root*\
+*# full path such as C:\Resources or a relative path to the executable '/resources'*\
+**Example: repo.tar.gz** = /root/repo*\
+**Example: installpkg.sh** = /root*\
+**Example: resources** = c:\support\resources
 
 ### [REPO] # Files that support using RPMs and a local repo
 **repo.tar.gz** =		*# Used to point the installer to a local repo extracted from a repo.tar.gz file*\
 **installpkg.sh** =	*# Path to the installpkg.sh file*\
 *There are two utility scripts included called getpackage.sh and installpkg.sh.  getpackage.sh downloads*\
 *a package to the repo folder, while installpkg.sh will install that package.*\
+*The repo folder should then be zipped up unzip the linux gzip command.  The name **HAS TO BE** **repo.tar.gz**
 
 ### [RPM] #RPMs (name/command) that need to be installed prior to softare installation
 **unzip = unzip**	*# this will install the unzip RPM from the local repo*\
@@ -40,8 +42,8 @@ as well as used to update hosts files and other configuration files that is need
 **java = java**	*# This will install java RPM from the local repo*\
 
 ### [FILES] # Copies files from the resource folder to the paths and unzips if necessary.
-*if a specified directory does not exists it will create it.  It will unzip in the specified folder*
-*as well as keeping the subdirectories.  BUT it will ignore an initial folder in the zip file if one exists*
+*if a specified directory does not exists it will create it.  It will unzip in the specified folder*\
+*as well as keeping the subdirectories.  BUT it will ignore an initial folder in the zip file if one exists*\
 **Simple Copy Example:** *httpd.conf = c:/support/httpd/Apache24/conf*\
 **Rename copy Example:** *myappsettings.json = c:/support/thing/appsettings.json*\
 **Unzip file Example:** *transformer.zip = c:/support/newtransform*\
