@@ -9,5 +9,5 @@ ended up using it at my work for many different purposes, including providing up
 It uses a config.ini (which can be named [anything].ini) and a resource folder.
 
 # CONFIG.INI EXPLAINED
-## [USERINFO] # Information needed to login into the machine
+#### [USERINFO] # Information needed to login into the machine
 
