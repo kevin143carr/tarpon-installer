@@ -20,21 +20,21 @@ Perhaps not the best name, but this field is used as the Remote IP that will be 
 as well as used to update hosts files and other configuration files that is needed.
 
 ### [BUILD] # buildtype:(WINDOWS OR LINUX) -- installtype:(LOCAL OR REMOTE) -- resources:example shows relative folder
-#### buildtype =	*Used to determine if the installed files are going on a LINUX or WINDOWS system.  Use upper case!*
-#### installtype =	*# Used to determine if it is a LOCAL or REMOTE style install.*
-#### resources =	*# Used to tell the installer where the resource directory is it can be either a*
-####				*# full path such as C:\Resources or a relative path to the executable '/resources'*
-####	*Example: repo.tar.gz = /root/repo*
-####	*Exmample: installpkg.sh = /root*
+** buildtype ** = *Used to determine if the installed files are going on a LINUX or WINDOWS system.  Use upper case!*
+** installtype ** =	*# Used to determine if it is a LOCAL or REMOTE style install.*
+** resources ** = *# Used to tell the installer where the resource directory is it can be either a*
+				*# full path such as C:\Resources or a relative path to the executable '/resources'*
+	*Example: repo.tar.gz = /root/repo*
+	*Exmample: installpkg.sh = /root*
 
 ### [REPO] # Files that support the RPMS
-#### repo.tar.gz =		*# Used to point the installer to a local repo extracted from a repo.tar.gz file*
-#### installpkg.sh =	*# Path to the installpkg.sh file*
-#### *There are two utility scripts included called getpackage.sh and installpkg.sh.  getpackage.sh downloads*
-#### *a package to the repo folder, while installpkg.sh will install that package.*
+** repo.tar.gz ** =		*# Used to point the installer to a local repo extracted from a repo.tar.gz file*
+** installpkg.sh ** =	*# Path to the installpkg.sh file*
+*There are two utility scripts included called getpackage.sh and installpkg.sh.  getpackage.sh downloads*
+*a package to the repo folder, while installpkg.sh will install that package.*
 
 ### [RPM] #RPMs (name/command) that need to be installed prior to softare installation
-#### unzip = unzip	*# this will install the unzip RPM from the local repo*
-#### postgresql-12	*# postgresql12-server # this will install postgresql RPM from the local repo*
-#### httpd = httpd	*# this will install the httpd RPM from the local repo*
-#### java = java		*# This will install java RPM from the local repo*
+** unzip ** = unzip	*# this will install the unzip RPM from the local repo*
+** postgresql-12 **	*# postgresql12-server # this will install postgresql RPM from the local repo*
+** httpd = httpd **	*# this will install the httpd RPM from the local repo*
+** java = java	**	*# This will install java RPM from the local repo*
