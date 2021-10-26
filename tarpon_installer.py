@@ -6,7 +6,7 @@ import os.path
 from os import path
 
 configfile = "config.ini"
-version = "2.5.2"
+version = "2.5.5"
 
 class iniInfo:
     username = ""

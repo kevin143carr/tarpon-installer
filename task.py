@@ -50,13 +50,20 @@ class Task:
             if my_file.is_file():
                 print('copying and extracting file {} to {}'.format(key, files[key]))
                 try:
-                    os.makedirs(files[key], exist_ok = True)
+                    if '.' in files[key]: # contains a file name
+                        dirname = os.path.dirname(os.path.abspath(files[key])) # just get the path
+                        os.makedirs(dirname, exist_ok = True)
+                    else:
+                        os.makedirs(files[key], exist_ok = True)
                     print("Directory {} created successfully".format(files[key]))
                 except OSError as error:
                     print("Directory {} can not be created".format(files[key]))
 
                 src = "{}/{}".format(resources, key)
-                dst = "{}/{}".format(files[key],key)
+                if '.' in files[key]: # contains a file name, so do not append a filename from 'key'
+                    dst = "{}".format(files[key])
+                else:
+                    dst = "{}/{}".format(files[key],key)
                 copyfile(src,dst)
 
                 if 'zip' in key:
@@ -169,7 +176,7 @@ class Task:
         elif installtype == 'LOCAL':
             self.doActionsLocal(actions)
 
-    def modifyFiles(self, files, buildtype):
+    def modifyFiles(self, files):
         for file in files:
             result = files[file].split("||")
             file = file.split("-",1)
