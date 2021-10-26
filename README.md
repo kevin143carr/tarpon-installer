@@ -10,16 +10,17 @@ It uses a config.ini (which can be named [anything].ini) and a resource folder.
 
 # CONFIG.INI EXPLAINED
 ### [USERINFO] # Information needed to log into the machine
-The contains the username and password fields.  Yes it is in plaintext!  This is often
+This is the username and password fields.  Yes it is in plaintext!  This is often
 used to update hosts files and other files that need this information, especially when
 doing remote installations.  The username and password will be used to ssh into a linux
 box when doing a "Remote Linux Install".
 
 ### [SERVERCONFIG] # ip address information
 Perhaps not the best name, but this field is used as the Remote IP that will be ssh(d) into
-as well as used to update hosts files and other configuration files that is needed.
+as well as used to update hosts files and other configuration files that is needed.  You can use the %host% 
+to use as a variable to the host field.
 
-### [BUILD] # buildtype:(WINDOWS OR LINUX) -- installtype:(LOCAL OR REMOTE) -- Relative and Full
+### [BUILD] # buildtype:(WINDOWS OR LINUX) -- installtype:(LOCAL OR REMOTE) -- Relative or Full
 **buildtype** = *Used to determine if the installed files are going on a LINUX or WINDOWS system.  Use upper case!*\
 **installtype** =	*# Used to determine if it is a LOCAL or REMOTE style install.*\
 **resources** = *# Used to tell the installer where the resource directory is it can be either a*\
