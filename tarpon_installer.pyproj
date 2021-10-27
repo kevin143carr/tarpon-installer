@@ -8,13 +8,13 @@
     <StartupFile>tarpon_installer.py</StartupFile>
     <SearchPath>
     </SearchPath>
-    <WorkingDirectory>.</WorkingDirectory>
+    <WorkingDirectory>d:\installer\</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <Name>tarpon_installer</Name>
     <RootNamespace>snac_jaar_linux_install</RootNamespace>
     <IsWindowsApplication>False</IsWindowsApplication>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
-    <CommandLineArguments>winconfig.ini</CommandLineArguments>
+    <CommandLineArguments>d:\installer\config.ini</CommandLineArguments>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
     <SuppressEnvironmentCreationPrompt>True</SuppressEnvironmentCreationPrompt>
   </PropertyGroup>
@@ -34,8 +34,8 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="config.ini" />
+    <Content Include="README.md" />
     <Content Include="requirements.txt" />
-    <Content Include="TextFile1.txt" />
     <Content Include="winconfig.ini" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
