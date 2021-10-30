@@ -1,3 +1,4 @@
 /tarpon-installer.pyproj
 /tarpon-installer.sln
 .vs
+/__pycache__
