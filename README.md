@@ -24,7 +24,8 @@ to use as a variable to the host field.
 **buildtype** = *Used to determine if the installed files are going on a LINUX or WINDOWS system.  Use upper case!*\
 **installtype** =	*# Used to determine if it is a LOCAL or REMOTE style install.*\
 **resources** = *# Used to tell the installer where the resource directory is it can be either a*\
-*full path such as C:\Resources or a relative path to the executable '/resources'*\
+*full path such as C:\Resources or a relative path to the executable '/resources'.*\
+*This is where you place files you want to copy onto the new system.*\
 **Example: repo.tar.gz** = /root/repo*\
 **Example: installpkg.sh** = /root*\
 **Example: resources** = c:\support\resources
