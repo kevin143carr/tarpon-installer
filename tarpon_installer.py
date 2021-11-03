@@ -66,10 +66,10 @@ class mainClass:
             task.installRepo(ini_info.resources, ini_info.repo)
             task.installRPMs(ini_info.resources, ini_info.rpms)
 
-        # task.copyFromResources(ini_info.resources, ini_info.files, ini_info.installtype, ini_info.buildtype)
-        # task.doActions(ini_info.actions, ini_info.installtype, ini_info.buildtype)
+        task.copyFromResources(ini_info.resources, ini_info.files, ini_info.installtype, ini_info.buildtype)
+        task.doActions(ini_info.actions, ini_info.installtype, ini_info.buildtype)
         task.modifyFiles(ini_info.modify, ini_info.installtype, ini_info.buildtype)
-        # task.finalActions(ini_info.finalactions, ini_info.installtype, ini_info.buildtype)
+        task.finalActions(ini_info.finalactions, ini_info.installtype, ini_info.buildtype)
 
     def __init__(self):
         print("Starting ><###> Tarpon Installer <###>< !!!")
