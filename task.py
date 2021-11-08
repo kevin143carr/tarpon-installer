@@ -6,7 +6,7 @@ import shutil
 from zipfile import ZipFile
 from shutil import copyfile
 from pathlib import Path
-
+from fileutilities import FileUtilities
 
 class Task:
     ssh = paramiko.SSHClient()
@@ -14,6 +14,7 @@ class Task:
     password = ""
     hostname = ""
     resources = ""
+    file_utilities = FileUtilities
 
     def loginSSH(self):
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -176,13 +177,40 @@ class Task:
         elif installtype == 'LOCAL':
             self.doActionsLocal(actions)
 
-    def modifyFiles(self, files):
+    def modifyFilesLocal(self, files):
+        for file in files:
+            ischange = True if("{CHANGE}" in files[file]) else False
+            if(ischange):
+                result = files[file].split("{CHANGE}")
+            else:
+                result = files[file].split("{ADD}")
+
+            modifywith = result[1]
+            file = files[file][len("{FILE}"):len(result[0])]
+
+            my_file = Path("{}".format(file))
+            if my_file.is_file():
+                modcontent = modifywith.split("||")
+                if ischange:
+                    self.file_utilities.modifyFileContents(file, modcontent[0], modcontent[1])
+                else:
+                    self.file_utilities.addFileContents(file, modifywith)
+            else: # Create File Condition
+                self.file_utilities.createFileAddContents(file,modifywith.split("||"))
+
+    def modifyFilesSSH(self, files):
         for file in files:
             result = files[file].split("||")
             file = file.split("-",1)
             stdin, stdout, stderr = self.ssh.exec_command('sed -i \"s/{}/{}/g\" {}'.format(result[0],result[1],file[1]))
             for line in iter(stderr.readline,""):
                 print (line, end="")
+
+    def modifyFiles(self, files, installtype, buildtype):
+        if(installtype == 'REMOTE' and buildtype == 'LINUX'):
+            self.modifyFilesSSH(files)
+        else:
+            self.modifyFilesLocal(files)
 
     def finalActions(self, actions, installtype, buildtype):
         self.doActions(actions, installtype, buildtype)

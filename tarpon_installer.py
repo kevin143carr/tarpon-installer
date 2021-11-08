@@ -6,7 +6,7 @@ import os.path
 from os import path
 
 configfile = "config.ini"
-version = "2.5.5"
+version = "2.6.5"
 
 class iniInfo:
     username = ""
@@ -68,7 +68,7 @@ class mainClass:
 
         task.copyFromResources(ini_info.resources, ini_info.files, ini_info.installtype, ini_info.buildtype)
         task.doActions(ini_info.actions, ini_info.installtype, ini_info.buildtype)
-        task.modifyFiles(ini_info.modify)
+        task.modifyFiles(ini_info.modify, ini_info.installtype, ini_info.buildtype)
         task.finalActions(ini_info.finalactions, ini_info.installtype, ini_info.buildtype)
 
     def __init__(self):

@@ -24,7 +24,8 @@ to use as a variable to the host field.
 **buildtype** = *Used to determine if the installed files are going on a LINUX or WINDOWS system.  Use upper case!*\
 **installtype** =	*# Used to determine if it is a LOCAL or REMOTE style install.*\
 **resources** = *# Used to tell the installer where the resource directory is it can be either a*\
-*full path such as C:\Resources or a relative path to the executable '/resources'*\
+*full path such as C:\Resources or a relative path to the executable '/resources'.*\
+*This is where you place files you want to copy onto the new system.*\
 **Example: repo.tar.gz** = /root/repo*\
 **Example: installpkg.sh** = /root*\
 **Example: resources** = c:\support\resources
@@ -55,11 +56,27 @@ to use as a variable to the host field.
 **Windows Timeout Example:** *timeout1 = timeout /t 3*\
 **Delete Example:** *cleanzip1 = del /Q c:\support\washere.zip
 
-### [MODIFY] {LINUX ONLY} # Used to modify files - MUST USE 1,2,3,ETC.. DESIGNATORS
+### [MODIFY] # Used to modify files - MUST USE 1,2,3,ETC.. DESIGNATORS -- 
+**For Remote Linux it should be like below**
 *usage: (number-)filepath+filename = keyword||replaceword (this only works in strings without "", /, \)*\
 **Example:** *1-/var/lib/pgsql/12/data/postgresql.conf = #listen_addresses = 'localhost'||listen_addresses = '*'*\
 **Example:** *2-/var/lib/pgsql/12/data/postgresql.conf = log_timezone =||log_timezone = 'UTC' #changed#*\
 **Example:** *3-/opt/webconfigurationmanager/appsettings.json = localhost:55001||*:55001*\
+
+**For Local Linux or Windows use the following examples:**\
+**Example:#Used to modify files usage: (number = ){FILE}filepath+filename{CHANGE}keyword||replaceword**\
+**Used to modify files usage: (number = ){FILE}filepath+filename{ADD}keyword**\
+*# if a file does not exists it will create it then add from the '||' delimitted list*\
+*# search and replace*\
+**Example:** *1 = {FILE}C:/myinstall/support/userconfig.conf{CHANGE}user1 =||user1 = Marky*\
+*# search and replace*\
+**Example:** *2 = {FILE}C:/myinstall/support/userconfig.conf{CHANGE}log_timezone =||log_timezone = 'UTC'*\
+*# added to end of file*\
+**Example:** *3 = {FILE}C:/myinstall/support/userconfig.conf{ADD}portnumber = 55001*\
+*# added to end of file*\
+**Example:** *4 = {FILE}C:/myinstall/support/userconfig.conf{ADD} # Muskrats Stink*\
+*# create file and add lines through '||' delimitted key/values*\
+**Example:** *5 = {FILE}C:/myinstall/support/createthisfile.conf{ADD}ipaddress = 111.222.333.444||portnumber = 34333||resourcefolder = d:\resources*\
 
 ### [FINAL] # Same as Actions but is the last things done, each action has to be uniquely named
 **Example:** *statusjaardcm = systemctl status jaardcm | grep Active:*\
