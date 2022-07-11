@@ -3,6 +3,7 @@ import paramiko
 import os
 import subprocess
 import shutil
+import sys
 from zipfile import ZipFile
 from shutil import copyfile
 from pathlib import Path
@@ -60,11 +61,17 @@ class Task:
                 except OSError as error:
                     print("Directory {} can not be created".format(files[key]))
 
-                src = "{}/{}".format(resources, key)
+                dirtest = key.split('/')
+                src = "{}{}".format(resources, key)
                 if '.' in files[key]: # contains a file name, so do not append a filename from 'key'
                     dst = "{}".format(files[key])
                 else:
-                    dst = "{}/{}".format(files[key],key)
+                    if (len(dirtest) > 1):
+                        keyname = dirtest[1]
+                        dst = "{}/{}".format(files[key],keyname)
+                    else:
+                        dst = "{}/{}".format(files[key],key)
+
                 copyfile(src,dst)
 
                 if 'zip' in key:
@@ -129,9 +136,22 @@ class Task:
             my_file = Path("{}/{}".format(resources,key))
             if my_file.is_file():
                 print('copying and extracting file {} to {}'.format(key, files[key]))
-                self.ssh.exec_command('mkdir {}'.format(files[key]))
-                src = "{}/{}".format(resources, key)
-                dst = "{}/{}".format(files[key],key)
+                self.ssh.exec_command('mkdir -p {}'.format(files[key]))
+                dirtest = key.split('/')
+                src = "{}{}".format(resources, key)
+                if '.' in files[key]: # contains a file name, so do not append a filename from 'key'
+                    dst = "{}".format(files[key])
+                else:
+                    if (len(dirtest) > 1):
+                        keyname = dirtest[1]
+                        dst = "{}/{}".format(files[key],keyname)
+                    else:
+                        dst = "{}/{}".format(files[key],key)
+
+                if(os.path.exists("{}/{}".format(os.getcwd(), src)) == False):
+                    print("Error could not find this file: {}/{}".format(os.getcwd(), src))
+                    continue
+
                 ftp.put(src , dst)
 
                 if 'zip' in key:
