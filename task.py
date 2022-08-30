@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import time
 import paramiko
 import os
@@ -21,7 +23,7 @@ class Task:
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         self.ssh.connect(hostname = self.hostname, username = self.username, password = self.password)
 
-    def installRepo(self, resources, repo):
+    def installRemoteRepo(self, resources, repo):
         ftp = self.ssh.open_sftp()
         for key in repo:
             print('copying and extracting Repo files {} to {}'.format(key, repo[key]))
@@ -37,12 +39,46 @@ class Task:
                 print (line, end="")
         ftp.close()
 
+    def installLocalRepo(self, resources, repo):
+        for key in repo:
+            print('copying and extracting Repo files {} to {}'.format(key, repo[key]))
+            if key != "installpkg.sh":
+                os.mkdir('{}'.format(repo[key]))
+            src = "{}/{}".format(resources, key)
+            dst = "{}/{}".format(repo[key],key)
+            try:
+                shutil.copy(src, dst)
+            except:
+                copyfile(src)
+            try:    
+                p = subprocess.run(['tar', 'xvfz', '{}/{}'.format(repo[key],key), '-C', '/root'])
+            except:
+                p = subprocess.check_output('tar xvfz {}/{}'.format(repo[key],key), '-C', '/root', shell=True)        
+            for line in str(p).splitlines():
+                print(line, end="")
+            p = subprocess.check_output('chmod 775 -f {}'.format(repo[key]), shell=True)
+            for line in str(p).splitlines():
+                print(line, end="\n")
+
     def installRPMs(self, resources, rpms):
         for key in rpms:
             print('install RPMs {} to {}'.format(key, rpms[key]))
             stdin, stdout, stderr = self.ssh.exec_command('/root/installpkg.sh {}'.format(rpms[key]))
-            for line in iter(stdout.readline,""):
+            for line in str(p).splitlines():
                 print (line, end="")
+            time.sleep(5)
+
+    def installLocalRPMs(self, resources, rpms):
+        p = subprocess.check_output('sudo chmod +x /root/installpkg.sh', shell=True)
+        for key in rpms:
+            print('install RPMs {} to {}'.format(key, rpms[key]))
+            try:
+                p = subprocess.check_output('/root/installpkg.sh {} -f'.format(rpms[key]), shell=True)
+                print("PPP", p)
+            except:
+                p = subprocess.run(['/root/installpkg.sh {} -f'.format(rpms[key])])
+            for line in str(p).splitlines():
+                print(line, end="\n")
             time.sleep(5)
 
     def copyFromResourcesLocal(self, resources, files):

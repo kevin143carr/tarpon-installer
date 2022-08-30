@@ -2,6 +2,7 @@ altgraph==0.17
 bcrypt==3.2.0
 cffi==1.14.6
 cryptography==3.4.7
+easygui==0.98.3
 future==0.18.2
 paramiko==2.7.2
 pefile==2021.5.24

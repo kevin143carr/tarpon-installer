@@ -4,6 +4,7 @@ from configparser import ConfigParser
 from task import Task
 import os.path
 from os import path
+from easygui import *
 
 configfile = "config.ini"
 version = "2.6.6"
@@ -42,6 +43,8 @@ class iniInfo:
         self.finalactions = config_object._sections['FINAL']
 
 class mainClass:
+    display_list = []
+    display_dict = {}
 
     def main(self):
         print("******************************************************************")
@@ -55,6 +58,33 @@ class mainClass:
         print("******************************************************************")
         time.sleep(2)
         ini_info = iniInfo()
+
+        title = 'Important Installation Information Needed'
+        text =  'Please Enter the Following Information'
+
+        count = 0;
+        if "DISPLAY" in ini_info.username:
+            self.display_list.append("Username")
+            self.display_dict.update({"Username": count})
+            count+=1
+        if "DISPLAY" in ini_info.password:
+            self.display_list.append("Password")
+            self.display_dict.update({"Password": count})
+            count+=1
+        if "DISPLAY" in ini_info.host:
+            self.display_list.append("Host IP")
+            self.display_dict.update({"Host IP": count})
+
+        output = multenterbox(text, title, self.display_list)
+
+        for key in self.display_dict:
+            if "Username" in key:
+                ini_info.username = output[self.display_dict[key]]
+            if "Password" in key:
+                ini_info.password = output[self.display_dict[key]]
+            if "Host IP" in key:
+                ini_info.host = output[self.display_dict[key]]
+
         task = Task(ini_info.username, ini_info.password, ini_info.host, ini_info.resources)
 
         # if Remote Type then login via SSH
@@ -62,9 +92,16 @@ class mainClass:
             task.loginSSH()
 
         # Repos and RPMs are Linux only
-        if ini_info.buildtype == 'LINUX':
-            task.installRepo(ini_info.resources, ini_info.repo)
+ 
+        # Remote Install
+        if ini_info.buildtype == 'LINUX' and ini_info.installtype == 'REMOTE':
+            task.installRemoteRepo(ini_info.resources, ini_info.repo)
             task.installRPMs(ini_info.resources, ini_info.rpms)
+
+        # Local Install
+        if ini_info.buildtype == 'LINUX':
+            task.installLocalRepo(ini_info.resources, ini_info.repo)
+            task.installLocalRPMs(ini_info.resources, ini_info.rpms)
 
         task.copyFromResources(ini_info.resources, ini_info.files, ini_info.installtype, ini_info.buildtype)
         task.doActions(ini_info.actions, ini_info.installtype, ini_info.buildtype)
