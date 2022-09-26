@@ -1,4 +1,5 @@
 import sys
+import ctypes
 import time
 from configparser import ConfigParser
 from task import Task
@@ -7,7 +8,7 @@ from os import path
 from easygui import *
 
 configfile = "config.ini"
-version = "2.6.6"
+version = "2.7.0"
 
 class iniInfo:
     username = ""
@@ -16,6 +17,7 @@ class iniInfo:
     buildtype = ""
     installtype = ""
     resources = ""
+    startinfo = ""
     files = dict()
     repo = dict()
     rpms = dict()
@@ -26,6 +28,8 @@ class iniInfo:
     def __init__(self):
         config_object = ConfigParser()
         config_object.read(configfile)
+        startup = config_object["STARTUP"]
+        self.startinfo = startup['startupinfo']
         userinfo = config_object["USERINFO"]
         serverinfo = config_object["SERVERCONFIG"]
         build = config_object["BUILD"]
@@ -39,12 +43,19 @@ class iniInfo:
         self.repo = config_object._sections['REPO']
         self.rpms = config_object._sections['RPM']
         self.actions = config_object._sections['ACTIONS']
-        self.modify =  config_object._sections['MODIFY']
+        self.modify = config_object._sections['MODIFY']
         self.finalactions = config_object._sections['FINAL']
 
 class mainClass:
     display_list = []
     display_dict = {}
+
+    def isAdmin(self):
+        try:
+            is_admin = (os.getuid() == 0)
+        except AttributeError:
+            is_admin = ctypes.windll.shell32.IsUserAnAdmin() != 0
+        return is_admin
 
     def main(self):
         print("******************************************************************")
@@ -57,12 +68,34 @@ class mainClass:
         print("******************************************************************")
         print("******************************************************************")
         time.sleep(2)
+
+        if self.isAdmin():
+            print("Executing as Administrator")
+        else:
+            print("")
+            print("****************************************")
+            print("* ERROR!         ERROR!         ERROR! *")
+            print("*                                      *")
+            print("* Please run as Administrator or root! *")
+            print("****************************************")
+            print("")
+            input("Press 'Enter' to exit!")
+            return
+
         ini_info = iniInfo()
 
-        title = 'Important Installation Information Needed'
-        text =  'Please Enter the Following Information'
+        if len(ini_info.startinfo) > 0:
+            if 'YESNO' in ini_info.startinfo:
+                text = ini_info.startinfo.split('::')
+                answer = ynbox(text[1],"User Question")
+                if answer == False:
+                    print("Exiting Installation Now!")
+                    return;
 
-        count = 0;
+        title = 'Important Installation Information Needed'
+        text = 'Please Enter the Following Information'
+
+        count = 0
         if "DISPLAY" in ini_info.username:
             self.display_list.append("Username")
             self.display_dict.update({"Username": count})
@@ -74,16 +107,21 @@ class mainClass:
         if "DISPLAY" in ini_info.host:
             self.display_list.append("Host IP")
             self.display_dict.update({"Host IP": count})
+            count+=1
 
-        output = multenterbox(text, title, self.display_list)
+        if count > 0:
+            output = multenterbox(text, title, self.display_list)
+            if output == None:
+                print("Installation Cancelled")
+                return
 
-        for key in self.display_dict:
-            if "Username" in key:
-                ini_info.username = output[self.display_dict[key]]
-            if "Password" in key:
-                ini_info.password = output[self.display_dict[key]]
-            if "Host IP" in key:
-                ini_info.host = output[self.display_dict[key]]
+            for key in self.display_dict:
+                if "Username" in key:
+                    ini_info.username = output[self.display_dict[key]]
+                if "Password" in key:
+                    ini_info.password = output[self.display_dict[key]]
+                if "Host IP" in key:
+                    ini_info.host = output[self.display_dict[key]]
 
         task = Task(ini_info.username, ini_info.password, ini_info.host, ini_info.resources)
 

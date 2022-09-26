@@ -10,6 +10,7 @@ from zipfile import ZipFile
 from shutil import copyfile
 from pathlib import Path
 from fileutilities import FileUtilities
+from easygui import *
 
 class Task:
     ssh = paramiko.SSHClient()
@@ -218,6 +219,14 @@ class Task:
             try:
                 if '%host%' in actions[action]:
                     actions[action] = actions[action].replace("%host%",self.hostname)
+
+                if 'YESNO' in actions[action]:
+                    text = actions[action].split('::');
+                    answer = ynbox(text[1],"User Question");
+                    if answer == False:
+                        continue;
+                    else:
+                        actions[action] = text[2];
 
                 print('Executing Action {} with {}'.format(action, actions[action]))
 
