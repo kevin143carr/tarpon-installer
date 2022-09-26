@@ -8,7 +8,7 @@ from os import path
 from easygui import *
 
 configfile = "config.ini"
-version = "2.7.0"
+version = "2.7.2"
 
 class iniInfo:
     username = ""
