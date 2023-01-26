@@ -11,6 +11,7 @@ from shutil import copyfile
 from pathlib import Path
 from fileutilities import FileUtilities
 from easygui import *
+import logging
 
 class Task:
     ssh = paramiko.SSHClient()
@@ -19,6 +20,7 @@ class Task:
     hostname = ""
     resources = ""
     file_utilities = FileUtilities
+    logger = logging.getLogger("mylogger")
 
     def loginSSH(self):
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -27,22 +29,22 @@ class Task:
     def installRemoteRepo(self, resources, repo):
         ftp = self.ssh.open_sftp()
         for key in repo:
-            print('copying and extracting Repo files {} to {}'.format(key, repo[key]))
+            self.logger.info('copying and extracting Repo files {} to {}'.format(key, repo[key]))
             self.ssh.exec_command('mkdir {}'.format(repo[key]))
             src = "{}/{}".format(resources, key)
             dst = "{}/{}".format(repo[key],key)
             ftp.put(src , dst)
             stdin, stdout, stderr = self.ssh.exec_command('tar xvfz {}/{}'.format(repo[key],key))
             for line in iter(stdout.readline,""):
-                print (line, end="")
+                self.logger.info (line, end="")
             stdin, stdout, stderr = self.ssh.exec_command('chmod 775 -f {}/{}'.format(repo[key],key))
             for line in iter(stdout.readline,""):
-                print (line, end="")
+                self.logger.info (line, end="")
         ftp.close()
 
     def installLocalRepo(self, resources, repo):
         for key in repo:
-            print('copying and extracting Repo files {} to {}'.format(key, repo[key]))
+            self.logger.info('copying and extracting Repo files {} to {}'.format(key, repo[key]))
             if key != "installpkg.sh":
                 os.mkdir('{}'.format(repo[key]))
             src = "{}/{}".format(resources, key)
@@ -56,47 +58,53 @@ class Task:
             except:
                 p = subprocess.check_output('tar xvfz {}/{}'.format(repo[key],key), '-C', '/root', shell=True)        
             for line in str(p).splitlines():
-                print(line, end="")
+                self.logger.info(line, end="")
             p = subprocess.check_output('chmod 775 -f {}'.format(repo[key]), shell=True)
             for line in str(p).splitlines():
-                print(line, end="\n")
+                self.logger.info(line, end="\n")
 
     def installRPMs(self, resources, rpms):
         for key in rpms:
-            print('install RPMs {} to {}'.format(key, rpms[key]))
+            self.logger.info('install RPMs {} to {}'.format(key, rpms[key]))
             stdin, stdout, stderr = self.ssh.exec_command('/root/installpkg.sh {}'.format(rpms[key]))
             for line in str(p).splitlines():
-                print (line, end="")
+                self.logger.info (line, end="")
             time.sleep(5)
 
     def installLocalRPMs(self, resources, rpms):
         p = subprocess.check_output('sudo chmod +x /root/installpkg.sh', shell=True)
         for key in rpms:
-            print('install RPMs {} to {}'.format(key, rpms[key]))
+            self.logger.info('install RPMs {} to {}'.format(key, rpms[key]))
             try:
                 p = subprocess.check_output('/root/installpkg.sh {} -f'.format(rpms[key]), shell=True)
-                print("PPP", p)
+                self.logger.info("PPP", p)
             except:
                 p = subprocess.run(['/root/installpkg.sh {} -f'.format(rpms[key])])
             for line in str(p).splitlines():
-                print(line, end="\n")
+                self.logger.info(line, end="\n")
             time.sleep(5)
 
-    def copyFromResourcesLocal(self, resources, files):
+    def copyFromResourcesLocal(self, window, bar, taskitem, resources, files):
+        count = 0
         for key in files:
+            count += 1;
+            bar['value'] = (count/len(files.keys()))*100
+            window.update_idletasks()
             firstfile = 0
             my_file = Path("{}/{}".format(resources,key))
             if my_file.is_file():
-                print('copying and extracting file {} to {}'.format(key, files[key]))
+                taskstr = 'copying and extracting file {} to {}'.format(key, files[key])
+                self.logger.info(taskstr)
+                taskitem.set(taskstr)
                 try:
                     if '.' in files[key]: # contains a file name
                         dirname = os.path.dirname(os.path.abspath(files[key])) # just get the path
                         os.makedirs(dirname, exist_ok = True)
                     else:
                         os.makedirs(files[key], exist_ok = True)
-                    print("Directory {} created successfully".format(files[key]))
+                    self.logger.info("Directory {} created successfully".format(files[key]))
                 except OSError as error:
-                    print("Directory {} can not be created".format(files[key]))
+                    self.logger.warning("Directory {} can not be created".format(files[key]))
 
                 dirtest = key.split('/')
                 src = "{}{}".format(resources, key)
@@ -165,14 +173,15 @@ class Task:
                             with source, target:
                                 shutil.copyfileobj(source, target)
             else:
-                print("Error copying file {}/{}, it does not exist".format(resources,key))
+                self.logger.error("Error copying file {}/{}, it does not exist".format(resources,key))
+        finished = True
 
     def copyFromResourcesSSH(self, resources, files):
         ftp = self.ssh.open_sftp()
         for key in files:
             my_file = Path("{}/{}".format(resources,key))
             if my_file.is_file():
-                print('copying and extracting file {} to {}'.format(key, files[key]))
+                self.logger.info('copying and extracting file {} to {}'.format(key, files[key]))
                 self.ssh.exec_command('mkdir -p {}'.format(files[key]))
                 dirtest = key.split('/')
                 src = "{}{}".format(resources, key)
@@ -186,7 +195,7 @@ class Task:
                         dst = "{}/{}".format(files[key],key)
 
                 if(os.path.exists("{}/{}".format(os.getcwd(), src)) == False):
-                    print("Error could not find this file: {}/{}".format(os.getcwd(), src))
+                    self.logger.error("Error could not find this file: {}/{}".format(os.getcwd(), src))
                     continue
 
                 ftp.put(src , dst)
@@ -194,28 +203,33 @@ class Task:
                 if 'zip' in key:
                     stdin, stdout, stderr = self.ssh.exec_command('unzip -o {}/{} -d {}'.format(files[key],key,files[key]))
                     for line in iter(stdout.readline,""):
-                        print (line, end="")
+                        self.logger.info (line, end="")
             else:
-                print("Error copying file {}/{}, it does not exist".format(resources,key))
+                self.logger.error("Error copying file {}/{}, it does not exist".format(resources,key))
         ftp.close()
 
-    def copyFromResources(self, resources, files, installtype, buildtype):
-        if(installtype == 'REMOTE' and buildtype == 'LINUX'):
-            self.copyFromResourcesSSH(resources, files)
-        elif installtype == 'LOCAL':
-            self.copyFromResourcesLocal(resources, files)
+    def copyFromResources(self, window, bar, taskitem, ini_info):
+        if(ini_info.installtype == 'REMOTE' and ini_info.buildtype == 'LINUX'):
+            self.copyFromResourcesSSH(ini_info.resources, ini_info.files)
+        elif ini_info.installtype == 'LOCAL':
+            self.copyFromResourcesLocal(window, bar, taskitem, ini_info.resources, ini_info.files)
 
     def doActionsSSH(self, actions):
         for action in actions:
             if '%host%' in actions[action]:
                 actions[action] = actions[action].replace("%host%",self.hostname)
-            print('Executing Action {} with {}'.format(action, actions[action]))
+            self.logger.info('Executing Action {} with {}'.format(action, actions[action]))
             stdin, stdout, stderr = self.ssh.exec_command('{}'.format(actions[action]))
             for line in iter(stdout.readline,""):
-                print (line, end="")
+                self.logger.info (line, end="")
 
-    def doActionsLocal(self, actions):
+    def doActionsLocal(self, window, bar, taskitem, actions):
+        count = 0
         for action in actions:
+            count += 1;
+            bar['value'] = (count/len(actions.keys()))*100
+            window.update_idletasks()
+
             try:
                 if '%host%' in actions[action]:
                     actions[action] = actions[action].replace("%host%",self.hostname)
@@ -228,40 +242,59 @@ class Task:
                     else:
                         actions[action] = text[2];
 
-                print('Executing Action {} with {}'.format(action, actions[action]))
+                taskstr = 'Executing Action {} with {}'.format(action, actions[action])
+                self.logger.info(taskstr)
+                taskitem.set(taskstr)
 
                 p = subprocess.check_output(actions[action], shell=True)
                 for line in p.splitlines():
-                    print(line.decode('utf-8'))
+                    self.logger.info(line.decode('utf-8'))
             except Exception as e:
-                print("Error in Action {}".format(str(e)))
+                self.logger.error("Error in Action {}".format(str(e)))
 
-    def doActions(self, actions, installtype, buildtype):
-        if(installtype == 'REMOTE' and buildtype == 'LINUX'):
-            self.doActionsSSH(actions)
-        elif installtype == 'LOCAL':
-            self.doActionsLocal(actions)
+    def doActions(self, window, bar, taskitem, ini_info, type = "action"):
+        if(ini_info.installtype == 'REMOTE' and ini_info.buildtype == 'LINUX'):
+            self.doActionsSSH(ini_info.actions)
+        elif ini_info.installtype == 'LOCAL':
+            if(type == "action"):
+                self.doActionsLocal(window, bar, taskitem, ini_info.actions)
+            elif(type == "final"):
+                self.doActionsLocal(window, bar, taskitem, ini_info.finalactions)
 
-    def modifyFilesLocal(self, files):
-        for file in files:
-            ischange = True if("{CHANGE}" in files[file]) else False
-            if(ischange):
-                result = files[file].split("{CHANGE}")
-            else:
-                result = files[file].split("{ADD}")
+    def modifyFilesLocal(self, window, bar, taskitem, files):
+        count = 0
+        try:
+            for file in files:
+                count += 1;
+                bar['value'] = (count/len(files.keys()))*100
+                window.update_idletasks()
 
-            modifywith = result[1]
-            file = files[file][len("{FILE}"):len(result[0])]
-
-            my_file = Path("{}".format(file))
-            if my_file.is_file():
-                modcontent = modifywith.split("||")
-                if ischange:
-                    self.file_utilities.modifyFileContents(file, modcontent[0], modcontent[1])
+                ischange = True if("{CHANGE}" in files[file]) else False
+                if(ischange):
+                    result = files[file].split("{CHANGE}")
                 else:
-                    self.file_utilities.addFileContents(file, modifywith)
-            else: # Create File Condition
-                self.file_utilities.createFileAddContents(file,modifywith.split("||"))
+                    result = files[file].split("{ADD}")
+
+                modifywith = result[1]
+                file = files[file][len("{FILE}"):len(result[0])]
+
+                my_file = Path("{}".format(file))
+
+                taskstr = 'Modifying File {} with {}'.format(file, modifywith)
+                self.logger.info(taskstr)
+                taskitem.set(taskstr)
+
+                if my_file.is_file():
+                    modcontent = modifywith.split("||")
+                    if ischange:
+                        self.file_utilities.modifyFileContents(file, modcontent[0], modcontent[1])
+                    else:
+                        self.file_utilities.addFileContents(file, modifywith)
+                else: # Create File Condition
+                    self.file_utilities.createFileAddContents(file,modifywith.split("||"))
+        except Exception as ex:
+            self.logger.error(ex)
+
 
     def modifyFilesSSH(self, files):
         for file in files:
@@ -269,16 +302,16 @@ class Task:
             file = file.split("-",1)
             stdin, stdout, stderr = self.ssh.exec_command('sed -i \"s/{}/{}/g\" {}'.format(result[0],result[1],file[1]))
             for line in iter(stderr.readline,""):
-                print (line, end="")
+                self.logger.info (line, end="")
 
-    def modifyFiles(self, files, installtype, buildtype):
-        if(installtype == 'REMOTE' and buildtype == 'LINUX'):
-            self.modifyFilesSSH(files)
+    def modifyFiles(self, window, bar, taskitem, ini_info):
+        if(ini_info.installtype == 'REMOTE' and ini_info.buildtype == 'LINUX'):
+            self.modifyFilesSSH(ini_info.modify)
         else:
-            self.modifyFilesLocal(files)
+            self.modifyFilesLocal(window, bar, taskitem, ini_info.modify)
 
-    def finalActions(self, actions, installtype, buildtype):
-        self.doActions(actions, installtype, buildtype)
+    def finalActions(self, window, bar, taskitem, ini_info):
+        self.doActions( window, bar, taskitem, ini_info, "final")
 
     def __init__(self, username, password, hostname, resources):
         self.username = username
