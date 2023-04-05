@@ -14,7 +14,7 @@ import threading
 import logging
 
 configfile = "config.ini"
-version = "3.1.0"
+version = "3.1.2"
 logger = None
 
 class iniInfo:
@@ -27,6 +27,7 @@ class iniInfo:
     startinfo = ""
     installtitle = ""
     logoimage = ""
+    buttontext = ""
     files = dict()
     repo = dict()
     rpms = dict()
@@ -42,6 +43,7 @@ class iniInfo:
             self.startinfo = startup['startupinfo']
             self.installtitle = startup['installtitle']
             self.logoimage = startup['logoimg']
+            self.buttontext = startup['buttontext']
             userinfo = config_object["USERINFO"]
             serverinfo = config_object["SERVERCONFIG"]
             build = config_object["BUILD"]
@@ -138,7 +140,7 @@ class mainClass:
         taskitem.set("INSTALL TASK:")
         tk.Label(functionFrame,textvariable=taskitem, wraplength = 350, justify="left").place(x=10, y=190, anchor="w")
 
-        InstallButton = tk.Button(functionFrame,text="Begin Install",command=lambda: self.installThread(ini_info, InstallButton, self.window, bar, section, taskitem))
+        InstallButton = tk.Button(functionFrame,text=ini_info.buttontext,command=lambda: self.installThread(ini_info, InstallButton, self.window, bar, section, taskitem))
         InstallButton.place(relx=.5, y=240, anchor=tk.CENTER)
 
     def installThread(self, ini_info, InstallButton, window, bar, percent, text):

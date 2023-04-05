@@ -20,9 +20,17 @@ class FileUtilities:
             f.close()
 
         with open(file, "w") as f:
+            found = False
             for line in lines:
-                if(searchline in line):
+
+                if(found == True):
+                    f.write(line)
+                    continue;
+
+                searchval = " {0} ".format(line).lower().count(" {0} ".format(searchline).lower())
+                if(searchval != 0):
                     f.write(update + "\n")
+                    found = True
                 else:
                     f.write(line)
 
