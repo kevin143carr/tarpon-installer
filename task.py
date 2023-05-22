@@ -84,38 +84,54 @@ class Task:
                 self.logger.info(line, end="\n")
             time.sleep(5)
 
-    def copyFromResourcesLocal(self, window, bar, taskitem, resources, files):
+    def checkForUserInput(self, string, userinputs):
+        rtnstring = string
+        for input in userinputs:
+            for i in range(len(string.split('%')) -1):
+                if input in string:
+                    string = string.replace('%'+input+'%',userinputs[input].get(),1)
+                    rtnstring = string
+        return rtnstring
+
+
+    def copyFromResourcesLocal(self, window, bar, taskitem, ini_info):
         count = 0
-        for key in files:
+        for key in ini_info.files:
             count += 1;
-            bar['value'] = (count/len(files.keys()))*100
+            bar['value'] = (count/len(ini_info.files.keys()))*100
             window.update_idletasks()
             firstfile = 0
-            my_file = Path("{}/{}".format(resources,key))
+            my_file = Path("{}/{}".format(ini_info.resources,key))
+
+            # check for user input
+            userinput = self.checkForUserInput(ini_info.files[key], ini_info.userinput)
+            if(userinput != None):
+                ini_info.files[key] = userinput
+
             if my_file.is_file():
-                taskstr = 'copying and extracting file {} to {}'.format(key, files[key])
+                taskstr = 'copying and extracting file {} to {}'.format(key, ini_info.files[key])
                 self.logger.info(taskstr)
                 taskitem.set(taskstr)
                 try:
-                    if '.' in files[key]: # contains a file name
-                        dirname = os.path.dirname(os.path.abspath(files[key])) # just get the path
+                    if '.' in ini_info.files[key]: # contains a file name
+                        dirname = os.path.dirname(os.path.abspath(ini_info.files[key])) # just get the path
                         os.makedirs(dirname, exist_ok = True)
                     else:
-                        os.makedirs(files[key], exist_ok = True)
-                    self.logger.info("Directory {} created successfully".format(files[key]))
+                        os.makedirs(ini_info.files[key], exist_ok = True)
+                    self.logger.info("Directory {} created successfully".format(ini_info.files[key]))
                 except OSError as error:
-                    self.logger.warning("Directory {} can not be created".format(files[key]))
+                    self.logger.warning("Directory {} can not be created".format(ini_info.files[key]))
 
                 dirtest = key.split('/')
-                src = "{}{}".format(resources, key)
-                if '.' in files[key]: # contains a file name, so do not append a filename from 'key'
-                    dst = "{}".format(files[key])
+                src = "{}{}".format(ini_info.resources, key)
+                if '.' in ini_info.files[key]: # contains a file name, so do not append a filename from 'key'
+                    dst = "{}".format(ini_info.files[key])
                 else:
                     if (len(dirtest) > 1):
                         keyname = dirtest[1]
-                        dst = "{}/{}".format(files[key],keyname)
+                        dst = "{}/{}".format(ini_info.files[key],keyname)
                     else:
-                        dst = "{}/{}".format(files[key],key)
+                        dst = "{}/{}".format(ini_info.files[key],key)
 
                 copyfile(src,dst)
 
@@ -148,7 +164,7 @@ class Task:
                                             filename += "/"
                                             filename += words[i+1]
 
-                                os.makedirs(files[key] +"/" + filename, exist_ok = True)
+                                os.makedirs(ini_info.files[key] +"/" + filename, exist_ok = True)
                                 continue
     
                             # copy file (taken from zipfile's extract)
@@ -169,11 +185,11 @@ class Task:
                                     filename = words[0]
 
                             source = zf.open(file)
-                            target = open(os.path.join(files[key], filename), "wb")
+                            target = open(os.path.join(ini_info.files[key], filename), "wb")
                             with source, target:
                                 shutil.copyfileobj(source, target)
             else:
-                self.logger.error("Error copying file {}/{}, it does not exist".format(resources,key))
+                self.logger.error("Error copying file {}/{}, it does not exist".format(ini_info.resources,key))
         finished = True
 
     def copyFromResourcesSSH(self, resources, files):
@@ -212,7 +228,7 @@ class Task:
         if(ini_info.installtype == 'REMOTE' and ini_info.buildtype == 'LINUX'):
             self.copyFromResourcesSSH(ini_info.resources, ini_info.files)
         elif ini_info.installtype == 'LOCAL':
-            self.copyFromResourcesLocal(window, bar, taskitem, ini_info.resources, ini_info.files)
+            self.copyFromResourcesLocal(window, bar, taskitem, ini_info)
 
     def doActionsSSH(self, actions):
         for action in actions:
@@ -223,12 +239,13 @@ class Task:
             for line in iter(stdout.readline,""):
                 self.logger.info (line, end="")
 
-    def doActionsLocal(self, window, bar, taskitem, actions):
+    def doActionsLocal(self, window, bar, taskitem, actions, options, userinputs):
         count = 0
         for action in actions:
             count += 1;
             bar['value'] = (count/len(actions.keys()))*100
             window.update_idletasks()
+            exec_option = '1'
 
             try:
                 if '%host%' in actions[action]:
@@ -245,10 +262,20 @@ class Task:
                 taskstr = 'Executing Action {} with {}'.format(action, actions[action])
                 self.logger.info(taskstr)
                 taskitem.set(taskstr)
+                
+                if action in options.keys():
+                    exec_option = options[action].get()
 
-                p = subprocess.check_output(actions[action], shell=True)
-                for line in p.splitlines():
-                    self.logger.info(line.decode('utf-8'))
+                if(exec_option != '0'):
+                    # check for user input
+                    userinput = self.checkForUserInput(actions[action], userinputs)
+                    if(userinput != None):
+                        actions[action] = userinput
+
+                    p = subprocess.check_output(actions[action], shell=True)
+                    for line in p.splitlines():
+                        self.logger.info(line.decode('utf-8'))
+
             except Exception as e:
                 self.logger.error("Error in Action {}".format(str(e)))
 
@@ -257,9 +284,9 @@ class Task:
             self.doActionsSSH(ini_info.actions)
         elif ini_info.installtype == 'LOCAL':
             if(type == "action"):
-                self.doActionsLocal(window, bar, taskitem, ini_info.actions)
+                self.doActionsLocal(window, bar, taskitem, ini_info.actions, ini_info.optionvals, ini_info.userinput)
             elif(type == "final"):
-                self.doActionsLocal(window, bar, taskitem, ini_info.finalactions)
+                self.doActionsLocal(window, bar, taskitem, ini_info.finalactions, ini_info.optionvals, ini_info.userinput)
 
     def modifyFilesLocal(self, window, bar, taskitem, files):
         count = 0

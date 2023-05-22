@@ -10,11 +10,12 @@ from easygui import *
 import tkinter as tk
 import tkinter.ttk as ttk
 from PIL import Image as Image, ImageTk as Itk
+from tkscrolledframe import ScrolledFrame
 import threading
 import logging
 
 configfile = "config.ini"
-version = "3.1.2"
+version = "3.2.4"
 logger = None
 
 class iniInfo:
@@ -34,6 +35,9 @@ class iniInfo:
     actions = dict()
     modify = dict()
     finalactions = dict()
+    options = dict()
+    optionvals = dict()
+    userinput = dict()
 
     def __init__(self):
         config_object = ConfigParser()
@@ -59,6 +63,8 @@ class iniInfo:
             self.actions = config_object._sections['ACTIONS']
             self.modify = config_object._sections['MODIFY']
             self.finalactions = config_object._sections['FINAL']
+            self.options = config_object._sections['OPTIONS']
+            self.userinput = config_object._sections['USERINPUT']
         except Exception as ex:
             logger.error(ex)
 
@@ -75,7 +81,48 @@ class mainClass:
         "ridge": tk.RIDGE
         }
 
-    def buildGUI(self, functiontitle, functiontitletext, display_list):
+
+    def optionsDialog(self, parent, ini_info):
+        optionsWindow = tk.Toplevel(self.window)
+        optionsWindow.geometry("600x300")
+        # window.title(ini_info.installtitle)
+        optionsWindow.resizable(False,False)
+        optionsWindow.focusmodel(model="active")
+        optionsWindow.after(100, lambda: optionsWindow.focus_force())
+
+        # This centers the window
+        optionsWindow.wait_visibility()
+        x = parent.winfo_x() + parent.winfo_width()//2 - optionsWindow.winfo_width()//2
+        y = parent.winfo_y() + parent.winfo_height()//2 - optionsWindow.winfo_height()//2
+        optionsWindow.geometry(f"+{x}+{y}")
+
+        functionFrame = tk.Frame(optionsWindow, height=240, width=340)
+        functionFrame.pack(side="top", expand=0, fill="both")
+
+        scrolledFrame = ScrolledFrame(functionFrame, height=240, width=360)
+        scrolledFrame.pack(side="top", expand=0, fill="both")
+
+        scrolledFrame.bind_arrow_keys(functionFrame)
+        scrolledFrame.bind_scroll_wheel(functionFrame)
+        inner_frame = scrolledFrame.display_widget(tk.Frame)
+
+        for row in range(len(ini_info.options)):
+            vals = ini_info.options.keys()
+            value = list(vals)[row]
+
+            ini_info.optionvals[value]=tk.StringVar(value='0')
+
+            lb = tk.Label(inner_frame, justify = "left", text=ini_info.options[value])
+            cb = tk.Checkbutton(inner_frame, justify = "left", variable=ini_info.optionvals[value], onvalue='1', offvalue='0')
+            lb.grid(row=row,
+                    column=1, stick="W")
+            cb.grid(row=row,
+                    column=0, stick="W")
+
+        optionsButton = tk.Button(optionsWindow, text="Close", width=20, font="Arial 10 bold", command=optionsWindow.destroy).place(relx=.5, y=280,anchor=tk.CENTER)
+
+
+    def buildGUI(self, functiontitle):
         ini_info = iniInfo()
 
         count = 0
@@ -98,11 +145,17 @@ class mainClass:
         self.window.geometry("800x400")
         self.window.title(ini_info.installtitle)
         self.window.resizable(False,False)
+        self.window.focusmodel(model="active")
+
+        for row in range(len(ini_info.options)):
+            vals = ini_info.options.keys()
+            value = list(vals)[row]
+            ini_info.optionvals[value]=tk.StringVar(value='0')
 
         section = tk.StringVar()
         taskitem = tk.StringVar()
 
-        PicFrame = tk.Frame(self.window, height=380, width=380, relief=tk.RAISED, borderwidth=5)
+        PicFrame = tk.Frame(self.window, height=380, width=380, relief=tk.RAISED, borderwidth=3)
         PicFrame.place(x=10,y=10)
 
         titleimage=Image.open(ini_info.logoimage)
@@ -112,7 +165,7 @@ class mainClass:
         piclabel.image = titlepic
         piclabel.place(relx=.5, rely=.5, anchor=tk.CENTER)
 
-        TitleFrame = tk.Frame(self.window, height=100, width=390, relief=tk.RAISED, borderwidth=5)
+        TitleFrame = tk.Frame(self.window, height=100, width=390, relief=tk.RAISED, borderwidth=3)
         TitleFrame.place(x=400, y=10)
         TitleLabel = tk.Label(TitleFrame, text=ini_info.installtitle, font="Arial 17 bold")
         TitleLabel.place(relx=.5, y=20, anchor=tk.CENTER)
@@ -121,27 +174,59 @@ class mainClass:
         bar = ttk.Progressbar(TitleFrame,orient=tk.HORIZONTAL,length=310)
         bar.place(relx=.5, y=70,anchor=tk.CENTER)
 
-        functionFrame = tk.Frame(self.window, height=270, width=390, relief=tk.RAISED, borderwidth=5)
+        functionFrame = tk.Frame(self.window, height=130, width=365, relief=tk.RAISED, borderwidth=3)
         functionFrame.place(x=400, y=120)
-        functionTitleLabel = tk.Label(functionFrame,text=functiontitle)
-        functionTitleLabel.place(relx=.5, y=20, anchor=tk.CENTER)
-        functionTitleTextLabel = tk.Label(functionFrame, text=functiontitletext)
-        functionTitleTextLabel.place(relx=.5, y=40, anchor=tk.CENTER)
 
-        posy = 60
-        for entrylabel in display_list:
+        scrolledFrame = ScrolledFrame(functionFrame, height=130, width=365)
+        scrolledFrame.pack(side="top", expand=0, fill="both")
+
+        scrolledFrame.bind_arrow_keys(functionFrame)
+        scrolledFrame.bind_scroll_wheel(functionFrame)
+        inner_frame = scrolledFrame.display_widget(tk.Frame)
+
+        functionTitleLabel = tk.Label(inner_frame,text=functiontitle, font="Arial 12 bold")
+
+        row = 0
+        functionTitleLabel.grid(row=row, column=0, sticky='W',padx=10, columnspan = 2)
+        row += 1
+
+        for entrylabel in self.display_list:
             var = tk.StringVar()
-            tk.Label(functionFrame, text=entrylabel).place( x=10, y=posy, anchor="w")
-            tk.Entry(functionFrame, textvariable=var).place( x=200, y=posy, anchor="center")
+            lb = tk.Label(inner_frame, text=entrylabel, justify = "left")
+            lb.grid(row=row, column=0, sticky='W',padx=10)
+            en = tk.Entry(inner_frame, textvariable=var, justify = "left")
+            en.grid(row=row, column=1, sticky='W',padx=10)
             self.display_dict[entrylabel] = var
-            posy += 20
+            row += 1
+
+        for entrylabel in ini_info.userinput:
+            var = tk.StringVar()
+            lb = tk.Label(inner_frame, justify = "left", text=ini_info.userinput[entrylabel])
+            lb.grid(row=row, column=0, sticky='W',padx=10)
+
+            en = tk.Entry(inner_frame, justify = "left", text=entrylabel, textvariable=var)
+            en.grid(row=row, column=1, sticky='W',padx=10)
+            ini_info.userinput[entrylabel] = var
+            row += 1
+
+        row += 1
+        lb = tk.Label(inner_frame, justify = "left", text="")
+        lb.grid(row=row, column=0, sticky='W',padx=10)
+        row += 1
+        lb2 = tk.Label(inner_frame, justify = "left", text="")
+        lb2.grid(row=row, column=0, sticky='W',padx=10)
+
+        optionsButton = tk.Button(self.window, text="Options", width=20, font="Arial 10 bold", command=lambda: self.optionsDialog(self.window, ini_info)).place(x=595, y=290,anchor=tk.CENTER)
+
+        taskFrame = tk.Frame(self.window, height=85, width=390, relief=tk.RAISED, borderwidth=3)
+        taskFrame.place(x=400, y=305)
 
         section.set("SECTION:")
         taskitem.set("INSTALL TASK:")
-        tk.Label(functionFrame,textvariable=taskitem, wraplength = 350, justify="left").place(x=10, y=190, anchor="w")
+        tk.Label(taskFrame,textvariable=taskitem, wraplength = 350, justify="left").place(x=10, y=17, anchor="w")
 
-        InstallButton = tk.Button(functionFrame,text=ini_info.buttontext,command=lambda: self.installThread(ini_info, InstallButton, self.window, bar, section, taskitem))
-        InstallButton.place(relx=.5, y=240, anchor=tk.CENTER)
+        InstallButton = tk.Button(taskFrame,text=ini_info.buttontext, width=10, font="Arial 10 bold", command=lambda: self.installThread(ini_info, InstallButton, self.window, bar, section, taskitem))
+        InstallButton.place(relx=.5, y=60, anchor=tk.CENTER)
 
     def installThread(self, ini_info, InstallButton, window, bar, percent, text):
         InstallButton['state'] = tk.DISABLED
@@ -161,9 +246,8 @@ class mainClass:
         logger.info("******************************************************************")
 
         functiontitle = 'Important Installation Information Needed'
-        functiontitletext = 'Please Enter the Following Information'
 
-        self.buildGUI(functiontitle, functiontitletext, self.display_list)
+        self.buildGUI(functiontitle)      
         self.window.mainloop()
 
     def beginInstall(self, ini_info, window, bar, section, taskitem):
@@ -209,6 +293,8 @@ class mainClass:
             section.set("SECTION: Final Actions")
             taskitem.set("")
             task.finalActions(window, bar, taskitem, ini_info)
+
+            self.window.quit()
         except Exception as ex:
             logger.error(ex)
 
@@ -239,9 +325,6 @@ if __name__ == "__main__":
 
     logger = logging.getLogger("mylogger")
 
-    logging.basicConfig(filename="installer.log",
-                    filemode='w', level = logging.INFO)
-
     if len(sys.argv) < 2:
         PrintHelp()
 
@@ -256,14 +339,17 @@ if __name__ == "__main__":
         logger.info("parameter {}".format(params[item]))
 
     if path.exists(configfile) == False:
-        logger.error("ERROR: ><###> Cannot Find Configuration File. <###><")
+        logger.error("ERROR: ><###> Cannot Find Configuration File - '{}'. <###><".format(configfile))
         PrintHelp()
+
+    logging.basicConfig(filename="{}.log".format(os.path.splitext(configfile)[0]),
+                    filemode='w', level = logging.INFO)
 
     if isAdmin():
         logger.info("Executing as Administrator")
     else:
         logger.info("Elevating Permissions because Administrator = {}".format(isAdmin()))
-        elevate()
+        elevate(show_console = False)
     
     mc = mainClass()
     mc.main()
