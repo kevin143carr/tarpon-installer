@@ -9,11 +9,12 @@ ended up using it at my work for many different purposes, including providing up
 It uses a config.ini (which can be named [anything].ini) and a resource folder.
 
 # CONFIG.INI EXPLAINED
+
 ### [STARTUP] # A startup task gives you the opportunity to choose logo and title.
-**Example**
-logoimg = mylogo.png
-installtitle = MY INSTALLER NAME GOES HERE
-startupinfo = information about the installer like: "This will install the complete MY APP system on this machine and reboot your machine"
+**Example**\
+logoimg = mylogo.png\
+installtitle = MY INSTALLER NAME GOES HERE\
+startupinfo = information about the installer like: "This will install the complete MY APP system on this machine and reboot your machine"\
 buttontext = The word for the install button usually just 'Install', but it can say an word.
 
 ### [USERINFO] # Information needed to log into the machine
@@ -23,7 +24,7 @@ doing remote installations.  The username and password will be used to ssh into 
 box when doing a "Remote Linux Install".  if it is blank it will not show up on the install GUI.\
 **Example**\
 username = \
-password = \
+password = 
 
 ### [SERVERCONFIG] # ip address information
 Perhaps not the best name, but this field is used as the Remote IP that will be ssh(d) into
