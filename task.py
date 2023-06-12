@@ -66,23 +66,37 @@ class Task:
     def installRPMs(self, resources, rpms):
         for key in rpms:
             self.logger.info('install RPMs {} to {}'.format(key, rpms[key]))
-            stdin, stdout, stderr = self.ssh.exec_command('/root/installpkg.sh {}'.format(rpms[key]))
+            p = subprocess.check_output('/root/installpkg.sh {}'.format(rpms[key]))
             for line in str(p).splitlines():
                 self.logger.info (line, end="")
             time.sleep(5)
 
     def installLocalRPMs(self, resources, rpms):
-        p = subprocess.check_output('sudo chmod +x /root/installpkg.sh', shell=True)
+        p = None
         for key in rpms:
-            self.logger.info('install RPMs {} to {}'.format(key, rpms[key]))
+            cwd = os.getcwd()
+            self.logger.info('install RPMs {} {}'.format(key, rpms[key]))
             try:
-                p = subprocess.check_output('/root/installpkg.sh {} -f'.format(rpms[key]), shell=True)
-                self.logger.info("PPP", p)
-            except:
-                p = subprocess.run(['/root/installpkg.sh {} -f'.format(rpms[key])])
-            for line in str(p).splitlines():
-                self.logger.info(line, end="\n")
-            time.sleep(5)
+                multilinerpm = rpms[key].split(",")
+                if len(multilinerpm) > 0:
+                    execstr = ''
+                    for line in multilinerpm:
+                        if execstr == '':
+                            execstr = 'rpm --install {}/{} '.format(resources, line)
+                        else:
+                            execstr = execstr + '{}/{} '.format(resources, line)
+
+                    p = subprocess.check_output('{}'.format(execstr),shell=True)
+                    for line in p.splitlines():
+                        self.logger.info(line.decode('utf-8'))
+                    time.sleep(5)
+                else:
+                    p = subprocess.check_output('rpm --install {}/{}'.format(resources,rpms[key]),shell=True)
+                    for line in p.splitlines():
+                        self.logger.info(line.decode('utf-8'))
+                    time.sleep(5)
+            except Exception as ex:
+                self.logger.error("{} : file {}".format(ex,rpms[key]))
 
     def checkForUserInput(self, string, userinputs):
         rtnstring = string
@@ -101,12 +115,13 @@ class Task:
             bar['value'] = (count/len(ini_info.files.keys()))*100
             window.update_idletasks()
             firstfile = 0
-            my_file = Path("{}/{}".format(ini_info.resources,key))
+            my_file = Path("{}/{}/{}".format(os.getcwd(),ini_info.resources,key))
 
-            # check for user input
-            userinput = self.checkForUserInput(ini_info.files[key], ini_info.userinput)
-            if(userinput != None):
-                ini_info.files[key] = userinput
+            if ini_info.buildtype != 'LINUX':
+                # check for user input
+                userinput = self.checkForUserInput(ini_info.files[key], ini_info.userinput)
+                if(userinput != None):
+                    ini_info.files[key] = userinput
 
             if my_file.is_file():
                 taskstr = 'copying and extracting file {} to {}'.format(key, ini_info.files[key])
@@ -123,7 +138,7 @@ class Task:
                     self.logger.warning("Directory {} can not be created".format(ini_info.files[key]))
 
                 dirtest = key.split('/')
-                src = "{}{}".format(ini_info.resources, key)
+                src = "{}/{}".format(ini_info.resources, key)
                 if '.' in ini_info.files[key]: # contains a file name, so do not append a filename from 'key'
                     dst = "{}".format(ini_info.files[key])
                 else:

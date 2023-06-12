@@ -15,7 +15,7 @@ import threading
 import logging
 
 configfile = "config.ini"
-version = "3.2.4"
+version = "3.4.0"
 logger = None
 
 class iniInfo:
@@ -41,6 +41,7 @@ class iniInfo:
 
     def __init__(self):
         config_object = ConfigParser()
+        config_object.optionxform = str
         try:
             config_object.read(configfile)
             startup = config_object["STARTUP"]
@@ -70,7 +71,8 @@ class iniInfo:
 
 class mainClass:
     display_list = []
-    display_dict = {}  
+    display_dict = {} 
+
     window = tk.Tk()
 
     border_effects = {
@@ -145,7 +147,7 @@ class mainClass:
         self.window.geometry("800x400")
         self.window.title(ini_info.installtitle)
         self.window.resizable(False,False)
-        self.window.focusmodel(model="active")
+        self.window.focusmodel(model="passive")
 
         for row in range(len(ini_info.options)):
             vals = ini_info.options.keys()
@@ -276,7 +278,6 @@ class mainClass:
 
             # Local Install
             if ini_info.buildtype == 'LINUX':
-                task.installLocalRepo(ini_info.resources, ini_info.repo)
                 task.installLocalRPMs(ini_info.resources, ini_info.rpms)
 
             section.set("SECTION: Copying Files")
@@ -300,14 +301,14 @@ class mainClass:
 
 
 def PrintHelp():
-    logger.info("**********************************************************************")
-    logger.info("*  ><###> Tarpon Installer <###>< is an open source install creator. *")
-    logger.info("*  specify config.ini file on the commandline                        *")
-    logger.info("*                                                                    *")
-    logger.info("*  Usage: tarpon_installer.exe yourconfig.ini                        *")
-    logger.info("*                                                                    *")
-    logger.info("*  VERSION {}".format(version))
-    logger.info("**********************************************************************")
+    print("**********************************************************************")
+    print("*  ><###> Tarpon Installer <###>< is an open source install creator. *")
+    print("*  specify config.ini file on the commandline                        *")
+    print("*                                                                    *")
+    print("*  Usage: tarpon_installer.exe yourconfig.ini                        *")
+    print("*                                                                    *")
+    print("*  VERSION {}".format(version))
+    print("**********************************************************************")
     raise SystemExit
 
 def isAdmin():
@@ -349,7 +350,7 @@ if __name__ == "__main__":
         logger.info("Executing as Administrator")
     else:
         logger.info("Elevating Permissions because Administrator = {}".format(isAdmin()))
-        elevate(show_console = False)
+        elevate(graphical = True)
     
     mc = mainClass()
     mc.main()
