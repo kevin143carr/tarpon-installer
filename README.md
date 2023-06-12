@@ -21,7 +21,7 @@ This is the username and password fields.  Yes it is in plaintext!  This is ofte
 used to update hosts files and other files that need this information, especially when
 doing remote installations.  The username and password will be used to ssh into a linux
 box when doing a "Remote Linux Install".  if it is blank it will not show up on the install GUI.
-**Example**
+**Example**\
 username = 
 password = 
 
