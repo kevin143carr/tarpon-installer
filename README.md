@@ -9,16 +9,29 @@ ended up using it at my work for many different purposes, including providing up
 It uses a config.ini (which can be named [anything].ini) and a resource folder.
 
 # CONFIG.INI EXPLAINED
+### [STARTUP] # A startup task gives you the opportunity to choose logo and title.
+**Example**
+logoimg = mylogo.png
+installtitle = MY INSTALLER NAME GOES HERE
+startupinfo = information about the installer like: "This will install the complete MY APP system on this machine and reboot your machine"
+buttontext = The word for the install button usually just 'Install', but it can say an word.
+
 ### [USERINFO] # Information needed to log into the machine
 This is the username and password fields.  Yes it is in plaintext!  This is often
 used to update hosts files and other files that need this information, especially when
 doing remote installations.  The username and password will be used to ssh into a linux
-box when doing a "Remote Linux Install".
+box when doing a "Remote Linux Install".  if it is blank it will not show up on the install GUI.
+**Example**
+username = 
+password = 
 
 ### [SERVERCONFIG] # ip address information
 Perhaps not the best name, but this field is used as the Remote IP that will be ssh(d) into
 as well as used to update hosts files and other configuration files that is needed.  You can use the %host% 
-to use as a variable to the host field.
+to use as a variable to the host field.  Again this is usually for a remote Linux install.  DISPLAY means to show the field.
+If it is blank, it will not show up in the install GUI.
+**Example**
+host = DISPLAY
 
 ### [BUILD] # buildtype:(WINDOWS OR LINUX) -- installtype:(LOCAL OR REMOTE) -- resources: (Relative or Full path)
 **buildtype** = *Used to determine if the installed files are going on a LINUX or WINDOWS system.  Use upper case!*\
@@ -26,16 +39,18 @@ to use as a variable to the host field.
 **resources** = *# Used to tell the installer where the resource directory is it can be either a*\
 *full path such as C:\Resources or a relative path to the executable '/resources'.*\
 *This is where you place files you want to copy onto the new system.*\
-**Example: repo.tar.gz** = /root/repo*\
-**Example: installpkg.sh** = /root*\
-**Example: resources** = c:\support\resources
+**Example**
+buildtype = WINDOWS
+installtype = LOCAL
+resources = resources/
 
-### [REPO] # Files that support using RPMs and a local repo
-**repo.tar.gz** =		*# Used to point the installer to a local repo extracted from a repo.tar.gz file*\
-**installpkg.sh** =	*# Path to the installpkg.sh file*\
-*There are two utility scripts included called getpackage.sh and installpkg.sh.  getpackage.sh downloads*\
-*a package to the repo folder, while installpkg.sh will install that package.*\
-*The repo folder should then be zipped up using the linux gzip command.  The name **HAS TO BE** **repo.tar.gz**
+### [USERINPUT] # Used to create installer variable that can be used in the [FILES],[ACTIONS] AND [FINAL] sections.
+*Just put percent signs around the key like: %userdata% and add it to the line item in the previously mentioned sections *\
+**Example**
+userdatafolder = c:\userdata
+databaseip = 172.16.20.25
+
+### [REPO] # NO LONGER SUPPORTED
 
 ### [RPM] #RPMs (name/command) that need to be installed prior to softare installation
 **unzip = unzip**	*# this will install the unzip RPM from the local repo*\
