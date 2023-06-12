@@ -52,7 +52,12 @@ databaseip = 172.16.20.25
 
 ### [REPO] # NO LONGER SUPPORTED
 
-### [RPM] #RPMs (name/command) that need to be installed prior to softare installation
+### [RPM] #RPMs that will be used during a Linux installation.
+*begin this section with #RPMS START HERE and end it with #RPMS END HERE .  When used with the buildadder it will *\
+*automatically place the rpms in this section if a [RPMS] section is added to a buildadderconfig.ini file.  See BuildAdder.*\
+
+
+
 **unzip = unzip**	*# this will install the unzip RPM from the local repo*\
 **postgresql-12**	*# postgresql12-server # this will install postgresql RPM from the local repo*\
 **httpd = httpd**	*# this will install the httpd RPM from the local repo*\
