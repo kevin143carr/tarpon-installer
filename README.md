@@ -11,10 +11,11 @@ It uses a config.ini (which can be named [anything].ini) and a resource folder.
 # CONFIG.INI EXPLAINED
 
 ### [STARTUP] # A startup task gives you the opportunity to choose logo and title.
+\
 **Example**\
 logoimg = mylogo.png\
 installtitle = MY INSTALLER NAME GOES HERE\
-startupinfo = information about the installer like: "This will install the complete MY APP system on this machine and reboot your machine"\
+startupinfo = information about the installer like: "This will install MY APP on this machine"\
 buttontext = The word for the install button usually just 'Install', but it can say an word.
 
 ### [USERINFO] # Information needed to log into the machine
@@ -22,6 +23,7 @@ This is the username and password fields.  Yes it is in plaintext!  This is ofte
 used to update hosts files and other files that need this information, especially when
 doing remote installations.  The username and password will be used to ssh into a linux
 box when doing a "Remote Linux Install".  if it is blank it will not show up on the install GUI.\
+\
 **Example**\
 username = \
 password = 
@@ -30,16 +32,17 @@ password =
 Perhaps not the best name, but this field is used as the Remote IP that will be ssh(d) into
 as well as used to update hosts files and other configuration files that is needed.  You can use the %host% 
 to use as a variable to the host field.  Again this is usually for a remote Linux install.  DISPLAY means to show the field.
-If it is blank, it will not show up in the install GUI.
-**Example**
+If it is blank, it will not show up in the install GUI.\
+\
+**Example**\
 host = DISPLAY
 
 ### [BUILD] # buildtype:(WINDOWS OR LINUX) -- installtype:(LOCAL OR REMOTE) -- resources: (Relative or Full path)
 **buildtype** = *Used to determine if the installed files are going on a LINUX or WINDOWS system.  Use upper case!*\
-**installtype** =	*# Used to determine if it is a LOCAL or REMOTE style install.*\
-**resources** = *# Used to tell the installer where the resource directory is it can be either a*\
+**installtype** =	*Used to determine if it is a LOCAL or REMOTE style install.*\
+**resources** = *Used to tell the installer where the resource directory is it can be either a*\
 *full path such as C:\Resources or a relative path to the executable '/resources'.*\
-*This is where you place files you want to copy onto the new system.*\
+\
 **Example**
 buildtype = WINDOWS
 installtype = LOCAL
@@ -47,7 +50,8 @@ resources = resources/
 
 ### [USERINPUT] # Used to create installer variable that can be used in the [FILES],[ACTIONS] AND [FINAL] sections.
 *Just put percent signs around the key like: %userdata% and add it to the line item in the previously mentioned sections *\
-**Example**
+\
+**Example**\
 userdatafolder = c:\userdata
 databaseip = 172.16.20.25
 
