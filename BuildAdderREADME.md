@@ -36,7 +36,7 @@ httpd = httpd,mod_http2,httpd-filesystem,httpd-tools\
 **End Example**\
 \
 The secret to making this work is to use names that will always be in the file name.\
-For example:  Let's say we put apache-activemq-5.16.0-bin.zip in our resources/externalbuilds folder.
+For example:  Let's say we put apache-activemq-5.16.0-bin.zip in our resources/externalbuilds folder.\
 if you want to use activemq then put 'activemq' as your key (see above)\
 and buildadder will search your builds folders for anything that has activemq as part of the name\
 and add it to your tarpon-install installer.ini file under the [FILES] section.  In this case it might\
