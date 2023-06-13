@@ -1,4 +1,6 @@
-![#c5f015]# ><###> Tarpon-Installer <###><'#c5f015'
+<span style="color:red">
+# ><###> Tarpon-Installer <###><
+  </span>
 Tarpon Installer allows for local and remote installations based on a configuration file.  
 It is command line based. Currently it supports remote installs from Windows to Linux, 
 Linux to Linux and Local Windows and Local Linux installs.
