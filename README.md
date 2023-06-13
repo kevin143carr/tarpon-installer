@@ -151,4 +151,7 @@ Notice you can add comments by using the # Your Comment notations.
 **Example:** *shutitdown = shutdown /r*
 
 # FINAL NOTES:
+Tarpon-Installer is a work in progress.  I have used it for many things.  I will start creating more\
+examples installer.ini files in the future to show the true power.\
+Thanks, Kevin Carr
 
