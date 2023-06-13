@@ -52,7 +52,7 @@ resources = resources/
 Just put percent signs around the key like: %userdatafolder% and add it to the line item in the previously mentioned sections\
 \
 **Example**\
-userdatafolder = c:\userdata
+userdatafolder = c:\userdata\
 databaseip = 172.16.20.25
 
 ### [REPO] # NO LONGER SUPPORTED
@@ -70,7 +70,7 @@ installhttpdfilesystem = rpms/httpd-filesystem-2.4.37-56.module+el8.8.0+1284+07e
 installhttpdtools = rpms/httpd-tools-2.4.37-56.module+el8.8.0+1284+07ef499e.6.x86_64.rpm\
 installhttpd = rpms/httpd-2.4.37-56.module+el8.8.0+1284+07ef499e.6.x86_64.rpm,rpms/rocky-logos-httpd-86.3-1.el8.noarch.rpm\
 installunzip = rpms/unzip-6.0-46.el8.x86_64.rpm\
-#RPMS END HERE\
+#RPMS END HERE
 
 Notice how some of the RPMs are grouped together, that is to make sure all the dependencies are in place.
 
@@ -89,7 +89,7 @@ This section is used with both Linux and Windows files.\
 **Example**\
 #BUILDS START HERE\
 latestlinuxbuilds/coolfile = /opt/coolfile/folder\
-latestwindowsbuilds/coolfile.exe = c:\coolfile\%userfolder%\
+latestwindowsbuilds/coolfile.exe = c:\coolfile\%userfolder%\\
 #BUILDS END HERE\
 anotherFolderUnderResources/thisfile.dat = c:\shouldgo\here\
 \
@@ -98,13 +98,28 @@ regardless of the version.\
 Outside the builds section you can add files from a folder within your resources folder and have them\
 copied to wherever you like.\
 Notice the %userfolder%, it is a uservariable I setup in the [USERINPUT]section.\
-\
 
 ### [ACTIONS] # Actions executed at the command level (both Linux and Windows), each action has to be uniquely named
 *Most anything that can be done from a command line can be done with this*\
 **Echo Example:** *echo1 = echo THIS IS A TEST*\
 **Windows Timeout Example:** *timeout1 = timeout /t 3*\
-**Delete Example:** *cleanzip1 = del /Q c:\support\washere.zip
+**Delete Example:** *cleanzip1 = del /Q c:\support\washere.zip\
+\
+**Example**\
+# make sure things are executable
+chmodmodifyapps = chmod 775 resources/modifyhostnames resources/modifypostgreshba
+chmodactivemqdir = chmod -R 775 /opt/dcd/activemq
+# Apache httpd fixups
+addapacheuser = useradd apache -g apache
+shutdownhttpd = systemctl stop httpd
+enablehttpd = systemctl enable httpd
+starthttpd = systemctl start httpd
+# Windows Example
+dirsupportdir = dir c:\STAR\support
+createproductsfolder = mkdir c:\STAR\Products
+createmanifestsfolder = mkdir c:\STAR\Products\manifests
+\
+Notice you can add comments by using the # Your Comment notations.
 
 ### [MODIFY] # Used to modify files - MUST USE 1,2,3,ETC.. DESIGNATORS -- 
 **For Remote Linux it should be like below**
@@ -129,17 +144,11 @@ Notice the %userfolder%, it is a uservariable I setup in the [USERINPUT]section.
 **Example:** *5 = {FILE}C:/myinstall/support/createthisfile.conf{ADD}ipaddress = 111.222.333.444||portnumber = 34333||resourcefolder = d:\resources*\
 
 ### [FINAL] # Same as Actions but is the last things done, each action has to be uniquely named
-**Example:** *statusjaardcm = systemctl status jaardcm | grep Active:*\
-**Example:** *statusjaarwcm = systemctl status jaarwcm | grep Active:*\
+**Example:** *statusjaardcm = systemctl status stardcm | grep Active:*\
+**Example:** *statusjaarwcm = systemctl status activemq | grep Active:*\
 **Example:** *rebootmachine = echo "********* FINISHED AND REBOOTING IN 10 SECONDS *********"*\
 **Example:** *starttimer = timeout /t 10*\
 **Example:** *shutitdown = shutdown /r*
 
 # FINAL NOTES:
-*I like using pyinstaller with it so I only have the executable, config file and resource folder.*\
-*A typical **REMOTE LINUX INSTALL** looks like this from a **WINDOWS** box:*\
-*D:\installer*\
-*D:\installer\config.ini*\
-*D:\installer\tarpon_installer.exe* (using pyinstall)*\
-*D:\installer\resources*\ (make sure installpkg.sh is in there)
 
