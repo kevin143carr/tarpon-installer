@@ -1,5 +1,8 @@
 <span style="color:red">
-# ><###> Tarpon-Installer <###><
+  Tarpon Installer allows for local and remote installations based on a configuration file.  
+It is command line based. Currently it supports remote installs from Windows to Linux, 
+  
+# ><###> Tarpon-Installer <###><\
   </span>
 Tarpon Installer allows for local and remote installations based on a configuration file.  
 It is command line based. Currently it supports remote installs from Windows to Linux, 
