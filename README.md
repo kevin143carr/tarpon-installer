@@ -16,7 +16,7 @@ It uses a config.ini (which can be named [anything].ini) and a resource folder.
 logoimg = mylogo.png\
 installtitle = MY INSTALLER NAME GOES HERE\
 startupinfo = information about the installer like: "This will install MY APP on this machine"\
-buttontext = The word for the install button usually just 'Install', but it can say an word.
+buttontext = The word for the install button usually just 'Install', but it can say any word.
 
 ### [USERINFO] # Information needed to log into the machine
 This is the username and password fields.  Yes it is in plaintext!  This is often
@@ -37,7 +37,7 @@ If it is blank, it will not show up in the install GUI.\
 **Example**\
 host = DISPLAY
 
-### [BUILD] # buildtype:(WINDOWS OR LINUX) -- installtype:(LOCAL OR REMOTE) -- resources: (Relative or Full path)
+### [BUILD] # buildtype:(WINDOWS OR LINUX) -- installtype:(LOCAL OR REMOTE) -- resources:(Relative or Full path)
 **buildtype** = *Used to determine if the installed files are going on a LINUX or WINDOWS system.  Use upper case!*\
 **installtype** =	*Used to determine if it is a LOCAL or REMOTE style install.*\
 **resources** = *Used to tell the installer where the resource directory is it can be either a*\
@@ -49,7 +49,7 @@ installtype = LOCAL
 resources = resources/
 
 ### [USERINPUT] # Used to create installer variable that can be used in the [FILES],[ACTIONS] AND [FINAL] sections.
-*Just put percent signs around the key like: %userdata% and add it to the line item in the previously mentioned sections *\
+Just put percent signs around the key like: %userdatafolder% and add it to the line item in the previously mentioned sections\
 \
 **Example**\
 userdatafolder = c:\userdata
@@ -58,15 +58,20 @@ databaseip = 172.16.20.25
 ### [REPO] # NO LONGER SUPPORTED
 
 ### [RPM] #RPMs that will be used during a Linux installation.
-*begin this section with #RPMS START HERE and end it with #RPMS END HERE .  When used with the buildadder it will *\
-*automatically place the rpms in this section if a [RPMS] section is added to a buildadderconfig.ini file.  See BuildAdder.*\
+Begin this section with #RPMS START HERE and end it with #RPMS END HERE .  When used with the buildadder it will\
+automatically place the rpms in this section if a [RPMS] section is added to a buildadderconfig.ini file.  See BuildAdder.\
+This section tells the installer what RPMs should be installed on a Linux based system.\
+**Example**\
+#RPMS START HERE\
+installbzip2 = rpms/bzip2-libs-1.0.6-26.el8.x86_64.rpm\
+installapr = rpms/apr-1.6.3-12.el8.x86_64.rpm,rpms/apr-util-1.6.1-6.el8_8.1.x86_64.rpm,rpms/apr-util-bdb-1.6.1-6.el8_8.1.x86_64.rpm,rpms/apr-util-openssl-1.6.1-6.el8_8.1.x86_64.rpm\
+installhttpdfilesystem = rpms/httpd-filesystem-2.4.37-56.module+el8.8.0+1284+07ef499e.6.noarch.rpm\
+installhttpdtools = rpms/httpd-tools-2.4.37-56.module+el8.8.0+1284+07ef499e.6.x86_64.rpm\
+installhttpd = rpms/httpd-2.4.37-56.module+el8.8.0+1284+07ef499e.6.x86_64.rpm,rpms/rocky-logos-httpd-86.3-1.el8.noarch.rpm,rpms/mod_http2-1.15.7-8.module+el8.8.0+1284+07ef499e.3.x86_64.rpm\
+installunzip = rpms/unzip-6.0-46.el8.x86_64.rpm\
+#RPMS END HERE\
 
-
-
-**unzip = unzip**	*# this will install the unzip RPM from the local repo*\
-**postgresql-12**	*# postgresql12-server # this will install postgresql RPM from the local repo*\
-**httpd = httpd**	*# this will install the httpd RPM from the local repo*\
-**java = java**	*# This will install java RPM from the local repo*\
+Notice how some of the RPMs are grouped together, that is to make sure all the dependencies are in place.
 
 ### [FILES] # Copies files from the resource folder to the paths and unzips if necessary.
 *if a specified directory does not exists it will create it.  It will unzip in the specified folder*\
