@@ -106,15 +106,15 @@ Notice the %userfolder%, it is a uservariable I setup in the [USERINPUT]section.
 **Delete Example:** *cleanzip1 = del /Q c:\support\washere.zip\
 \
 **Example**\
-# make sure things are executable
+#make sure things are executable
 chmodmodifyapps = chmod 775 resources/modifyhostnames resources/modifypostgreshba
 chmodactivemqdir = chmod -R 775 /opt/dcd/activemq
-# Apache httpd fixups
+#Apache httpd fixups
 addapacheuser = useradd apache -g apache
 shutdownhttpd = systemctl stop httpd
 enablehttpd = systemctl enable httpd
 starthttpd = systemctl start httpd
-# Windows Example
+#Windows Example
 dirsupportdir = dir c:\STAR\support
 createproductsfolder = mkdir c:\STAR\Products
 createmanifestsfolder = mkdir c:\STAR\Products\manifests
