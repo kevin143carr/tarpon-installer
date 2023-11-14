@@ -12,6 +12,6 @@ You can have multiple addresses by adding a comma between the addresses\
 modifyhostsnames --searchfor test --modifier myname(or something else) --addresses test1=a.a.a.a,test2=b.b.b.b\
 
 # ><###> Modify Postgres HBA <###><
-This is a simple tool that can be used for both Linux and Windows to modify the PostGreSQL pg_hba.conf file.
+This is a simple tool that can be used for both Linux and Windows to modify the PostGreSQL pg_hba.conf file.\
 **Example**\
 usage: modifypostgreshba --address xxx.xxx.xxx.xxx (where xxx = IP address) --directory /var/lib/pgsql 
