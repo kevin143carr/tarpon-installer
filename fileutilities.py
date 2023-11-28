@@ -19,6 +19,7 @@ class FileUtilities:
             lines = f.readlines()
             f.close()
 
+        searchline_test = searchline.strip()
         with open(file, "w") as f:
             found = False
             for line in lines:
@@ -27,7 +28,8 @@ class FileUtilities:
                     f.write(line)
                     continue;
 
-                searchval = " {0} ".format(line).lower().count(" {0} ".format(searchline).lower())
+                linetest = line.strip()
+                searchval = " {0} ".format(linetest).lower().count(" {0} ".format(searchline_test).lower())
                 if(searchval != 0):
                     f.write(update + "\n")
                     found = True

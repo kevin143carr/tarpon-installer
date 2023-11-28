@@ -15,7 +15,7 @@ import threading
 import logging
 
 configfile = "config.ini"
-version = "3.4.0"
+version = "3.4.1"
 logger = None
 
 class iniInfo:
