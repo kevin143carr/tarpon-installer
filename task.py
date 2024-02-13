@@ -7,7 +7,7 @@ import subprocess
 import shutil
 import sys
 from zipfile import ZipFile
-from tarfile import TarFile
+from tarfile import TarFile, TarInfo
 from shutil import copyfile
 from pathlib import Path
 from fileutilities import FileUtilities
@@ -213,10 +213,15 @@ class Task:
                         source = zf.open(file)
                     else:
                         source = tf.getmember(file)
-                        source = tf.extractfile(source)
-                        if(hasdirectory == True):
-                            getfoldername = os.path.dirname(filename)
-                            os.makedirs(ini_info.files[key] +"/" + getfoldername, exist_ok = True)
+                        testagain = source.type
+                        if(source.isdir()):
+                            os.makedirs(ini_info.files[key] +"/" + file, exist_ok = True)
+                            continue
+                        else:
+                            source = tf.extractfile(source)
+                            if(hasdirectory == True):
+                                getfoldername = os.path.dirname(filename)
+                                os.makedirs(ini_info.files[key] +"/" + getfoldername, exist_ok = True)
                         
                     target = open(os.path.join(ini_info.files[key], filename), "wb")                        
 
