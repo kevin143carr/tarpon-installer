@@ -15,7 +15,7 @@ import threading
 import logging
 
 configfile = "config.ini"
-version = "3.4.1"
+version = "3.4.6"
 logger = None
 
 class iniInfo:
@@ -350,7 +350,7 @@ if __name__ == "__main__":
         logger.info("Executing as Administrator")
     else:
         logger.info("Elevating Permissions because Administrator = {}".format(isAdmin()))
-        elevate(graphical = True)
+#        elevate(graphical = True)
     
     mc = mainClass()
     mc.main()

@@ -7,6 +7,7 @@ import subprocess
 import shutil
 import sys
 from zipfile import ZipFile
+from tarfile import TarFile
 from shutil import copyfile
 from pathlib import Path
 from fileutilities import FileUtilities
@@ -149,60 +150,79 @@ class Task:
                         dst = "{}/{}".format(ini_info.files[key],key)
 
                 copyfile(src,dst)
+                
+                filetype ='zip'
 
                 if 'zip' in key:
+                    zf = ZipFile(dst)
+                    files = zf.namelist()
 
-                    with ZipFile(dst) as zf:
-                        hasdirectory = False  # the zip file has an initial directory in which files will be extracted
-                        for file in zf.namelist():
+                elif 'tar.gz' in key:
+                    filetype = 'tar.gz'
+                    tf = TarFile.open(dst)
+                    files = tf.getnames()
+                    
+                hasdirectory = False
+                       
+                for file in files:
 
-                            if firstfile == 0:
-                                firstfile = 1
-                                test = file.split('/')
-                                if(len(test) > 1):
-                                    hasdirectory = True
+                    if firstfile == 0:
+                        firstfile = 1
+                        test = file.split('/')
+                        if(len(test) > 1):
+                            hasdirectory = True
 
-                            filename = os.path.basename(file)
+                    filename = os.path.basename(file)
 
-                            # create directories
-                            if not filename:
-                                words = file.split('/')
-                                filename = ""
+                    # create directories
+                    if not filename:
+                        words = file.split('/')
+                        filename = ""
 
-                                if(hasdirectory == False):
-                                    filename = file
+                        if(hasdirectory == False):
+                            filename = file
+                        else:
+                            for i in range(len(words)-1):
+                                if i == 0:
+                                    filename += words[i+1]
                                 else:
-                                    for i in range(len(words)-1):
-                                        if i == 0:
-                                            filename += words[i+1]
-                                        else:
-                                            filename += "/"
-                                            filename += words[i+1]
+                                    filename += "/"
+                                    filename += words[i+1]
 
-                                os.makedirs(ini_info.files[key] +"/" + filename, exist_ok = True)
-                                continue
+                        os.makedirs(ini_info.files[key] +"/" + filename, exist_ok = True)
+                        continue
     
-                            # copy file (taken from zipfile's extract)
-                            words = file.split('/')
-                            filename = ""
+                    # copy file (taken from zipfile's extract)
+                    words = file.split('/')
+                    filename = ""
 
-                            if hasdirectory == False:
-                                filename = file
-                            else:
-                                if len(words) > 1:
-                                    for i in range(len(words)-1):
-                                        if i == 0:
-                                            filename += words[i+1]
-                                        else:
-                                            filename += "/"
-                                            filename += words[i+1]
+                    if hasdirectory == False:
+                        filename = file
+                    else:
+                        if len(words) > 1:
+                            for i in range(len(words)-1):
+                                if i == 0:
+                                    filename += words[i+1]
                                 else:
-                                    filename = words[0]
+                                    filename += "/"
+                                    filename += words[i+1]
+                        else:
+                            filename = words[0]
 
-                            source = zf.open(file)
-                            target = open(os.path.join(ini_info.files[key], filename), "wb")
-                            with source, target:
-                                shutil.copyfileobj(source, target)
+                    if filetype == 'zip':
+                        source = zf.open(file)
+                    else:
+                        source = tf.getmember(file)
+                        source = tf.extractfile(source)
+                        if(hasdirectory == True):
+                            getfoldername = os.path.dirname(filename)
+                            os.makedirs(ini_info.files[key] +"/" + getfoldername, exist_ok = True)
+                        
+                    target = open(os.path.join(ini_info.files[key], filename), "wb")                        
+
+                    with source, target:
+                        shutil.copyfileobj(source, target)
+                        target.close()
             else:
                 self.logger.error("Error copying file {}/{}, it does not exist".format(ini_info.resources,key))
         finished = True
