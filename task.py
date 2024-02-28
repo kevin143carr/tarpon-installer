@@ -11,8 +11,11 @@ from tarfile import TarFile, TarInfo
 from shutil import copyfile
 from pathlib import Path
 from fileutilities import FileUtilities
+from processwatcher import ProcessWatcher
 from easygui import *
+from subprocess import STDOUT, PIPE
 import logging
+import threading
 
 class Task:
     ssh = paramiko.SSHClient()
@@ -21,7 +24,9 @@ class Task:
     hostname = ""
     resources = ""
     file_utilities = FileUtilities
-    logger = logging.getLogger("mylogger")
+    process_watcher = ProcessWatcher
+    logger = logging.getLogger("logger")
+    lock = threading.Lock()
 
     def loginSSH(self):
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -72,9 +77,13 @@ class Task:
                 self.logger.info (line, end="")
             time.sleep(5)
 
-    def installLocalRPMs(self, resources, rpms):
+    def installLocalRPMs(self, window, bar, taskitem, resources, rpms):
         p = None
+        count = 0
         for key in rpms:
+            count += 1;
+            bar['value'] = (count/len(rpms.keys()))*100
+            
             cwd = os.getcwd()
             self.logger.info('install RPMs {} {}'.format(key, rpms[key]))
             try:
@@ -86,6 +95,10 @@ class Task:
                             execstr = 'rpm --install {}/{} '.format(resources, line)
                         else:
                             execstr = execstr + '{}/{} '.format(resources, line)
+                            
+                    taskstr = 'Installing RPM - {}'.format(execstr)
+                    self.logger.info(taskstr)
+                    taskitem.set(taskstr)                            
 
                     p = subprocess.check_output('{}'.format(execstr),shell=True)
                     for line in p.splitlines():
@@ -134,7 +147,6 @@ class Task:
                         os.makedirs(dirname, exist_ok = True)
                     else:
                         os.makedirs(ini_info.files[key], exist_ok = True)
-                    self.logger.info("Directory {} created successfully".format(ini_info.files[key]))
                 except OSError as error:
                     self.logger.warning("Directory {} can not be created".format(ini_info.files[key]))
 
@@ -152,7 +164,6 @@ class Task:
                 copyfile(src,dst)
                 
                 filetype ='zip'
-
                 if 'zip' in key:
                     zf = ZipFile(dst)
                     files = zf.namelist()
@@ -161,73 +172,75 @@ class Task:
                     filetype = 'tar.gz'
                     tf = TarFile.open(dst)
                     files = tf.getnames()
+                else:
+                    files = None                    
                     
                 hasdirectory = False
-                       
-                for file in files:
-
-                    if firstfile == 0:
-                        firstfile = 1
-                        test = file.split('/')
-                        if(len(test) > 1):
-                            hasdirectory = True
-
-                    filename = os.path.basename(file)
-
-                    # create directories
-                    if not filename:
+                
+                if (files != None):                  
+                    for file in files:
+                        if firstfile == 0:
+                            firstfile = 1
+                            test = file.split('/')
+                            if(len(test) > 1):
+                                hasdirectory = True
+    
+                        filename = os.path.basename(file)
+    
+                        # create directories
+                        if not filename:
+                            words = file.split('/')
+                            filename = ""
+    
+                            if(hasdirectory == False):
+                                filename = file
+                            else:
+                                for i in range(len(words)-1):
+                                    if i == 0:
+                                        filename += words[i+1]
+                                    else:
+                                        filename += "/"
+                                        filename += words[i+1]
+    
+                            os.makedirs(ini_info.files[key] +"/" + filename, exist_ok = True)
+                            continue
+        
+                        # copy file (taken from zipfile's extract)
                         words = file.split('/')
                         filename = ""
-
-                        if(hasdirectory == False):
+    
+                        if hasdirectory == False:
                             filename = file
                         else:
-                            for i in range(len(words)-1):
-                                if i == 0:
-                                    filename += words[i+1]
-                                else:
-                                    filename += "/"
-                                    filename += words[i+1]
-
-                        os.makedirs(ini_info.files[key] +"/" + filename, exist_ok = True)
-                        continue
+                            if len(words) > 1:
+                                for i in range(len(words)-1):
+                                    if i == 0:
+                                        filename += words[i+1]
+                                    else:
+                                        filename += "/"
+                                        filename += words[i+1]
+                            else:
+                                filename = words[0]
     
-                    # copy file (taken from zipfile's extract)
-                    words = file.split('/')
-                    filename = ""
-
-                    if hasdirectory == False:
-                        filename = file
-                    else:
-                        if len(words) > 1:
-                            for i in range(len(words)-1):
-                                if i == 0:
-                                    filename += words[i+1]
-                                else:
-                                    filename += "/"
-                                    filename += words[i+1]
+                        if filetype == 'zip':
+                            source = zf.open(file)
                         else:
-                            filename = words[0]
-
-                    if filetype == 'zip':
-                        source = zf.open(file)
-                    else:
-                        source = tf.getmember(file)
-                        testagain = source.type
-                        if(source.isdir()):
-                            os.makedirs(ini_info.files[key] +"/" + file, exist_ok = True)
-                            continue
-                        else:
-                            source = tf.extractfile(source)
-                            if(hasdirectory == True):
-                                getfoldername = os.path.dirname(filename)
-                                os.makedirs(ini_info.files[key] +"/" + getfoldername, exist_ok = True)
-                        
-                    target = open(os.path.join(ini_info.files[key], filename), "wb")                        
-
-                    with source, target:
-                        shutil.copyfileobj(source, target)
-                        target.close()
+                            source = tf.getmember(file)
+                            testagain = source.type
+                            if(source.isdir()):
+                                os.makedirs(ini_info.files[key] +"/" + file, exist_ok = True)
+                                continue
+                            else:
+                                source = tf.extractfile(source)
+                                if(hasdirectory == True):
+                                    getfoldername = os.path.dirname(filename)
+                                    os.makedirs(ini_info.files[key] +"/" + getfoldername, exist_ok = True)
+                            
+                        target = open(os.path.join(ini_info.files[key], filename), "wb")                        
+    
+                        with source, target:
+                            shutil.copyfileobj(source, target)
+                            target.close()
             else:
                 self.logger.error("Error copying file {}/{}, it does not exist".format(ini_info.resources,key))
         finished = True
@@ -277,61 +290,108 @@ class Task:
             self.logger.info('Executing Action {} with {}'.format(action, actions[action]))
             stdin, stdout, stderr = self.ssh.exec_command('{}'.format(actions[action]))
             for line in iter(stdout.readline,""):
-                self.logger.info (line, end="")
-
-    def doActionsLocal(self, window, bar, taskitem, actions, options, userinputs):
+                self.logger.info (line, end="")                             
+    
+    # def doActionsLocal(self, window, bar, taskitem, actions, options, userinputs):
+    def doActionsLocal(self, window, bar, taskitem, ini_info, final=False):
         count = 0
-        for action in actions:
-            count += 1;
-            bar['value'] = (count/len(actions.keys()))*100
-            window.update_idletasks()
-            exec_option = '1'
+        actionthread = None
+        timeoutval = ini_info.defaultactiontimeout
+        
+        if final == True:
+            ini_info.actions = ini_info.finalactions
 
+        if ini_info.watchdog == True:            
+            self.process_watcher.continuewatch = True
+            actionthread = threading.Thread(target=self.process_watcher.WatchForSelf, args=(self.process_watcher, "tarpon_installer", int(timeoutval), 3, 3))
+            actionthread.start()               
+
+        for action in ini_info.actions:
+            timeoutval = ini_info.defaultactiontimeout
+            
+            if '[timeout =' in ini_info.actions[action]:
+                timeoutval = ini_info.actions[action].split(']',maxsplit=1)[0]
+                ini_info.actions[action] = ini_info.actions[action].replace(timeoutval+']',"")
+                timeoutval = timeoutval.split('=')[1].strip()
+                
+            # actionthread = threading.Thread(target=self.process_watcher.WatchForPid, args=(self.process_watcher, "python3", int(timeoutval), 3))
+            # actionthread.start()
+            
             try:
-                if '%host%' in actions[action]:
-                    actions[action] = actions[action].replace("%host%",self.hostname)
-
-                if 'YESNO' in actions[action]:
-                    text = actions[action].split('::');
+                self.lock.acquire()
+                
+                count += 1;
+                bar['value'] = (count/len(ini_info.actions.keys()))*100
+                exec_option = '1'
+    
+                if '%host%' in ini_info.actions[action]:
+                    actions[action] = ini_info.actions[action].replace("%host%",self.hostname)
+    
+                if 'YESNO' in ini_info.actions[action]:
+                    text = ini_info.actions[action].split('::');
                     answer = ynbox(text[1],"User Question");
                     if answer == False:
                         continue;
                     else:
-                        actions[action] = text[2];
-
-                taskstr = 'Executing Action {} with {}'.format(action, actions[action])
-                self.logger.info(taskstr)
+                        ini_info.actions[action] = text[2];
+    
+                taskstr = 'Executing {} with {}'.format(action, ini_info.actions[action])
                 taskitem.set(taskstr)
                 
-                if action in options.keys():
-                    exec_option = options[action].get()
-
+                if action in ini_info.options.keys():
+                    exec_option = ini_info.options[action].get()
+    
                 if(exec_option != '0'):
                     # check for user input
-                    userinput = self.checkForUserInput(actions[action], userinputs)
+                    userinput = self.checkForUserInput(ini_info.actions[action], ini_info.userinput)
                     if(userinput != None):
-                        actions[action] = userinput
-
-                    p = subprocess.check_output(actions[action], shell=True)
-                    for line in p.splitlines():
-                        self.logger.info(line.decode('utf-8'))
-
+                        ini_info.actions[action] = userinput
+                        
+                        if ini_info.buildtype == 'LINUX':                            
+                            p = subprocess.Popen(ini_info.actions[action],shell=True,start_new_session=True)
+                            self.process_watcher.pidvalue = p.pid
+                            self.logger.info("launching process {} with PID {}".format(ini_info.actions[action], self.process_watcher.pidvalue))
+                            p.wait()
+                            time.sleep(1)
+                        else:                        
+                            p = subprocess.run(ini_info.actions[action],shell=True,timeout=300,encoding='utf-8', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                            
+                            for line in str(p.stdout).splitlines():
+                                self.logger.info(line)
+                                
+                            for line in str(p.stderr).splitlines():
+                                self.logger.info(line)
+                            
             except Exception as e:
-                self.logger.error("Error in Action {}".format(str(e)))
+                if "Process timed out" in str(e):
+                    self.logger.error("Timeout Error in Action {}".format(str(e)))
+                    p.kill()
+                else:
+                    self.logger.error("Error in Action {}".format(str(e)))
+                    
+                self.lock.release()
+                continue                                           
+            
+            self.lock.release()
+            
+        if ini_info.watchdog == True:            
+            self.process_watcher.continuewatch = False
+            actionthread.join()
+            
 
     def doActions(self, window, bar, taskitem, ini_info, type = "action"):
         if(ini_info.installtype == 'REMOTE' and ini_info.buildtype == 'LINUX'):
             self.doActionsSSH(ini_info.actions)
         elif ini_info.installtype == 'LOCAL':
             if(type == "action"):
-                self.doActionsLocal(window, bar, taskitem, ini_info.actions, ini_info.optionvals, ini_info.userinput)
+                self.doActionsLocal(window, bar, taskitem, ini_info)
             elif(type == "final"):
-                self.doActionsLocal(window, bar, taskitem, ini_info.finalactions, ini_info.optionvals, ini_info.userinput)
+                self.doActionsLocal(window, bar, taskitem, ini_info, True)
 
-    def modifyFilesLocal(self, window, bar, taskitem, files):
+    def modifyFilesLocal(self, window, bar, taskitem, files, userinputs):
         count = 0
-        try:
-            for file in files:
+        for file in files:
+            try:              
                 count += 1;
                 bar['value'] = (count/len(files.keys()))*100
                 window.update_idletasks()
@@ -344,6 +404,8 @@ class Task:
 
                 modifywith = result[1]
                 file = files[file][len("{FILE}"):len(result[0])]
+                
+                file = self.checkForUserInput(file, userinputs)
 
                 my_file = Path("{}".format(file))
 
@@ -353,14 +415,18 @@ class Task:
 
                 if my_file.is_file():
                     modcontent = modifywith.split("||")
+                    # check for user input
+                    userinput = self.checkForUserInput(modcontent[1], userinputs)                      
                     if ischange:
-                        self.file_utilities.modifyFileContents(file, modcontent[0], modcontent[1])
+                        self.file_utilities.modifyFileContents(file, modcontent[0], userinput)
                     else:
                         self.file_utilities.addFileContents(file, modifywith)
                 else: # Create File Condition
                     self.file_utilities.createFileAddContents(file,modifywith.split("||"))
-        except Exception as ex:
-            self.logger.error(ex)
+                    
+            except Exception as ex:
+                self.logger.error(ex)
+                continue
 
 
     def modifyFilesSSH(self, files):
@@ -375,7 +441,7 @@ class Task:
         if(ini_info.installtype == 'REMOTE' and ini_info.buildtype == 'LINUX'):
             self.modifyFilesSSH(ini_info.modify)
         else:
-            self.modifyFilesLocal(window, bar, taskitem, ini_info.modify)
+            self.modifyFilesLocal(window, bar, taskitem, ini_info.modify,ini_info.userinput)
 
     def finalActions(self, window, bar, taskitem, ini_info):
         self.doActions( window, bar, taskitem, ini_info, "final")

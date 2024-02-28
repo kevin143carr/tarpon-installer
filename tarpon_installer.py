@@ -15,7 +15,7 @@ import threading
 import logging
 
 configfile = "config.ini"
-version = "3.4.6"
+version = "3.5.4"
 logger = None
 
 class iniInfo:
@@ -29,6 +29,8 @@ class iniInfo:
     installtitle = ""
     logoimage = ""
     buttontext = ""
+    defaultactiontimeout = 0
+    watchdog = False
     files = dict()
     repo = dict()
     rpms = dict()
@@ -45,6 +47,8 @@ class iniInfo:
         try:
             config_object.read(configfile)
             startup = config_object["STARTUP"]
+            self.defaultactiontimeout = int(startup['defaultactiontimeout'])
+            self.watchdog = bool(startup['watchdog'])
             self.startinfo = startup['startupinfo']
             self.installtitle = startup['installtitle']
             self.logoimage = startup['logoimg']
@@ -278,7 +282,8 @@ class mainClass:
 
             # Local Install
             if ini_info.buildtype == 'LINUX':
-                task.installLocalRPMs(ini_info.resources, ini_info.rpms)
+                section.set("SECTION: Installing RPMs")
+                task.installLocalRPMs(window, bar, taskitem, ini_info.resources, ini_info.rpms)
 
             section.set("SECTION: Copying Files")
             task.copyFromResources(window, bar, taskitem, ini_info)
@@ -301,14 +306,17 @@ class mainClass:
 
 
 def PrintHelp():
-    print("**********************************************************************")
-    print("*  ><###> Tarpon Installer <###>< is an open source install creator. *")
-    print("*  specify config.ini file on the commandline                        *")
-    print("*                                                                    *")
-    print("*  Usage: tarpon_installer.exe yourconfig.ini                        *")
-    print("*                                                                    *")
-    print("*  VERSION {}".format(version))
-    print("**********************************************************************")
+    print("************************************************************************")
+    print("*  ><###> Tarpon Installer <###>< is an open source install creator.   *")
+    print("*  specify config.ini file on the commandline                          *")
+    print("*                                                                      *")
+    print("*  Usage: tarpon_installer.exe yourconfig.ini                          *")
+    print("*  Alt Usage: tarpon_installer.exe -t yourconfig.ini -debuglevel DEBUG *")
+    print("*                                                                      *")
+    print("*  debug levels are: INFO (default) and DEBUG                          *")
+    print("*                                                                      *")
+    print("*  VERSION {}                                                          *".format(version))
+    print("************************************************************************")
     raise SystemExit
 
 def isAdmin():
@@ -323,34 +331,65 @@ if __name__ == "__main__":
     params = {}
     option = ""
     skipImport = False
+    debuglevel = None
 
-    logger = logging.getLogger("mylogger")
-
-    if len(sys.argv) < 2:
-        PrintHelp()
-
+    logger = logging.getLogger("logger")
+    
     for arg in sys.argv:
         if arg[0:1] == "-":
             option = arg
         else:
             params[option] = arg
 
+    i = 0
     for item in params:
-        configfile = params[item]
+        print("parameter {}: {}".format(i, params[item]))
+        i = i + 1    
+
+    if len(sys.argv) < 2:
+        PrintHelp()
+
+    if len(sys.argv) == 2:
+        for arg in sys.argv:
+            if arg[0:1] == "-":
+                option = arg
+            else:
+                params[option] = arg
+                
+        for item in params:
+            configfile = params[item]
+                
+    elif len(sys.argv) > 3:            
+        if "-t" in params:
+            configfile = params["-t"]
+    
+        if "-debuglevel" in params:
+            debuglevel = params["-debuglevel"]
+    else:
+        PrintHelp()
+
+    for item in params:
         logger.info("parameter {}".format(params[item]))
 
     if path.exists(configfile) == False:
         logger.error("ERROR: ><###> Cannot Find Configuration File - '{}'. <###><".format(configfile))
         PrintHelp()
 
-    logging.basicConfig(filename="{}.log".format(os.path.splitext(configfile)[0]),
-                    filemode='w', level = logging.INFO)
+    if debuglevel == None:
+        logging.basicConfig(filename="{}.log".format(os.path.splitext(configfile)[0]),
+                        filemode='w', level = logging.INFO)
+    elif 'DEBUG' in debuglevel:
+        logging.basicConfig(filename="{}.log".format(os.path.splitext(configfile)[0]),
+                        filemode='w', level = logging.DEBUG)
+    else:
+        logging.basicConfig(filename="{}.log".format(os.path.splitext(configfile)[0]),
+                        filemode='w', level = logging.INFO)
 
     if isAdmin():
         logger.info("Executing as Administrator")
     else:
         logger.info("Elevating Permissions because Administrator = {}".format(isAdmin()))
-#        elevate(graphical = True)
+        elevate(graphical = True)
     
     mc = mainClass()
     mc.main()

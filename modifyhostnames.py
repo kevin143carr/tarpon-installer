@@ -76,7 +76,7 @@ if __name__ == "__main__":
     params = {}
     option = ""
 
-    logger = logging.getLogger("mylogger")
+    logger = logging.getLogger("logger")
 
     logging.basicConfig(filename="modifyhostnames.log",
                     filemode='w', level = logging.INFO)

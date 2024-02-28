@@ -31,7 +31,7 @@ class FileUtilities:
                 linetest = line.strip()
                 searchval = "{0}".format(linetest).lower().count("{0}".format(searchline_test).lower())
                 if(searchval != 0):
-                    print("linetest = {}\nsearchline_test = {}".format(linetest, searchline_test))
+                    # print("linetest = {}\nsearchline_test = {}".format(linetest, searchline_test))
                     f.write(update + "\n")
                     found = True
                 else:
