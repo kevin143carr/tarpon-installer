@@ -11,7 +11,6 @@ from tarfile import TarFile, TarInfo
 from shutil import copyfile
 from pathlib import Path
 from fileutilities import FileUtilities
-from processwatcher import ProcessWatcher
 from easygui import *
 from subprocess import STDOUT, PIPE
 import logging
@@ -24,7 +23,6 @@ class Task:
     hostname = ""
     resources = ""
     file_utilities = FileUtilities
-    process_watcher = ProcessWatcher
     logger = logging.getLogger("logger")
     lock = threading.Lock()
 
@@ -77,7 +75,7 @@ class Task:
                 self.logger.info (line, end="")
             time.sleep(5)
 
-    def installLocalRPMs(self, window, bar, taskitem, resources, rpms):
+    def installLocalRPMs(self, window, bar, taskitem, resources, rpms, watchdog):
         p = None
         count = 0
         for key in rpms:
@@ -88,27 +86,19 @@ class Task:
             self.logger.info('install RPMs {} {}'.format(key, rpms[key]))
             try:
                 multilinerpm = rpms[key].split(",")
-                if len(multilinerpm) > 0:
-                    execstr = ''
-                    for line in multilinerpm:
-                        if execstr == '':
-                            execstr = 'rpm --install {}/{} '.format(resources, line)
-                        else:
-                            execstr = execstr + '{}/{} '.format(resources, line)
-                            
-                    taskstr = 'Installing RPM - {}'.format(execstr)
-                    self.logger.info(taskstr)
-                    taskitem.set(taskstr)                            
-
-                    p = subprocess.check_output('{}'.format(execstr),shell=True)
-                    for line in p.splitlines():
-                        self.logger.info(line.decode('utf-8'))
-                    time.sleep(5)
-                else:
-                    p = subprocess.check_output('rpm --install {}/{}'.format(resources,rpms[key]),shell=True)
-                    for line in p.splitlines():
-                        self.logger.info(line.decode('utf-8'))
-                    time.sleep(5)
+                execstr = ''
+                for line in multilinerpm:
+                    if execstr == '':
+                        execstr = 'rpm --install {}/{} '.format(resources, line)
+                    else:
+                        execstr = execstr + '{}/{} '.format(resources, line)
+                        
+                taskstr = 'Installing RPM - {}'.format(execstr)
+                self.logger.info(taskstr)
+                taskitem.set(taskstr)
+                
+                self.executeProcs(execstr, watchdog)
+                    
             except Exception as ex:
                 self.logger.error("{} : file {}".format(ex,rpms[key]))
 
@@ -292,31 +282,63 @@ class Task:
             for line in iter(stdout.readline,""):
                 self.logger.info (line, end="")                             
     
-    # def doActionsLocal(self, window, bar, taskitem, actions, options, userinputs):
+    def checkForWatchdogEvent(self,pid, action):
+        watchdogfile = open('tarpon_watchdog.log','r')
+        lines = watchdogfile.readlines()
+        
+        for line in lines:
+            if pid in line:
+                print("watchdog event occured - re-issueing command {}".format(action))
+                self.logger.error("watchdog event occured - re-issueing command in Action {}".format(action))
+                watchdogfile.close()
+                self.executeProcs(action, True)
+                
+        watchdogfile.close()
+                
+    
+    def executeProcsDebug(self, action, watchdog = False):
+        p = subprocess.Popen(action,shell=True, stdout=PIPE, stderr=PIPE, 
+                             start_new_session=True, encoding='utf-8')
+        self.logger.info("PID [{}] COMMAND [{}]".format(p.pid,action))
+        p.wait()
+        
+        time.sleep(2)
+
+        if watchdog == True:
+            pidval = "PID [{}]".format(p.pid)
+            self.checkForWatchdogEvent(pidval, action)
+        
+        stdout,stderr = p.communicate(timeout=180)
+
+        
+        for line in str(stdout).splitlines():
+            self.logger.debug(line)
+                
+        for line in str(stderr).splitlines():
+            self.logger.debug(line)
+            
+    def executeProcs(self, action, watchdog = False):
+        p = subprocess.Popen(action,shell=True, stdout=None, stderr=None, 
+                             start_new_session=True, encoding=None)
+        self.logger.info("PID [{}] COMMAND [{}]".format(p.pid,action))
+        p.wait()
+        
+        time.sleep(2)
+
+        if watchdog == True:
+            pidval = "PID [{}]".format(p.pid)
+            self.checkForWatchdogEvent(pidval, action)                
+        
+        
     def doActionsLocal(self, window, bar, taskitem, ini_info, final=False):
         count = 0
         actionthread = None
-        timeoutval = ini_info.defaultactiontimeout
         
         if final == True:
-            ini_info.actions = ini_info.finalactions
-
-        if ini_info.watchdog == True:            
-            self.process_watcher.continuewatch = True
-            actionthread = threading.Thread(target=self.process_watcher.WatchForSelf, args=(self.process_watcher, "tarpon_installer", int(timeoutval), 3, 3))
-            actionthread.start()               
+            ini_info.actions = ini_info.finalactions         
 
         for action in ini_info.actions:
-            timeoutval = ini_info.defaultactiontimeout
-            
-            if '[timeout =' in ini_info.actions[action]:
-                timeoutval = ini_info.actions[action].split(']',maxsplit=1)[0]
-                ini_info.actions[action] = ini_info.actions[action].replace(timeoutval+']',"")
-                timeoutval = timeoutval.split('=')[1].strip()
-                
-            # actionthread = threading.Thread(target=self.process_watcher.WatchForPid, args=(self.process_watcher, "python3", int(timeoutval), 3))
-            # actionthread.start()
-            
+                       
             try:
                 self.lock.acquire()
                 
@@ -346,21 +368,10 @@ class Task:
                     userinput = self.checkForUserInput(ini_info.actions[action], ini_info.userinput)
                     if(userinput != None):
                         ini_info.actions[action] = userinput
-                        
-                        if ini_info.buildtype == 'LINUX':                            
-                            p = subprocess.Popen(ini_info.actions[action],shell=True,start_new_session=True)
-                            self.process_watcher.pidvalue = p.pid
-                            self.logger.info("launching process {} with PID {}".format(ini_info.actions[action], self.process_watcher.pidvalue))
-                            p.wait()
-                            time.sleep(1)
-                        else:                        
-                            p = subprocess.run(ini_info.actions[action],shell=True,timeout=300,encoding='utf-8', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                            
-                            for line in str(p.stdout).splitlines():
-                                self.logger.info(line)
-                                
-                            for line in str(p.stderr).splitlines():
-                                self.logger.info(line)
+                        if self.logger.level == logging.DEBUG:
+                            self.executeProcsDebug(ini_info.actions[action], ini_info.watchdog)
+                        else:
+                            self.executeProcs(ini_info.actions[action], ini_info.watchdog)
                             
             except Exception as e:
                 if "Process timed out" in str(e):
@@ -373,10 +384,6 @@ class Task:
                 continue                                           
             
             self.lock.release()
-            
-        if ini_info.watchdog == True:            
-            self.process_watcher.continuewatch = False
-            actionthread.join()
             
 
     def doActions(self, window, bar, taskitem, ini_info, type = "action"):

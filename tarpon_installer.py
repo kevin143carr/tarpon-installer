@@ -13,9 +13,11 @@ from PIL import Image as Image, ImageTk as Itk
 from tkscrolledframe import ScrolledFrame
 import threading
 import logging
+import subprocess
+import psutil
 
 configfile = "config.ini"
-version = "3.5.4"
+version = "3.5.6"
 logger = None
 
 class iniInfo:
@@ -29,8 +31,7 @@ class iniInfo:
     installtitle = ""
     logoimage = ""
     buttontext = ""
-    defaultactiontimeout = 0
-    watchdog = False
+    watchdog = None
     files = dict()
     repo = dict()
     rpms = dict()
@@ -47,12 +48,17 @@ class iniInfo:
         try:
             config_object.read(configfile)
             startup = config_object["STARTUP"]
-            self.defaultactiontimeout = int(startup['defaultactiontimeout'])
-            self.watchdog = bool(startup['watchdog'])
             self.startinfo = startup['startupinfo']
             self.installtitle = startup['installtitle']
             self.logoimage = startup['logoimg']
             self.buttontext = startup['buttontext']
+            self.watchdog = bool(startup['watchdog'])
+        except Exception as ex:
+            logger.error(ex)
+            print("Missing keyword {} in the [STARTUP] section".format(ex))
+            raise SystemExit
+        
+        try:
             userinfo = config_object["USERINFO"]
             serverinfo = config_object["SERVERCONFIG"]
             build = config_object["BUILD"]
@@ -72,6 +78,9 @@ class iniInfo:
             self.userinput = config_object._sections['USERINPUT']
         except Exception as ex:
             logger.error(ex)
+            print("Missing keyword in .ini file.  check you .ini file for the following: {}".format(ex))
+            raise SystemExit
+            
 
 class mainClass:
     display_list = []
@@ -130,7 +139,8 @@ class mainClass:
 
     def buildGUI(self, functiontitle):
         ini_info = iniInfo()
-
+        optionbuttonresize = 0
+            
         count = 0
         if "DISPLAY" in ini_info.username:
             self.display_list.append("Username")
@@ -148,7 +158,7 @@ class mainClass:
                 logger.warning("Installation Cancelled")
                 return
 
-        self.window.geometry("800x400")
+        self.window.geometry("800x420")
         self.window.title(ini_info.installtitle)
         self.window.resizable(False,False)
         self.window.focusmodel(model="passive")
@@ -179,11 +189,14 @@ class mainClass:
 
         bar = ttk.Progressbar(TitleFrame,orient=tk.HORIZONTAL,length=310)
         bar.place(relx=.5, y=70,anchor=tk.CENTER)
-
-        functionFrame = tk.Frame(self.window, height=130, width=365, relief=tk.RAISED, borderwidth=3)
+        
+        if(len(ini_info.options) > 0):
+            optionbuttonresize = 30
+            
+        functionFrame = tk.Frame(self.window, height=155 - optionbuttonresize, width=365, relief=tk.RAISED, borderwidth=3)
         functionFrame.place(x=400, y=120)
 
-        scrolledFrame = ScrolledFrame(functionFrame, height=130, width=365)
+        scrolledFrame = ScrolledFrame(functionFrame, height=155 - optionbuttonresize, width=365)
         scrolledFrame.pack(side="top", expand=0, fill="both")
 
         scrolledFrame.bind_arrow_keys(functionFrame)
@@ -222,7 +235,8 @@ class mainClass:
         lb2 = tk.Label(inner_frame, justify = "left", text="")
         lb2.grid(row=row, column=0, sticky='W',padx=10)
 
-        optionsButton = tk.Button(self.window, text="Options", width=20, font="Arial 10 bold", command=lambda: self.optionsDialog(self.window, ini_info)).place(x=595, y=290,anchor=tk.CENTER)
+        if(len(ini_info.options) > 0):
+            optionsButton = tk.Button(self.window, text="Options", width=20, font="Arial 10 bold", command=lambda: self.optionsDialog(self.window, ini_info)).place(x=595, y=290,anchor=tk.CENTER)
 
         taskFrame = tk.Frame(self.window, height=85, width=390, relief=tk.RAISED, borderwidth=3)
         taskFrame.place(x=400, y=305)
@@ -253,7 +267,7 @@ class mainClass:
 
         functiontitle = 'Important Installation Information Needed'
 
-        self.buildGUI(functiontitle)      
+        self.buildGUI(functiontitle)
         self.window.mainloop()
 
     def beginInstall(self, ini_info, window, bar, section, taskitem):
@@ -283,7 +297,7 @@ class mainClass:
             # Local Install
             if ini_info.buildtype == 'LINUX':
                 section.set("SECTION: Installing RPMs")
-                task.installLocalRPMs(window, bar, taskitem, ini_info.resources, ini_info.rpms)
+                task.installLocalRPMs(window, bar, taskitem, ini_info.resources, ini_info.rpms, ini_info.watchdog)
 
             section.set("SECTION: Copying Files")
             task.copyFromResources(window, bar, taskitem, ini_info)
@@ -299,8 +313,9 @@ class mainClass:
             section.set("SECTION: Final Actions")
             taskitem.set("")
             task.finalActions(window, bar, taskitem, ini_info)
-
             self.window.quit()
+            
+                
         except Exception as ex:
             logger.error(ex)
 
