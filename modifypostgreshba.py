@@ -10,6 +10,8 @@ def find_file(file_name, directory_name):
             if(file_name == name):
                 file_path = os.path.join(path,name)
                 files_found.append(file_path)
+                return files_found
+            
     return files_found
 
 def FindPostgresHBAPath(linuxpath = '/var/lib/pgsql'):
@@ -27,12 +29,16 @@ def FindPostgresHBAPath(linuxpath = '/var/lib/pgsql'):
         print("Failed to find PostGreSQL")
 
     file_found = find_file("pg_hba.conf", path)
+    if len(file_found) == 0:
+        print("Failed to find pg_hba.conf file")
+        raise SystemExit
+
     return file_found[0]
 
-def modifypostgresHBA(hba_path, IPAddress):
+def modifypostgresHBA(hba_path, IPAddress, permission):
 
     IPAddress = IPAddress[0:IPAddress.rfind('.')] + ".0/24"
-    print("modifying {} with {}".format(hba_path,IPAddress))
+    print("modifying {} with {} and {}".format(hba_path,IPAddress, permission))
     with open(hba_path, "r") as f:
         lines = f.readlines()
         f.close()
@@ -42,9 +48,9 @@ def modifypostgresHBA(hba_path, IPAddress):
             if('# IPv4 local connections:' in line):
                 f.write(line)
                 if platform == 'linux':
-                    line = "host\tall\t\tall\t\t{}\t\tmd5".format(IPAddress);
+                    line = "host\tall\t\tall\t\t{}\t\t{}".format(IPAddress, permission);
                 else:
-                    line = "host\tall\t\t\t\tall\t\t\t\t{}\t\t\tmd5".format(IPAddress);
+                    line = "host\tall\t\t\t\tall\t\t\t\t{}\t\t\t{}".format(IPAddress, permission);
                 f.write(line + "\n")
             else:
                 f.write(line)
@@ -52,17 +58,18 @@ def modifypostgresHBA(hba_path, IPAddress):
         f.close()
 
 def PrintHelp():
-    print("**********************************************************************")
-    print("*  ><###> Modify pg_hba.conf files <###>< is an open source install creator. *")
-    print("*  usage: modifypostgreshba --address xxx.xxx.xxx.xxx (where xxx = IP address) --directory /var/lib/pgsql  *")
-    print("*  VERSION 2.2                                                                         *")
-    print("**********************************************************************")
+    print("**********************************************************************************************")
+    print("*  ><###> Modify pg_hba.conf files <###><                                                    *")
+    print("*  usage:                                                                                    *")
+    print("*  modifypostgreshba --address xxx.xxx.xxx.xxx --directory /var/lib/pgsql  --permission trust*")
+    print("*  VERSION 2.4                                                                               *")
+    print("**********************************************************************************************")
     raise SystemExit
 
 if __name__ == "__main__":
     params = {}
     option = ""
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 4:
         PrintHelp()
 
     for arg in sys.argv:
@@ -74,6 +81,7 @@ if __name__ == "__main__":
     for item in params:
         print("parameter {}".format(params[item]))
 
+    permission = params['--permission']
     ipaddr = params['--address']        
     directory = params['--directory']
 
@@ -81,4 +89,4 @@ if __name__ == "__main__":
         file_path = FindPostgresHBAPath()
     else:
         file_path = FindPostgresHBAPath(directory)
-    modifypostgresHBA(file_path, ipaddr)
+    modifypostgresHBA(file_path, ipaddr, permission)
