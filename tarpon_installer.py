@@ -17,7 +17,7 @@ import subprocess
 import psutil
 
 configfile = "config.ini"
-version = "3.5.6"
+version = "3.5.7"
 logger = None
 
 class iniInfo:

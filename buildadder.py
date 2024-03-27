@@ -7,7 +7,7 @@ from os import path
 import fnmatch
 import shutil
 
-version = "2.1.0"
+version = "2.1.1"
 ticonfigfile = "config.ini"
 baconfigfile = "buildadderconfig.ini"
 
@@ -63,7 +63,13 @@ class Task:
     def __init__(self, files, userconfigfile, builddir, rpmdir):
         self.files = files
         self.userconfigfile = userconfigfile
-
+        
+        if '\r' in rpmdir:
+            rpmdir = rpmdir.strip('\r')  
+            
+        if '\r' in builddir:
+            builddir = builddir.strip('\r')          
+        
         if ',' in builddir:
             dirs = builddir.split(',')
             for dir in dirs:
@@ -81,8 +87,8 @@ class Task:
                 files = os.listdir("resources/" + dir)
                 for file in files:
                     self.rpmdirfiles.append("{}/{}".format(dir,file))
-        else:
-            files = os.listdir("resources/" + rpmdir)
+        else:          
+            files = os.listdir("resources/" + rpmdir)            
             for file in files:
                 self.rpmdirfiles.append("{}/{}".format(rpmdir,file))        
 

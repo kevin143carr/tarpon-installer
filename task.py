@@ -319,7 +319,7 @@ class Task:
             
     def executeProcs(self, action, watchdog = False):
         p = subprocess.Popen(action,shell=True, stdout=None, stderr=None, 
-                             start_new_session=True, encoding=None)
+                             start_new_session=False, encoding=None)
         self.logger.info("PID [{}] COMMAND [{}]".format(p.pid,action))
         p.wait()
         
