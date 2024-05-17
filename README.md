@@ -50,14 +50,14 @@ host = DISPLAY
 buildtype = WINDOWS\
 installtype = LOCAL\
 resources = resources\
-\
+
 ### [USERINPUT] # Used to create input boxes on the dialog.  
 The key becomes a installer variable that can be used in the [FILES],[ACTIONS] AND [FINAL] sections.
 Just put percent signs around the key like: %userdatafolder% and add it to the line item in the previously mentioned sections\
 \
 **Example**\
-userdatafolder = Please enter data folder name
-databaseip = Please enter database IP addresss
+userdatafolder = Please enter data folder name\
+databaseip = Please enter database IP addresss\
 
 You would then use %userdatafolder% and %databseip% as variables in your [FILES], [ACTIONS] and [FINAL]
 
@@ -75,6 +75,10 @@ optiondeleteolddata = Do you wish to delete old data?\
 \
 Notice I put the word 'option' on the front of my keyword.  That will remind me when I an in the\
 [ACTIONS] or [FINAL] sections to use it there as an optional action.\
+\
+**[ACTION] Section**\
+optionmakenewdir = mkdir %userdatafolder%\
+optiondeleteolddata = rm -rf %userdatafolder%\
 \
 ### [REPO] # NO LONGER SUPPORTED
 
@@ -146,6 +150,7 @@ Notice you can add comments by using the # Your Comment notations.
 You can modify a line in a file.  The {FILE} designator represents the path and name of the file.\
 The {CHANGE} represents a searchable, unique line in the file.\
 Use the '||' token to separate the what text will overwrite the original.
+The {ADD} Designator will add a line to the last line of the file.  It wil create the fill if it does not exists.
 
 **For Local Linux or Windows use the following examples:**\
 **Example:#Used to modify files usage: (number = ){FILE}filepath+filename{CHANGE}keyword||replaceword**\
@@ -169,15 +174,15 @@ Use the '||' token to separate the what text will overwrite the original.
 **Example:** *starttimer = timeout /t 10*\
 **Example:** *shutitdown = shutdown /r*
 
-#### THIS ENDS THE .INI SECTION.
+# THIS ENDS THE .INI SECTION.
 
-### SPECIAL ACTION COMMANDS 
-# YESNO - YESNO allows you to popup a question to a user given them a choice of Yes or No.  If Yes then the action after\
-the '::' token will be taken.
+# SPECIAL ACTION COMMANDS 
+### YESNO - YESNO allows you to popup a question to a user given them a choice of Yes or No.  If Yes then the action after
+the '::' token will be taken. ###
 \
 **Example:** *rebootornot = YESNO::Do you want to reboot your system now?::echo "## - rebooting in 10 seconds ##"; sleep 10; reboot*\
 \
-MSGBOX - MSGBOX simply pop up a message dialog in the GUI,  or a displays text in a console application that requires a user\
+### MSGBOX - MSGBOX simply pop up a message dialog in the GUI,  or a displays text in a console application that requires a user\
 to hit enter or press [OK] button if using the GUI.\
 \
 **Example:** *popupmessagetouser1 = MSGBOX "Please make sure this %hostIP% is the correct IP address."*\
