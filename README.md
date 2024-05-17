@@ -13,6 +13,7 @@ It uses a config.ini (which can be named [anything].ini) and a resource folder.
 ### [STARTUP] # A startup task gives you the opportunity to choose logo and title.
 \
 **Example**\
+usegui = True - True to use GUI, false to be console application
 logoimg = mylogo.png\
 installtitle = MY INSTALLER NAME GOES HERE\
 startupinfo = information about the installer like: "This will install MY APP on this machine"\
@@ -50,16 +51,28 @@ buildtype = WINDOWS
 installtype = LOCAL
 resources = resources/
 \
-### [USERINPUT] # Used to create input boxes on the dialog.  The key becomes a installer variable that can be used in the\
-[FILES],[ACTIONS] AND [FINAL] sections.
+### [USERINPUT] # Used to create input boxes on the dialog.  
+The key becomes a installer variable that can be used in the [FILES],[ACTIONS] AND [FINAL] sections.
 Just put percent signs around the key like: %userdatafolder% and add it to the line item in the previously mentioned sections\
 \
 **Example**\
 userdatafolder = c:\userdata\
 databaseip = 172.16.20.25
 
-### [REPO] # NO LONGER SUPPORTED
+You would then use %userdatafolder% and %databseip% as variables in your [FILES], [ACTIONS] and [FINAL]
 
+###[OPTIONS] # Allows for optional task that may be done inside the [ACTIONS] and [FINAL] sections.
+An option button will automatically be displayed when using the GUI.  Options can then be checked.
+For console programs, a numbered list will show up for the user to choose.
+**Example**\
+optionmakenewdir = Do you wish to make a new directory.\
+optiondeleteolddata = Do you wish to delete old data?\
+\
+Notice I put the word 'option' on the front of my keyword.  That will remind me when I an in the\
+[ACTIONS] or [FINAL] sections to use it there as an optional action.\ 
+\
+### [REPO] # NO LONGER SUPPORTED
+\
 ### [RPM] #RPMs that will be used during a Linux installation.
 Begin this section with #RPMS START HERE and end it with #RPMS END HERE .  When used with the buildadder it will\
 automatically place the rpms in this section if a [RPMS] section is added to a buildadderconfig.ini file.  See BuildAdder.\
