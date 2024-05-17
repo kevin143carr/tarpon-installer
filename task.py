@@ -5,14 +5,15 @@ import paramiko
 import os
 import subprocess
 import shutil
-import sys
 from zipfile import ZipFile
-from tarfile import TarFile, TarInfo
+from tarfile import TarFile
 from shutil import copyfile
 from pathlib import Path
 from fileutilities import FileUtilities
+from managers.processmanager import ProcessManager
+from stringutilities import StringUtilities
 from easygui import *
-from subprocess import STDOUT, PIPE
+from subprocess import PIPE
 import logging
 import threading
 
@@ -23,6 +24,8 @@ class Task:
     hostname = ""
     resources = ""
     file_utilities = FileUtilities
+    process_manager = ProcessManager
+    string_utilities =  StringUtilities
     logger = logging.getLogger("logger")
     lock = threading.Lock()
 
@@ -67,51 +70,6 @@ class Task:
             for line in str(p).splitlines():
                 self.logger.info(line, end="\n")
 
-    def installRPMs(self, resources, rpms):
-        for key in rpms:
-            self.logger.info('install RPMs {} to {}'.format(key, rpms[key]))
-            p = subprocess.check_output('/root/installpkg.sh {}'.format(rpms[key]))
-            for line in str(p).splitlines():
-                self.logger.info (line, end="")
-            time.sleep(5)
-
-    def installLocalRPMs(self, window, bar, taskitem, resources, rpms, watchdog):
-        p = None
-        count = 0
-        for key in rpms:
-            count += 1;
-            bar['value'] = (count/len(rpms.keys()))*100
-            
-            cwd = os.getcwd()
-            self.logger.info('install RPMs {} {}'.format(key, rpms[key]))
-            try:
-                multilinerpm = rpms[key].split(",")
-                execstr = ''
-                for line in multilinerpm:
-                    if execstr == '':
-                        execstr = 'rpm --install {}/{} '.format(resources, line)
-                    else:
-                        execstr = execstr + '{}/{} '.format(resources, line)
-                        
-                taskstr = 'Installing RPM - {}'.format(execstr)
-                self.logger.info(taskstr)
-                taskitem.set(taskstr)
-                
-                self.executeProcs(execstr, watchdog)
-                    
-            except Exception as ex:
-                self.logger.error("{} : file {}".format(ex,rpms[key]))
-
-    def checkForUserInput(self, string, userinputs):
-        rtnstring = string
-        for input in userinputs:
-            for i in range(len(string.split('%')) -1):
-                if input in string:
-                    string = string.replace('%'+input+'%',userinputs[input].get(),1)
-                    rtnstring = string
-        return rtnstring
-
-
     def copyFromResourcesLocal(self, window, bar, taskitem, ini_info):
         count = 0
         for key in ini_info.files:
@@ -123,7 +81,7 @@ class Task:
 
             if ini_info.buildtype != 'LINUX':
                 # check for user input
-                userinput = self.checkForUserInput(ini_info.files[key], ini_info.userinput)
+                userinput = self.string_utilities.checkForUserVariable(ini_info.files[key], ini_info.userinput)
                 if(userinput != None):
                     ini_info.files[key] = userinput
 
@@ -137,7 +95,7 @@ class Task:
                         os.makedirs(dirname, exist_ok = True)
                     else:
                         os.makedirs(ini_info.files[key], exist_ok = True)
-                except OSError as error:
+                except OSError:
                     self.logger.warning("Directory {} can not be created".format(ini_info.files[key]))
 
                 dirtest = key.split('/')
@@ -216,7 +174,6 @@ class Task:
                             source = zf.open(file)
                         else:
                             source = tf.getmember(file)
-                            testagain = source.type
                             if(source.isdir()):
                                 os.makedirs(ini_info.files[key] +"/" + file, exist_ok = True)
                                 continue
@@ -233,7 +190,6 @@ class Task:
                             target.close()
             else:
                 self.logger.error("Error copying file {}/{}, it does not exist".format(ini_info.resources,key))
-        finished = True
 
     def copyFromResourcesSSH(self, resources, files):
         ftp = self.ssh.open_sftp()
@@ -280,59 +236,11 @@ class Task:
             self.logger.info('Executing Action {} with {}'.format(action, actions[action]))
             stdin, stdout, stderr = self.ssh.exec_command('{}'.format(actions[action]))
             for line in iter(stdout.readline,""):
-                self.logger.info (line, end="")                             
-    
-    def checkForWatchdogEvent(self,pid, action):
-        watchdogfile = open('tarpon_watchdog.log','r')
-        lines = watchdogfile.readlines()
-        
-        for line in lines:
-            if pid in line:
-                print("watchdog event occured - re-issueing command {}".format(action))
-                self.logger.error("watchdog event occured - re-issueing command in Action {}".format(action))
-                watchdogfile.close()
-                self.executeProcs(action, True)
-                
-        watchdogfile.close()
-                
-    
-    def executeProcsDebug(self, action, watchdog = False):
-        p = subprocess.Popen(action,shell=True, stdout=PIPE, stderr=PIPE, 
-                             start_new_session=True, encoding='utf-8')
-        self.logger.info("PID [{}] COMMAND [{}]".format(p.pid,action))
-        p.wait()
-        
-        time.sleep(2)
-
-        if watchdog == True:
-            pidval = "PID [{}]".format(p.pid)
-            self.checkForWatchdogEvent(pidval, action)
-        
-        stdout,stderr = p.communicate(timeout=180)
-
-        
-        for line in str(stdout).splitlines():
-            self.logger.debug(line)
-                
-        for line in str(stderr).splitlines():
-            self.logger.debug(line)
-            
-    def executeProcs(self, action, watchdog = False):
-        p = subprocess.Popen(action,shell=True, stdout=None, stderr=None, 
-                             start_new_session=False, encoding=None)
-        self.logger.info("PID [{}] COMMAND [{}]".format(p.pid,action))
-        p.wait()
-        
-        time.sleep(2)
-
-        if watchdog == True:
-            pidval = "PID [{}]".format(p.pid)
-            self.checkForWatchdogEvent(pidval, action)                
+                self.logger.info (line, end="")                                                         
         
         
     def doActionsLocal(self, window, bar, taskitem, ini_info, final=False):
         count = 0
-        actionthread = None
         
         if final == True:
             ini_info.actions = ini_info.finalactions         
@@ -347,7 +255,7 @@ class Task:
                 exec_option = '1'
     
                 if '%host%' in ini_info.actions[action]:
-                    actions[action] = ini_info.actions[action].replace("%host%",self.hostname)
+                    ini_info.actions[action] = ini_info.actions[action].replace("%host%",self.hostname)
     
                 if 'YESNO' in ini_info.actions[action]:
                     text = ini_info.actions[action].split('::');
@@ -365,18 +273,17 @@ class Task:
     
                 if(exec_option != '0'):
                     # check for user input
-                    userinput = self.checkForUserInput(ini_info.actions[action], ini_info.userinput)
+                    userinput = self.string_utilities.checkForUserVariable(ini_info.actions[action], ini_info.userinput)
                     if(userinput != None):
                         ini_info.actions[action] = userinput
                         if self.logger.level == logging.DEBUG:
-                            self.executeProcsDebug(ini_info.actions[action], ini_info.watchdog)
+                            self.process_manager.executeProcsDebug(ini_info.actions[action], ini_info.watchdog)
                         else:
-                            self.executeProcs(ini_info.actions[action], ini_info.watchdog)
+                            self.process_manager.executeProcs(ini_info.actions[action], ini_info.watchdog)
                             
             except Exception as e:
                 if "Process timed out" in str(e):
                     self.logger.error("Timeout Error in Action {}".format(str(e)))
-                    p.kill()
                 else:
                     self.logger.error("Error in Action {}".format(str(e)))
                     
@@ -412,7 +319,7 @@ class Task:
                 modifywith = result[1]
                 file = files[file][len("{FILE}"):len(result[0])]
                 
-                file = self.checkForUserInput(file, userinputs)
+                file = self.string_utilities.checkForUserVariable(file, userinputs)
 
                 my_file = Path("{}".format(file))
 
@@ -423,7 +330,7 @@ class Task:
                 if my_file.is_file():
                     modcontent = modifywith.split("||")
                     # check for user input
-                    userinput = self.checkForUserInput(modcontent[1], userinputs)                      
+                    userinput = self.string_utilities.checkForUserVariable(modcontent[1], userinputs)                      
                     if ischange:
                         self.file_utilities.modifyFileContents(file, modcontent[0], userinput)
                     else:
