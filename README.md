@@ -185,14 +185,14 @@ If Yes then the action after the '::' token will be taken.\
 ## MSGBOX - MSGBOX simply pop up a message dialog in the GUI,  or a displays text in a console application.
 That requires a user to hit enter or press [OK] button if using the GUI.\
 
-**Example:** *popupmessagetouser1 = MSGBOX "Please make sure this %hostIP% is the correct IP address."*\
+**Example:** *popupmessagetouser1 = MSGBOX "Please make sure this %hostIP% is the correct IP address."*
 
 ## [IF][THEN][ELSE] - [IF][THEN][ELSE] allow for conditional statements within actions.
-**Example:** *checkipaddress = [IF]%hostIP% == 127.0.0.1[THEN]MSGBOX "You are using localhost"[ELSE]MSGBOX "You are not using localhost"*\
+**Example:** *checkipaddress = [IF]%hostIP% == 127.0.0.1[THEN]MSGBOX "You are using localhost"[ELSE]MSGBOX "You are not using localhost"*
 
 ## POPLIST - POPLIST allows user populate a list based on a comma delimitted string or file and select one.  
-The syntax is: POPLIST <<Message in double quotes>> INPUTFILE <filename to read> or you can do INPUTLIST "one,two,three,four"\
-The result selection can be used as a variable of the action key
+The syntax is: POPLIST "Message in double quotes" INPUTFILE <filename to read> or you can do INPUTLIST "one,two,three,four"\
+The result selection can be used as a variable of the action key\
 **Example:** *getusernames = POPLIST "Please choose a username" INPUTFILE c:\path\usernames.txt*
 **Example:** *getusernames = POPLIST "Please choose a username" INPUTLIST "JAMES, FRED, MARY, JOHN"*
 
