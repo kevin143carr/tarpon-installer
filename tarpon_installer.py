@@ -1,8 +1,8 @@
 import sys
 import ctypes
-import time
 from elevate import elevate
 from configparser import ConfigParser
+from managers.rpmmanager import RpmManager
 from task import Task
 import os.path
 from os import path
@@ -13,8 +13,6 @@ from PIL import Image as Image, ImageTk as Itk
 from tkscrolledframe import ScrolledFrame
 import threading
 import logging
-import subprocess
-import psutil
 
 configfile = "config.ini"
 version = "3.5.7"
@@ -84,7 +82,8 @@ class iniInfo:
 
 class mainClass:
     display_list = []
-    display_dict = {} 
+    display_dict = {}
+    rpm_manager = RpmManager
 
     window = tk.Tk()
 
@@ -292,12 +291,12 @@ class mainClass:
             # Remote Install
             if ini_info.buildtype == 'LINUX' and ini_info.installtype == 'REMOTE':
                 task.installRemoteRepo(ini_info.resources, ini_info.repo)
-                task.installRPMs(ini_info.resources, ini_info.rpms)
+                self.rpm_manager.installRPMsRemote(ini_info.resources, ini_info.rpms)
 
             # Local Install
             if ini_info.buildtype == 'LINUX':
                 section.set("SECTION: Installing RPMs")
-                task.installLocalRPMs(window, bar, taskitem, ini_info.resources, ini_info.rpms, ini_info.watchdog)
+                self.rpm_manager.installLocalRPMs(window, bar, taskitem, ini_info.resources, ini_info.rpms, ini_info.watchdog)
 
             section.set("SECTION: Copying Files")
             task.copyFromResources(window, bar, taskitem, ini_info)
