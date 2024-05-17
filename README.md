@@ -47,21 +47,26 @@ host = DISPLAY
 *full path such as C:\Resources or a relative path to the executable '/resources'.*\
 \
 **Example**
-buildtype = WINDOWS
-installtype = LOCAL
-resources = resources/
+buildtype = WINDOWS\
+installtype = LOCAL\
+resources = resources\
 \
 ### [USERINPUT] # Used to create input boxes on the dialog.  
 The key becomes a installer variable that can be used in the [FILES],[ACTIONS] AND [FINAL] sections.
 Just put percent signs around the key like: %userdatafolder% and add it to the line item in the previously mentioned sections\
 \
 **Example**\
-userdatafolder = c:\userdata\
-databaseip = 172.16.20.25
+userdatafolder = Please enter data folder name
+databaseip = Please enter database IP addresss
 
 You would then use %userdatafolder% and %databseip% as variables in your [FILES], [ACTIONS] and [FINAL]
 
-###[OPTIONS] # Allows for optional task that may be done inside the [ACTIONS] and [FINAL] sections.
+### [VARIABLES] # Used to define variables that will be used during installation.
+**Example**\
+userdatafolder = c:\userdata\
+databaseip = 172.16.20.25
+
+### [OPTIONS] # Allows for optional task that may be done inside the [ACTIONS] and [FINAL] sections.
 An option button will automatically be displayed when using the GUI.  Options can then be checked.
 For console programs, a numbered list will show up for the user to choose.
 **Example**\
@@ -69,10 +74,10 @@ optionmakenewdir = Do you wish to make a new directory.\
 optiondeleteolddata = Do you wish to delete old data?\
 \
 Notice I put the word 'option' on the front of my keyword.  That will remind me when I an in the\
-[ACTIONS] or [FINAL] sections to use it there as an optional action.\ 
+[ACTIONS] or [FINAL] sections to use it there as an optional action.\
 \
 ### [REPO] # NO LONGER SUPPORTED
-\
+
 ### [RPM] #RPMs that will be used during a Linux installation.
 Begin this section with #RPMS START HERE and end it with #RPMS END HERE .  When used with the buildadder it will\
 automatically place the rpms in this section if a [RPMS] section is added to a buildadderconfig.ini file.  See BuildAdder.\
@@ -105,7 +110,7 @@ This section is used with both Linux and Windows files.\
 **Example**\
 #BUILDS START HERE\
 latestlinuxbuilds/coolfile = /opt/coolfile/folder\
-latestwindowsbuilds/coolfile.exe = c:\coolfile\%userfolder%\\
+latestwindowsbuilds/coolfile.exe = c:\coolfile\%userfolder%\
 #BUILDS END HERE\
 anotherFolderUnderResources/thisfile.dat = c:\shouldgo\here\
 \
@@ -119,7 +124,7 @@ Notice the %userfolder%, it is a uservariable I setup in the [USERINPUT]section.
 *Most anything that can be done from a command line can be done with this*\
 **Echo Example:** *echo1 = echo THIS IS A TEST*\
 **Windows Timeout Example:** *timeout1 = timeout /t 3*\
-**Delete Example:** *cleanzip1 = del /Q c:\support\washere.zip\
+**Delete Example:** *cleanzip1 = del /Q c:\support\washere.zip*\
 \
 **Example**\
 #make sure things are executable\
@@ -137,12 +142,10 @@ createmanifestsfolder = mkdir c:\STAR\Products\manifests\
 \
 Notice you can add comments by using the # Your Comment notations.
 
-### [MODIFY] # Used to modify files - MUST USE 1,2,3,ETC.. DESIGNATORS -- 
-**For Remote Linux it should be like below**
-*usage: (number-)filepath+filename = keyword||replaceword (this only works in strings without "", /, \)*\
-**Example:** *1-/var/lib/pgsql/12/data/postgresql.conf = #listen_addresses = 'localhost'||listen_addresses = '*'*\
-**Example:** *2-/var/lib/pgsql/12/data/postgresql.conf = log_timezone =||log_timezone = 'UTC' #changed#*\
-**Example:** *3-/opt/webconfigurationmanager/appsettings.json = localhost:55001||*:55001*\
+### [MODIFY] # Used to modify files - MUST USE 1,2,3,ETC.. DESIGNATORS --\
+You can modify a line in a file.  The {FILE} designator represents the path and name of the file.\
+The {CHANGE} represents a searchable, unique line in the file.\
+Use the '||' token to separate the what text will overwrite the original.
 
 **For Local Linux or Windows use the following examples:**\
 **Example:#Used to modify files usage: (number = ){FILE}filepath+filename{CHANGE}keyword||replaceword**\
@@ -165,6 +168,23 @@ Notice you can add comments by using the # Your Comment notations.
 **Example:** *rebootmachine = echo "********* FINISHED AND REBOOTING IN 10 SECONDS *********"*\
 **Example:** *starttimer = timeout /t 10*\
 **Example:** *shutitdown = shutdown /r*
+
+#### THIS ENDS THE .INI SECTION.
+
+### SPECIAL ACTION COMMANDS 
+# YESNO - YESNO allows you to popup a question to a user given them a choice of Yes or No.  If Yes then the action after\
+the '::' token will be taken.
+\
+**Example:** *rebootornot = YESNO::Do you want to reboot your system now?::echo "## - rebooting in 10 seconds ##"; sleep 10; reboot*\
+\
+MSGBOX - MSGBOX simply pop up a message dialog in the GUI,  or a displays text in a console application that requires a user\
+to hit enter or press [OK] button if using the GUI.\
+\
+**Example:** *popupmessagetouser1 = MSGBOX "Please make sure this %hostIP% is the correct IP address."*\
+\
+[IF][THEN][ELSE] - [IF][THEN][ELSE] allow for conditional statements within actions.\
+**Example:** *checkipaddress = [IF]%hostIP% == 127.0.0.1[THEN]MSGBOX "You are using localhost"[ELSE]MSGBOX "You are not using localhost"*\
+\
 
 # FINAL NOTES:
 Tarpon-Installer is a work in progress.  I have used it for many things.  I will start creating more\
