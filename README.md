@@ -16,7 +16,9 @@ It uses a config.ini (which can be named [anything].ini) and a resource folder.
 logoimg = mylogo.png\
 installtitle = MY INSTALLER NAME GOES HERE\
 startupinfo = information about the installer like: "This will install MY APP on this machine"\
-buttontext = The word for the install button usually just 'Install', but it can say any word.
+buttontext = The word for the install button usually just 'Install', but it can say any word.\
+watchdog = True - This will allow tarpon_installer to use the watchdog app which will kill stalled processes.
+
 
 ### [USERINFO] # Information needed to log into the machine
 This is the username and password fields.  Yes it is in plaintext!  This is often
@@ -47,8 +49,9 @@ host = DISPLAY
 buildtype = WINDOWS
 installtype = LOCAL
 resources = resources/
-
-### [USERINPUT] # Used to create installer variable that can be used in the [FILES],[ACTIONS] AND [FINAL] sections.
+\
+### [USERINPUT] # Used to create input boxes on the dialog.  The key becomes a installer variable that can be used in the\
+[FILES],[ACTIONS] AND [FINAL] sections.
 Just put percent signs around the key like: %userdatafolder% and add it to the line item in the previously mentioned sections\
 \
 **Example**\
