@@ -10,7 +10,7 @@ It uses a config.ini (which can be named [anything].ini) and a resource folder.
 
 # CONFIG.INI EXPLAINED
 
-### [STARTUP] # A startup task gives you the opportunity to choose logo and title.
+## [STARTUP] # A startup task gives you the opportunity to choose logo and title.
 \
 **Example**\
 usegui = True - True to use GUI, false to be console application
@@ -21,7 +21,7 @@ buttontext = The word for the install button usually just 'Install', but it can 
 watchdog = True - This will allow tarpon_installer to use the watchdog app which will kill stalled processes.
 
 
-### [USERINFO] # Information needed to log into the machine
+## [USERINFO] # Information needed to log into the machine
 This is the username and password fields.  Yes it is in plaintext!  This is often
 used to update hosts files and other files that need this information, especially when
 doing remote installations.  The username and password will be used to ssh into a linux
@@ -31,7 +31,7 @@ box when doing a "Remote Linux Install".  if it is blank it will not show up on 
 username = \
 password = 
 
-### [SERVERCONFIG] # ip address information
+## [SERVERCONFIG] # ip address information
 Perhaps not the best name, but this field is used as the Remote IP that will be ssh(d) into
 as well as used to update hosts files and other configuration files that is needed.  You can use the %host% 
 to use as a variable to the host field.  Again this is usually for a remote Linux install.  DISPLAY means to show the field.
@@ -40,7 +40,7 @@ If it is blank, it will not show up in the install GUI.\
 **Example**\
 host = DISPLAY
 
-### [BUILD] # buildtype:(WINDOWS OR LINUX) -- installtype:(LOCAL OR REMOTE) -- resources:(Relative or Full path)
+## [BUILD] # buildtype:(WINDOWS OR LINUX) -- installtype:(LOCAL OR REMOTE) -- resources:(Relative or Full path)
 **buildtype** = *Used to determine if the installed files are going on a LINUX or WINDOWS system.  Use upper case!*\
 **installtype** =	*Used to determine if it is a LOCAL or REMOTE style install.*\
 **resources** = *Used to tell the installer where the resource directory is it can be either a*\
@@ -51,7 +51,7 @@ buildtype = WINDOWS\
 installtype = LOCAL\
 resources = resources\
 
-### [USERINPUT] # Used to create input boxes on the dialog.  
+## [USERINPUT] # Used to create input boxes on the dialog.  
 The key becomes a installer variable that can be used in the [FILES],[ACTIONS] AND [FINAL] sections.
 Just put percent signs around the key like: %userdatafolder% and add it to the line item in the previously mentioned sections\
 \
@@ -61,12 +61,12 @@ databaseip = Please enter database IP addresss\
 
 You would then use %userdatafolder% and %databseip% as variables in your [FILES], [ACTIONS] and [FINAL]
 
-### [VARIABLES] # Used to define variables that will be used during installation.
+## [VARIABLES] # Used to define variables that will be used during installation.
 **Example**\
 userdatafolder = c:\userdata\
 databaseip = 172.16.20.25
 
-### [OPTIONS] # Allows for optional task that may be done inside the [ACTIONS] and [FINAL] sections.
+## [OPTIONS] # Allows for optional task that may be done inside the [ACTIONS] and [FINAL] sections.
 An option button will automatically be displayed when using the GUI.  Options can then be checked.
 For console programs, a numbered list will show up for the user to choose.
 **Example**\
@@ -80,9 +80,9 @@ Notice I put the word 'option' on the front of my keyword.  That will remind me 
 optionmakenewdir = mkdir %userdatafolder%\
 optiondeleteolddata = rm -rf %userdatafolder%\
 \
-### [REPO] # NO LONGER SUPPORTED
+## [REPO] # NO LONGER SUPPORTED
 
-### [RPM] #RPMs that will be used during a Linux installation.
+## [RPM] #RPMs that will be used during a Linux installation.
 Begin this section with #RPMS START HERE and end it with #RPMS END HERE .  When used with the buildadder it will\
 automatically place the rpms in this section if a [RPMS] section is added to a buildadderconfig.ini file.  See BuildAdder.\
 This section tells the installer what RPMs should be installed on a Linux based system.\
@@ -99,7 +99,7 @@ installunzip = rpms/unzip-6.0-46.el8.x86_64.rpm\
 
 Notice how some of the RPMs are grouped together, that is to make sure all the dependencies are in place.
 
-### [FILES] # Copies files from the resource folder to the paths and unzips if necessary.
+## [FILES] # Copies files from the resource folder to the paths and unzips if necessary.
 Begin this section with #BUILDS START HERE and end it with #BUILDS END HERE.  When used with buildadder it will\
 automatically place the files in this section if a [FILES] section exists in a buildadderconfig.ini file.  See BuildAdder.\
 This section is used with both Linux and Windows files.\
@@ -124,7 +124,7 @@ Outside the builds section you can add files from a folder within your resources
 copied to wherever you like.\
 Notice the %userfolder%, it is a uservariable I setup in the [USERINPUT]section.\
 
-### [ACTIONS] # Actions executed at the command level (both Linux and Windows), each action has to be uniquely named
+## [ACTIONS] # Actions executed at the command level (both Linux and Windows), each action has to be uniquely named
 *Most anything that can be done from a command line can be done with this*\
 **Echo Example:** *echo1 = echo THIS IS A TEST*\
 **Windows Timeout Example:** *timeout1 = timeout /t 3*\
@@ -146,7 +146,7 @@ createmanifestsfolder = mkdir c:\STAR\Products\manifests\
 \
 Notice you can add comments by using the # Your Comment notations.
 
-### [MODIFY] # Used to modify files - MUST USE 1,2,3,ETC.. DESIGNATORS --\
+## [MODIFY] # Used to modify files - MUST USE 1,2,3,ETC.. DESIGNATORS --\
 You can modify a line in a file.  The {FILE} designator represents the path and name of the file.\
 The {CHANGE} represents a searchable, unique line in the file.\
 Use the '||' token to separate the what text will overwrite the original.
@@ -167,7 +167,7 @@ The {ADD} Designator will add a line to the last line of the file.  It wil creat
 *# create file and add lines through '||' delimitted key/values*\
 **Example:** *5 = {FILE}C:/myinstall/support/createthisfile.conf{ADD}ipaddress = 111.222.333.444||portnumber = 34333||resourcefolder = d:\resources*\
 
-### [FINAL] # Same as Actions but is the last things done, each action has to be uniquely named
+## [FINAL] # Same as Actions but is the last things done, each action has to be uniquely named
 **Example:** *statusjaardcm = systemctl status stardcm | grep Active:*\
 **Example:** *statusjaarwcm = systemctl status activemq | grep Active:*\
 **Example:** *rebootmachine = echo "********* FINISHED AND REBOOTING IN 10 SECONDS *********"*\
@@ -202,7 +202,6 @@ The result selection can be used as a variable of the action key\
 *getusernames = POPLIST "Please choose a username" INPUTLIST "JAMES, FRED, MARY, JOHN"*
 
 dothisactionnext = MSGBOX "You chose %getusernames%"
-
 
 # FINAL NOTES:
 Tarpon-Installer is a work in progress.  I have used it for many things.  I will start creating more\
