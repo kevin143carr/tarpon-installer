@@ -177,19 +177,24 @@ The {ADD} Designator will add a line to the last line of the file.  It wil creat
 # THIS ENDS THE .INI SECTION.
 
 # SPECIAL ACTION COMMANDS 
-### YESNO - YESNO allows you to popup a question to a user given them a choice of Yes or No.  If Yes then the action after\
-the '::' token will be taken.\
+## YESNO - YESNO allows you to popup a question to a user given them a choice of Yes or No.  
+If Yes then the action after the '::' token will be taken.\
 \
 **Example:** *rebootornot = YESNO::Do you want to reboot your system now?::echo "## - rebooting in 10 seconds ##"; sleep 10; reboot*\
 \
-### MSGBOX - MSGBOX simply pop up a message dialog in the GUI,  or a displays text in a console application that requires a user\
+## MSGBOX - MSGBOX simply pop up a message dialog in the GUI,  or a displays text in a console application that requires a user\
 to hit enter or press [OK] button if using the GUI.\
 \
 **Example:** *popupmessagetouser1 = MSGBOX "Please make sure this %hostIP% is the correct IP address."*\
 \
-[IF][THEN][ELSE] - [IF][THEN][ELSE] allow for conditional statements within actions.\
+## [IF][THEN][ELSE] - [IF][THEN][ELSE] allow for conditional statements within actions.\
 **Example:** *checkipaddress = [IF]%hostIP% == 127.0.0.1[THEN]MSGBOX "You are using localhost"[ELSE]MSGBOX "You are not using localhost"*\
 \
+##POPLIST - POPLIST allows you populate a list based on a comma delimitted string and select one.  The syntax is:
+POPLIST <Message in double quotes> INPUTFILE <filename to read> or you can do INPUTLIST "one,two,three,four"\
+**Example:** *getusernames = POPLIST "Please choose a username" INPUTFILE c:\path\usernames.txt*
+**Example:** *getusernames = POPLIST "Please choose a username" INPUTLIST "JAMES, FRED, MARY, JOHN"*
+
 
 # FINAL NOTES:
 Tarpon-Installer is a work in progress.  I have used it for many things.  I will start creating more\
