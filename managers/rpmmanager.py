@@ -1,7 +1,7 @@
 import time
 import subprocess
 from fileutilities import FileUtilities
-from processmanager import ProcessManager
+from managers.processmanager import ProcessManager
 import logging
 
 class RpmManager:
