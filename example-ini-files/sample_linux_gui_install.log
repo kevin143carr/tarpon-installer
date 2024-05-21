@@ -8,3 +8,10 @@ INFO:logger: as needed, as long as this banner remains in place
 INFO:logger:*  VERSION 3.5.7
 INFO:logger:******************************************************************
 INFO:logger:******************************************************************
+INFO:logger:PID [4881] COMMAND [echo "Hello, It's been a while sdaf"]
+ERROR:logger:Error in Action [Errno 2] No such file or directory: 'tarpon_watchdog.log'
+ERROR:logger:Error in Action 'bool' object has no attribute 'rtnstate'
+ERROR:logger:Error in Action 'bool' object has no attribute 'rtnstate'
+ERROR:logger:Error in Action 'bool' object has no attribute 'rtnstate'
+ERROR:logger:Error in Action 'bool' object has no attribute 'rtnstate'
+ERROR:logger:'dict' object has no attribute 'userinput'

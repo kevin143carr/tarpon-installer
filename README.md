@@ -176,7 +176,7 @@ The {ADD} Designator will add a line to the last line of the file.  It wil creat
 
 # THIS ENDS THE .INI SECTION.
 
-# SPECIAL ACTION COMMANDS 
+# SPECIAL ACTION COMMANDS  AKA TARPL (Tarpon Language)
 ## YESNO - YESNO allows you to popup a question to a user given them a choice of Yes or No.  
 If Yes then the action after the '::' token will be taken.\
 \

@@ -1,4 +1,3 @@
-from easygui import *
 import tkinter as tk
 import tkinter.ttk as ttk
 from PIL import Image as Image, ImageTk as Itk
@@ -56,7 +55,7 @@ class GuiManager:
         optionsButton = tk.Button(optionsWindow, text="Close", width=20, font="Arial 10 bold", command=optionsWindow.destroy).place(relx=.5, y=280,anchor=tk.CENTER)
 
 
-    def buildGUI(window, functiontitle, ini_info, installfunc):
+    def buildGUI(self, window, functiontitle, ini_info, installfunc):
         logger = logging.getLogger("logger")
         display_list = []
         optionbuttonresize = 0

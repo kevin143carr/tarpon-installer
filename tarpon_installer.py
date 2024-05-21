@@ -7,11 +7,7 @@ from managers.guimanager import GuiManager
 from task import Task
 import os.path
 from os import path
-from easygui import *
 import tkinter as tk
-import tkinter.ttk as ttk
-from PIL import Image as Image, ImageTk as Itk
-from tkscrolledframe import ScrolledFrame
 import threading
 import logging
 
@@ -40,6 +36,8 @@ class iniInfo:
     options = dict()
     optionvals = dict()
     userinput = dict()
+    variables = dict()
+    returnvars = dict()
 
     def __init__(self):
         config_object = ConfigParser()
@@ -75,6 +73,7 @@ class iniInfo:
             self.finalactions = config_object._sections['FINAL']
             self.options = config_object._sections['OPTIONS']
             self.userinput = config_object._sections['USERINPUT']
+            self.variables = config_object._sections['VARIABLES']
         except Exception as ex:
             logger.error(ex)
             print("Missing keyword in .ini file.  check you .ini file for the following: {}".format(ex))
@@ -83,8 +82,8 @@ class iniInfo:
 
 class mainClass:
     display_dict = {}
-    rpm_manager = RpmManager
-    gui_manager = GuiManager
+    rpm_manager = RpmManager()
+    gui_manager = GuiManager()
 
     window = tk.Tk()
 

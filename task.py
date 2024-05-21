@@ -10,9 +10,8 @@ from tarfile import TarFile
 from shutil import copyfile
 from pathlib import Path
 from fileutilities import FileUtilities
-from managers.processmanager import ProcessManager
+from managers.actionmanager import ActionManager
 from stringutilities import StringUtilities
-from easygui import *
 from subprocess import PIPE
 import logging
 import threading
@@ -23,9 +22,9 @@ class Task:
     password = ""
     hostname = ""
     resources = ""
-    file_utilities = FileUtilities
-    process_manager = ProcessManager
-    string_utilities =  StringUtilities
+    file_utilities = FileUtilities()
+    action_manager =  ActionManager()
+    string_utilities =  StringUtilities()
     logger = logging.getLogger("logger")
     lock = threading.Lock()
 
@@ -81,7 +80,7 @@ class Task:
 
             if ini_info.buildtype != 'LINUX':
                 # check for user input
-                userinput = self.string_utilities.checkForUserVariable(ini_info.files[key], ini_info.userinput)
+                userinput = self.string_utilities.checkForUserVariable(ini_info.files[key], ini_info)
                 if(userinput != None):
                     ini_info.files[key] = userinput
 
@@ -227,80 +226,19 @@ class Task:
         if(ini_info.installtype == 'REMOTE' and ini_info.buildtype == 'LINUX'):
             self.copyFromResourcesSSH(ini_info.resources, ini_info.files)
         elif ini_info.installtype == 'LOCAL':
-            self.copyFromResourcesLocal(window, bar, taskitem, ini_info)
-
-    def doActionsSSH(self, actions):
-        for action in actions:
-            if '%host%' in actions[action]:
-                actions[action] = actions[action].replace("%host%",self.hostname)
-            self.logger.info('Executing Action {} with {}'.format(action, actions[action]))
-            stdin, stdout, stderr = self.ssh.exec_command('{}'.format(actions[action]))
-            for line in iter(stdout.readline,""):
-                self.logger.info (line, end="")                                                         
-        
-        
-    def doActionsLocal(self, window, bar, taskitem, ini_info, final=False):
-        count = 0
-        
-        if final == True:
-            ini_info.actions = ini_info.finalactions         
-
-        for action in ini_info.actions:
-                       
-            try:
-                self.lock.acquire()
-                
-                count += 1;
-                bar['value'] = (count/len(ini_info.actions.keys()))*100
-                exec_option = '1'
-    
-                if '%host%' in ini_info.actions[action]:
-                    ini_info.actions[action] = ini_info.actions[action].replace("%host%",self.hostname)
-    
-                if 'YESNO' in ini_info.actions[action]:
-                    text = ini_info.actions[action].split('::');
-                    answer = ynbox(text[1],"User Question");
-                    if answer == False:
-                        continue;
-                    else:
-                        ini_info.actions[action] = text[2];
-    
-                taskstr = 'Executing {} with {}'.format(action, ini_info.actions[action])
-                taskitem.set(taskstr)
-                
-                if action in ini_info.options.keys():
-                    exec_option = ini_info.options[action].get()
-    
-                if(exec_option != '0'):
-                    # check for user input
-                    userinput = self.string_utilities.checkForUserVariable(ini_info.actions[action], ini_info.userinput)
-                    if(userinput != None):
-                        ini_info.actions[action] = userinput
-                        if self.logger.level == logging.DEBUG:
-                            self.process_manager.executeProcsDebug(ini_info.actions[action], ini_info.watchdog)
-                        else:
-                            self.process_manager.executeProcs(ini_info.actions[action], ini_info.watchdog)
-                            
-            except Exception as e:
-                if "Process timed out" in str(e):
-                    self.logger.error("Timeout Error in Action {}".format(str(e)))
-                else:
-                    self.logger.error("Error in Action {}".format(str(e)))
-                    
-                self.lock.release()
-                continue                                           
+            self.copyFromResourcesLocal(window, bar, taskitem, ini_info)                                                                   
             
-            self.lock.release()
-            
-
     def doActions(self, window, bar, taskitem, ini_info, type = "action"):
         if(ini_info.installtype == 'REMOTE' and ini_info.buildtype == 'LINUX'):
-            self.doActionsSSH(ini_info.actions)
+            ActionManager.doActionsSSH(ini_info.actions)
         elif ini_info.installtype == 'LOCAL':
-            if(type == "action"):
-                self.doActionsLocal(window, bar, taskitem, ini_info)
-            elif(type == "final"):
-                self.doActionsLocal(window, bar, taskitem, ini_info, True)
+            try:                
+                if(type == "action"):
+                    self.action_manager.doActionsLocal(window, bar, taskitem, ini_info)
+                elif(type == "final"):
+                    self.action_manager.doActionsLocal(window, bar, taskitem, ini_info, True)
+            except Exception as e:
+                self.logger.error(e)
 
     def modifyFilesLocal(self, window, bar, taskitem, files, userinputs):
         count = 0

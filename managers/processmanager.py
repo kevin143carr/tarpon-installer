@@ -2,7 +2,6 @@ import time
 import paramiko
 import subprocess
 from fileutilities import FileUtilities
-from easygui import *
 from subprocess import PIPE
 import logging
 import threading
@@ -13,7 +12,7 @@ class ProcessManager:
     password = ""
     hostname = ""
     resources = ""
-    file_utilities = FileUtilities
+    file_utilities = FileUtilities()
     logger = logging.getLogger("logger")
     lock = threading.Lock()
     
@@ -36,7 +35,7 @@ class ProcessManager:
         self.logger.info("PID [{}] COMMAND [{}]".format(p.pid,action))
         p.wait()
         
-        time.sleep(2)
+        time.sleep(1)
 
         if watchdog == True:
             pidval = "PID [{}]".format(p.pid)
@@ -56,7 +55,7 @@ class ProcessManager:
         self.logger.info("PID [{}] COMMAND [{}]".format(p.pid,action))
         p.wait()
         
-        time.sleep(2)
+        time.sleep(1)
 
         if watchdog == True:
             pidval = "PID [{}]".format(p.pid)
