@@ -20,7 +20,7 @@ class PopListbox:
         hasselected.set(False)
         
         boxw.geometry("400x300")
-        boxw.title("Lista en Tk")
+        boxw.title("Please Select One")
         listbox = tk.Listbox(boxw, selectmode=tk.SINGLE)
         listbox.insert(0, *items)
         listbox.pack()
@@ -30,8 +30,6 @@ class PopListbox:
         )
         get_selection_button.pack()
         time.sleep(1)
-        print("before waiting on variable")
         boxw.wait_variable(hasselected)
-        print("after waiting on variable")
         boxw.destroy()
         return self.rtnval

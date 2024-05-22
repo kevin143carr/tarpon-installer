@@ -189,7 +189,7 @@ That requires a user to hit enter or press [OK] button if using the GUI.\
 **Example:** 
 *popupmessagetouser1 = MSGBOX "Please make sure this %hostIP% is the correct IP address."*
 
-## [IF][THEN][ELSE] - [IF][THEN][ELSE] allow for conditional statements within actions.
+## (NOT IMPLEMENTED YET) [IF][THEN][ELSE] - [IF][THEN][ELSE] allow for conditional statements within actions.
 **Example:** 
 *checkipaddress = [IF]%hostIP% == 127.0.0.1[THEN]MSGBOX "You are using localhost"[ELSE]MSGBOX "You are not using localhost"*
 
@@ -197,11 +197,17 @@ That requires a user to hit enter or press [OK] button if using the GUI.\
 The syntax is: POPLIST "Message in double quotes" INPUTFILE <filename to read> or you can do INPUTLIST "one,two,three,four"\
 The result selection can be used as a variable of the action key\
 **Example:** 
-*getusernames = POPLIST "Please choose a username" INPUTFILE c:\path\usernames.txt*\
+*getusernames = POPLIST::Please choose a username::INPUTFILE c:\path\usernames.txt::getusernamesfilevariable*
 **Example:** 
-*getusernames = POPLIST "Please choose a username" INPUTLIST "JAMES, FRED, MARY, JOHN"*
+*getusernames = POPLIST::Please choose a username::INPUTLIST "JAMES, FRED, MARY, JOHN"::getusernameslistvariable*
 
-dothisactionnext = MSGBOX "You chose %getusernames%"
+dothisactionnext1 = MSGBOX "You chose %getusernamesfilevariable%"
+dothisactionnext2 = MSGBOX "You chose %getusernameslistvariable%"
+
+## IFGOTO - IFGOTO allows you to jump to an index name in the .ini file based on a condition 1 or 0 condition.
+If the a goto happens, the execution of the .ini found will continue from that point.
+**Example:** 
+*makeuserdirectory = IFGOTO::test -d /usr/bin::iniindexnameyouwanttojumpto*
 
 # FINAL NOTES:
 Tarpon-Installer is a work in progress.  I have used it for many things.  I will start creating more\

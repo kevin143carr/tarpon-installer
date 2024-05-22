@@ -3,7 +3,8 @@ import logging
 import threading
 from managers.processmanager import ProcessManager
 from tarpl.tarplapi import TarpL
-from tarpl.tarplrtnclass import TarpLreturn
+from tarpl.tarplapi import TarpLreturn
+from tarpl.tarplclasses import TarpLAPIEnum
 from stringutilities import StringUtilities
 
 
@@ -13,7 +14,6 @@ class ActionManager:
     string_utilities =  StringUtilities()
     _tarpL = TarpL()
     lock = threading.Lock()
-    tarpLrtn = TarpLreturn()
     
     def doActionsSSH(self, actions):
         for action in actions:
@@ -27,11 +27,21 @@ class ActionManager:
 
     def doActionsLocal(self, window, bar, taskitem, ini_info, final=False):
         count = 0
+        enablegoto = False
+        gotoindex = ""
     
         if final == True:
             ini_info.actions = ini_info.finalactions         
     
         for action in ini_info.actions:
+            if enablegoto:
+                if gotoindex != action:
+                    continue
+                else:
+                    gotoindex = ""
+                    enablegoto = False
+                
+            tarpLrtn = TarpLreturn()            
     
             try:
                 self.lock.acquire()
@@ -53,17 +63,21 @@ class ActionManager:
                     isTarpL = self._tarpL.CheckForTarpL(finalstr)
                     text = finalstr.split('::');
                     if (isTarpL == True):
-                        self.tarpLrtn = self._tarpL.ExecuteTarpL(finalstr, window)
-                        if self.tarpLrtn.rtnstate == False:
+                        tarpLrtn = self._tarpL.ExecuteTarpL(finalstr, window)
+                        if tarpLrtn.rtnstate == False:
                             self.lock.release()
                             continue;
                         else:
-                            if self.tarpLrtn.rtnvar != "":                                
-                                ini_info.returnvars[self.tarpLrtn.rtnvar] = self.tarpLrtn.rtnvalue
-                                self.lock.release()
-                                continue
+                            if tarpLrtn.rtnvar != "":
+                                if tarpLrtn.tarpltype == TarpLAPIEnum.IFGOTO:
+                                    finalstr = tarpLrtn.rtnvalue
+                                    gotoindex = tarpLrtn.rtnvar
+                                else: # This ends up setting a variable, so no execution is needed
+                                    ini_info.returnvars[tarpLrtn.rtnvar] = tarpLrtn.rtnvalue                                    
+                                    self.lock.release()
+                                    continue
                             else:
-                                finalstr = text[2];
+                                finalstr = tarpLrtn.rtnvalue;
                                
                     taskstr = 'Executing {} with {}'.format(action, finalstr)
                     taskitem.set(taskstr)  
@@ -72,7 +86,16 @@ class ActionManager:
                         if self.logger.level == logging.DEBUG:
                             self.process_manager.executeProcsDebug(finalstr, ini_info.watchdog)
                         else:
-                            self.process_manager.executeProcs(finalstr, ini_info.watchdog)
+                            result = self.process_manager.executeProcs(finalstr, ini_info.watchdog)
+                            if tarpLrtn.tarpltype == TarpLAPIEnum.IFGOTO:
+                                if result == 0:
+                                    enablegoto = True
+                                    self.lock.release()
+                                    continue
+                                else:
+                                    enablegoto = False
+                                    self.lock.release()
+                                    continue
                     else:
                         continue
     

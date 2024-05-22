@@ -1,12 +1,13 @@
 import PySimpleGUI as sg
 from tkinter import messagebox as msgbox
 from tarpl.poplistbox import PopListbox
-from tarpl.tarplrtnclass import TarpLreturn
+from tarpl.tarplclasses import TarpLreturn
+from tarpl.tarplclasses import TarpLAPIEnum
+
 #Tarpon Installer Language
 class TarpL:
-    API = ['YESNO', 'MSGBOX', 'IF', 'THEN', 'ELSE', 'DIREXISTS', 'FILEEXISTS', 'POPLIST', 'INPUTLIST', 'INPUTFILE']
-    pop_listbox = PopListbox()
-    tarpLrtn = TarpLreturn()
+    API = ['YESNO', 'MSGBOX', 'IFGOTO', 'POPLIST', 'INPUTLIST', 'INPUTFILE']
+    pop_listbox = PopListbox()  
     
     def CheckForTarpL(self, inputstr):
         res = any(ele in inputstr for ele in self.API)
@@ -30,64 +31,74 @@ class TarpL:
                 return self.YESNO(actionstr, window)
             case 'MSGBOX':
                 return self.MSGBOX(actionstr, window)
-            case 'IF':
-                return 0
-            case 'THEN':
-                return 0
-            case 'ELSE':
-                return 0
-            case 'DIREXISTS':
-                return 0
-            case 'FILEEXISTS':
-                return 0
+            case 'IFGOTO':                
+                return self.IFGOTO(actionstr)
             case 'POPLIST':
-                return self.POPLIST(actionstr, window)          
+                return self.POPLIST(actionstr, window)
+            
+    def IFGOTO(self, instring):
+        tarpLrtn = TarpLreturn()
+        splitstr = instring.split('::');
+        tarpLrtn.rtnstate = True        
+        tarpLrtn.rtnvar = splitstr[2]
+        tarpLrtn.rtnvalue = splitstr[1]
+        tarpLrtn.tarpltype = TarpLAPIEnum.IFGOTO
+        return tarpLrtn
     
     def POPLIST (self, instring, window):
+        tarpLrtn = TarpLreturn()
         rtnval = None
         try:
-            text = instring.split('::');
-            inputype = self.getTarpL(text[2])
+            splitstr = instring.split('::');
+            inputype = self.getTarpL(splitstr[2])
             if inputype == 'INPUTLIST':
-                selectlist = text[3].split(',')
+                selectlist = splitstr[3].split(',')
                 rtnval = self.pop_listbox.showPopListbox(selectlist, window)
                 if rtnval != "":
-                    TarpLreturn.rtnstate = True
-                    TarpLreturn.rtnvalue = rtnval
-                    TarpLreturn.rtnvar = text[4]
+                    tarpLrtn.rtnstate = True
+                    tarpLrtn.rtnvalue = rtnval
+                    tarpLrtn.rtnvar = splitstr[4]
                 else:
-                    TarpLreturn.rtnstate = False
+                    tarpLrtn.rtnstate = False
             elif inputype == 'INPUTFILE' :
-                fp =  open(text[3],"r")
+                fp =  open(splitstr[3],"r")
                 fromfile = fp.readline()
                 print(fromfile)
                 selectlist = fromfile.split(',')
                 rtnval = self.pop_listbox.showPopListbox(selectlist, window)
                 if rtnval != "":
-                    TarpLreturn.rtnstate = True
-                    TarpLreturn.rtnvalue = rtnval
-                    TarpLreturn.rtnvar = text[4]
+                    tarpLrtn.rtnstate = True
+                    tarpLrtn.rtnvalue = rtnval
+                    tarpLrtn.rtnvar = splitstr[4]
+                    tarpLrtn.tarpltype = TarpLAPIEnum.POPLIST
                 else:
-                    TarpLreturn.rtnstate = False                
+                    tarpLrtn.tarpltype = TarpLAPIEnum.POPLIST                    
+                    tarpLrtn.rtnstate = False                
         except Exception as ex:
             print("Error in yes no {}".format(ex))
-        return TarpLreturn
+        return tarpLrtn
     
     
     def YESNO (self, instring, window):
+        tarpLrtn = TarpLreturn()        
         try:
-            text = instring.split('::');
-            answer = msgbox.askyesno("User Question", text[1], parent = window);
+            splitstr = instring.split('::');
+            tarpLrtn.rtnstate = msgbox.askyesno("User Question", splitstr[1], parent = window);
+            tarpLrtn.rtnvalue = splitstr[2]
+            tarpLrtn.tarpltype = TarpLAPIEnum.YESNO
         except Exception as ex:
             print("Error in yes no {}".format(ex))
             
-        return answer
+        return tarpLrtn
     
     def MSGBOX (self, instring, window):
+        tarpLrtn = TarpLreturn()         
         try:
-            text = instring.split('::');
-            answer = msgbox.showinfo("Information", text[1], parent = window);
+            splitstr = instring.split('::');
+            answer = msgbox.showinfo("Information", splitstr[1], parent = window);
+            tarpLrtn.rtnstate = False
+            tarpLrtn.tarpltype = TarpLAPIEnum.MSGBOX
         except Exception as ex:
             print("Error in yes no {}".format(ex))
             
-        return False
+        return tarpLrtn

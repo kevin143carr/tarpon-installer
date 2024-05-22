@@ -49,6 +49,8 @@ class ProcessManager:
         for line in str(stderr).splitlines():
             self.logger.debug(line)
             
+        return p.returncode            
+            
     def executeProcs(self, action, watchdog = False):
         p = subprocess.Popen(action,shell=True, stdout=None, stderr=None, 
                              start_new_session=False, encoding=None)
@@ -59,4 +61,6 @@ class ProcessManager:
 
         if watchdog == True:
             pidval = "PID [{}]".format(p.pid)
-            self.checkForWatchdogEvent(pidval, action)       
+            self.checkForWatchdogEvent(pidval, action)
+            
+        return p.returncode

@@ -26,7 +26,7 @@ class iniInfo:
     installtitle = ""
     logoimage = ""
     buttontext = ""
-    watchdog = None
+    watchdog = bool()
     files = dict()
     repo = dict()
     rpms = dict()
@@ -49,7 +49,7 @@ class iniInfo:
             self.installtitle = startup['installtitle']
             self.logoimage = startup['logoimg']
             self.buttontext = startup['buttontext']
-            self.watchdog = bool(startup['watchdog'])
+            self.watchdog = eval(startup['watchdog'])
         except Exception as ex:
             logger.error(ex)
             print("Missing keyword {} in the [STARTUP] section".format(ex))
