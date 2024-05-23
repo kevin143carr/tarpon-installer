@@ -19,16 +19,22 @@ class PopListbox:
         
         hasselected.set(False)
         
-        boxw.geometry("400x300")
+        #boxw.geometry("400x300")
         boxw.title("Please Select One")
         listbox = tk.Listbox(boxw, selectmode=tk.SINGLE)
+        listbox.pack(side = tk.LEFT, fill = tk.BOTH)
+        scrollbar = tk.Scrollbar(boxw)
+        scrollbar.pack(side=tk.RIGHT, fill = tk.BOTH)
         listbox.insert(0, *items)
         listbox.pack()
-        get_selection_button = ttk.Button(boxw, 
+        listbox.config(yscrollcommand = scrollbar.set)
+        scrollbar.config(command = listbox.yview)
+        get_selection_button = ttk.Button(boxw,
             text="Get selection",
             command= lambda: self.get_selection(boxw, hasselected, listbox)
-        )
-        get_selection_button.pack()
+        )        
+        get_selection_button.pack(side=tk.RIGHT, fill=tk.BOTH)
+        
         time.sleep(1)
         boxw.wait_variable(hasselected)
         boxw.destroy()
