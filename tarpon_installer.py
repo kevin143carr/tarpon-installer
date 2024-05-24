@@ -8,6 +8,7 @@ from task import Task
 import os.path
 from os import path
 import tkinter as tk
+import ttkbootstrap as ttk
 import threading
 import logging
 
@@ -95,7 +96,7 @@ class mainClass:
 
     def main(self):
         ini_info = iniInfo()
-        self.window = tk.Tk()
+        self.window = ttk.Window(themename="superhero")
         logger.info("******************************************************************")
         logger.info("******************************************************************")
         logger.info(" ><###> Tarpon Installer <###>< is an open source install creator.")
