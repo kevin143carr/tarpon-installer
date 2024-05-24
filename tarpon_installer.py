@@ -85,7 +85,7 @@ class mainClass:
     rpm_manager = RpmManager()
     gui_manager = GuiManager()
 
-    window = tk.Tk()
+    window = None
 
     def installThread(self, ini_info, InstallButton, window, bar, percent, text):
         InstallButton['state'] = tk.DISABLED
@@ -95,6 +95,7 @@ class mainClass:
 
     def main(self):
         ini_info = iniInfo()
+        self.window = tk.Tk()
         logger.info("******************************************************************")
         logger.info("******************************************************************")
         logger.info(" ><###> Tarpon Installer <###>< is an open source install creator.")

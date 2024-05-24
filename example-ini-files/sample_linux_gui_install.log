@@ -8,6 +8,3 @@ INFO:logger: as needed, as long as this banner remains in place
 INFO:logger:*  VERSION 3.5.7
 INFO:logger:******************************************************************
 INFO:logger:******************************************************************
-INFO:logger:PID [7506] COMMAND [echo "Hello, It's been a while dfsg"]
-INFO:logger:PID [7509] COMMAND [test -d "/usr/bin"]
-ERROR:logger:'dict' object has no attribute 'userinput'
