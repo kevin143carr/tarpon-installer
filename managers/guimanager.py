@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk
+from ttkbootstrap import ttk
 from PIL import Image as Image, ImageTk as Itk
 from tkscrolledframe import ScrolledFrame
 import logging
@@ -33,7 +33,7 @@ class GuiManager:
         y = parent.winfo_y() + parent.winfo_height()//2 - optionsWindow.winfo_height()//2
         optionsWindow.geometry(f"+{x}+{y}")
 
-        functionFrame = tk.Frame(optionsWindow, height=240, width=340)
+        functionFrame = ttk.Frame(optionsWindow, height=240, width=340)
         functionFrame.pack(side="top", expand=0, fill="both")
 
         scrolledFrame = ScrolledFrame(functionFrame, height=240, width=360)
@@ -49,14 +49,15 @@ class GuiManager:
 
             ini_info.optionvals[value]=tk.StringVar(value='0')
 
-            lb = tk.Label(inner_frame, justify = "left", text=ini_info.options[value])
-            cb = tk.Checkbutton(inner_frame, justify = "left", variable=ini_info.optionvals[value], onvalue='1', offvalue='0')
+            lb = ttk.Label(inner_frame, text=ini_info.options[value])
+            cb = ttk.Checkbutton(inner_frame, variable=ini_info.optionvals[value], onvalue='1', offvalue='0')
             lb.grid(row=row,
                     column=1, stick="W")
             cb.grid(row=row,
                     column=0, stick="W")
 
-        optionsButton = tk.Button(optionsWindow, text="Close", width=20, font="Arial 10 bold", command=optionsWindow.destroy).place(relx=.5, y=280,anchor=tk.CENTER)
+        optionsButton = ttk.Button(optionsWindow, text="Close", width=20, command=optionsWindow.destroy).place(relx=.5, y=280,anchor=tk.CENTER)
+        # optionsButton.pack()
         
     def buildLeftFrame(self, window, functiontitle, ini_info, installfunc):
         self.taskitem = tk.StringVar()
@@ -67,25 +68,25 @@ class GuiManager:
         photo = Itk.PhotoImage(image)
         
         # Create the first frame with a red background
-        left_frame = tk.Frame(window, width=400, height=420)
+        left_frame = ttk.Frame(window, width=400, height=420)
         left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         
         # Display image
-        label = tk.Label(left_frame, image=photo)
+        label = ttk.Label(left_frame, image=photo)
         label.image = photo  # Keep a reference to avoid garbage collection
         label.pack(padx=10, pady=5)
         
         # Create a LabelFrame below the image with yellow background
-        control_frame = tk.Frame(left_frame, relief=tk.RAISED, borderwidth=3)
+        control_frame = ttk.Frame(left_frame, relief=tk.RAISED, borderwidth=3)
         control_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
         
         # Create a Label inside the control frame for status
-        status_label = tk.Message(control_frame, textvariable=self.taskitem, width=350, anchor="w", justify="left")
+        status_label = ttk.Label(control_frame, textvariable=self.taskitem, anchor="w", justify="left")
         status_label.pack(padx=5, pady=5, anchor="w")
                
         self.taskitem.set("INSTALL TASK:")        
 
-        install_button = tk.Button(control_frame, text=ini_info.buttontext, font="Arial 13 bold", command=lambda: installfunc(ini_info, install_button, window, self.bar, None, self.taskitem))
+        install_button = ttk.Button(control_frame, text=ini_info.buttontext, command=lambda: installfunc(ini_info, install_button, window, self.bar, None, self.taskitem))
         install_button.pack(fill=tk.X, pady=5, padx=5, side=tk.BOTTOM, anchor="s")
            
     def on_focus_in(self, event):
@@ -106,26 +107,28 @@ class GuiManager:
         global canvas, entry_boxes
         
         self.section = tk.StringVar()
-        optionbuttonresize = 0   
         
-        right_frame = tk.Frame(window, width=400, height=420)
+        right_frame = ttk.Frame(window, width=400, height=420)
         right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
         
-        title_frame = tk.Frame(right_frame, relief=tk.RAISED, borderwidth=3)
+        title_frame = ttk.Frame(right_frame, relief=tk.RAISED, borderwidth=3)
         title_frame.pack(padx=5, pady=5, expand=True, side=tk.TOP, fill=tk.BOTH, anchor="n")
-        title_label = tk.Label(title_frame, text=ini_info.installtitle,width=40, font="Arial 17 bold")
+        title_label = ttk.Label(title_frame, text=ini_info.installtitle,width=40, font="Arial 17 bold")
         title_label.pack(pady=(5, 5))
 
         self.section.set("SECTION:")
         # Create a Label inside the control frame for status
-        section_label = tk.Label(title_frame, textvariable=self.section, width=300, anchor="w", justify="left")
+        section_label = ttk.Label(title_frame, textvariable=self.section, width=300, anchor="w", justify="left")
         section_label.pack(padx=5, pady=5)
         
-        functionTitleLabel = tk.Label(title_frame,text=functiontitle, font="Arial 16 bold")
+        bar = ttk.Progressbar(title_frame,orient=tk.HORIZONTAL,length=310)
+        bar.pack()        
+        
+        functionTitleLabel = ttk.Label(title_frame,text=functiontitle, font="Arial 16 bold")
         functionTitleLabel.pack(padx=5, pady=25, anchor="nw")
         
         # Create a scrollable frame in the blue frame
-        scrollable_frame = tk.Frame(title_frame, bg="blue")
+        scrollable_frame = ttk.Frame(title_frame)
         scrollable_frame.pack(fill=tk.BOTH, padx=20, pady=5)
     
         # Add a scrollbar
@@ -133,12 +136,12 @@ class GuiManager:
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
     
         # Configure the scrollable frame to use the scrollbar
-        canvas = tk.Canvas(scrollable_frame, bg="blue", yscrollcommand=scrollbar.set)
+        canvas = tk.Canvas(scrollable_frame, yscrollcommand=scrollbar.set)
         canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.config(command=canvas.yview)
     
         # Create a frame inside the canvas to hold the labels and entry boxes
-        inner_frame = tk.Frame(canvas, bg="blue")
+        inner_frame = ttk.Frame(canvas)
         canvas.create_window((0, 0), window=inner_frame, anchor="nw")       
     
         entry_boxes = []
@@ -146,7 +149,7 @@ class GuiManager:
         # Add some labels and entry boxes to the inner frame
         userinputkeys = list(ini_info.userinput.keys())
         for i in range(len(ini_info.userinput)):
-            label = tk.Label(inner_frame, text=ini_info.userinput[userinputkeys[i]], justify="left", bg="blue", fg="white")
+            label = ttk.Label(inner_frame, text=ini_info.userinput[userinputkeys[i]], justify="left")
             label.grid(row=i, column=0, padx=5, pady=5, sticky="w")
             entry = ttk.Entry(inner_frame, justify="left")
             entry.grid(row=i, column=1, padx=5, pady=5)
@@ -160,7 +163,7 @@ class GuiManager:
         canvas.bind("<Configure>", update_scroll_region)
         
         if(len(ini_info.options) > 0):
-            options_button = tk.Button(title_frame, text="Options", width=20, font="Arial 13 bold", command=lambda: GuiManager.optionsDialog(window, ini_info))
+            options_button = ttk.Button(title_frame, text="Options", width=20, command=lambda: GuiManager.optionsDialog(window, ini_info))
             options_button.pack(fill=tk.X, pady=5, padx=5, side=tk.BOTTOM, anchor="s")
             if (len(ini_info.options) == 0):
                 options_button.config(state=tk.DISABLED)
