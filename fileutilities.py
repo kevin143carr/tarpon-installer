@@ -4,7 +4,7 @@ from datetime import datetime
 
 class FileUtilities:
 
-    def addFileContents(file, entry):
+    def addFileContents(self, file, entry):
         try:
             print("Adding to {} with {}".format(file, entry))
             with open(file, "a") as f:
@@ -13,7 +13,7 @@ class FileUtilities:
         except:
             print("Error updating file")
 
-    def modifyFileContents(file, searchline, update):
+    def modifyFileContents(self, file, searchline, update):
         print("modifying {} with {}".format(file, update))
         with open(file, "r") as f:
             lines = f.readlines()
@@ -39,7 +39,7 @@ class FileUtilities:
 
             f.close()
 
-    def createFileAddContents(file, contents):
+    def createFileAddContents(self, file, contents):
         print("Creating {} and adding contents".format(file))
         with open(file, "w") as f:
             for line in contents:

@@ -13,7 +13,7 @@ import threading
 import logging
 
 configfile = "config.ini"
-version = "3.5.7"
+version = "4.0.4"
 logger = None
 
 class iniInfo:
@@ -88,15 +88,16 @@ class mainClass:
 
     window = None
 
-    def installThread(self, ini_info, InstallButton, window, bar, percent, text):
+    def installThread(self, ini_info, InstallButton, window):
         InstallButton['state'] = tk.DISABLED
         finished = False
-        installthread = threading.Thread(target=self.beginInstall, args=(ini_info, window, bar, percent, text))
+        installthread = threading.Thread(target=self.beginInstall, args=(ini_info, window))
         installthread.start()
 
     def main(self):
         ini_info = iniInfo()
-        self.window = ttk.Window(themename="superhero")
+        # self.window = ttk.Window(themename="superhero")
+        self.window = tk.Tk()
         logger.info("******************************************************************")
         logger.info("******************************************************************")
         logger.info(" ><###> Tarpon Installer <###>< is an open source install creator.")
@@ -112,7 +113,7 @@ class mainClass:
         self.gui_manager.buildGUI(self.window, functiontitle, ini_info, self.installThread)
         self.window.mainloop()
 
-    def beginInstall(self, ini_info, window, bar, section, taskitem):
+    def beginInstall(self, ini_info, window):
 
         for key in self.display_dict:
             if "Username" in key:
@@ -138,23 +139,23 @@ class mainClass:
 
             # Local Install
             if ini_info.buildtype == 'LINUX':
-                section.set("SECTION: Installing RPMs")
-                self.rpm_manager.installLocalRPMs(window, bar, taskitem, ini_info.resources, ini_info.rpms, ini_info.watchdog)
+                self.gui_manager.section.set("SECTION: INSTALLING RPMs")
+                self.rpm_manager.installLocalRPMs(window, self.gui_manager.bar, self.gui_manager.taskitem, ini_info.resources, ini_info.rpms, ini_info.watchdog)
 
-            section.set("SECTION: Copying Files")
-            task.copyFromResources(window, bar, taskitem, ini_info)
+            self.gui_manager.section.set("SECTION: COPYING FILES")
+            task.copyFromResources(window, self.gui_manager.bar, self.gui_manager.taskitem, ini_info)
 
-            section.set("SECTION: Doing Actions")
-            taskitem.set("")
-            task.doActions(window, bar, taskitem, ini_info)
+            self.gui_manager.section.set("SECTION: ACTIONS")
+            self.gui_manager.taskitem.set("")
+            task.doActions(window, self.gui_manager.bar, self.gui_manager.taskitem, ini_info)
 
-            section.set("SECTION: Modifying Files")
-            taskitem.set("")        
-            task.modifyFiles(window, bar, taskitem, ini_info)
+            self.gui_manager.section.set("SECTION: MODIFYING FILES")
+            self.gui_manager.taskitem.set("")        
+            task.modifyFiles(window, self.gui_manager.bar, self.gui_manager.taskitem, ini_info)
 
-            section.set("SECTION: Final Actions")
-            taskitem.set("")
-            task.finalActions(window, bar, taskitem, ini_info)
+            self.gui_manager.section.set("SECTION: FINAL ACTIONS")
+            self.gui_manager.taskitem.set("")
+            task.finalActions(window, self.gui_manager.bar, self.gui_manager.taskitem, ini_info)
             self.window.quit()
             
                 

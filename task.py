@@ -240,7 +240,7 @@ class Task:
             except Exception as e:
                 self.logger.error(e)
 
-    def modifyFilesLocal(self, window, bar, taskitem, files, userinputs):
+    def modifyFilesLocal(self, window, bar, taskitem, files, ini_info):
         count = 0
         for file in files:
             try:              
@@ -257,7 +257,7 @@ class Task:
                 modifywith = result[1]
                 file = files[file][len("{FILE}"):len(result[0])]
                 
-                file = self.string_utilities.checkForUserVariable(file, userinputs)
+                file = self.string_utilities.checkForUserVariable(file, ini_info)
 
                 my_file = Path("{}".format(file))
 
@@ -268,7 +268,7 @@ class Task:
                 if my_file.is_file():
                     modcontent = modifywith.split("||")
                     # check for user input
-                    userinput = self.string_utilities.checkForUserVariable(modcontent[1], userinputs)                      
+                    userinput = self.string_utilities.checkForUserVariable(modcontent[1], ini_info)                      
                     if ischange:
                         self.file_utilities.modifyFileContents(file, modcontent[0], userinput)
                     else:
@@ -293,7 +293,7 @@ class Task:
         if(ini_info.installtype == 'REMOTE' and ini_info.buildtype == 'LINUX'):
             self.modifyFilesSSH(ini_info.modify)
         else:
-            self.modifyFilesLocal(window, bar, taskitem, ini_info.modify,ini_info.userinput)
+            self.modifyFilesLocal(window, bar, taskitem, ini_info.modify, ini_info)
 
     def finalActions(self, window, bar, taskitem, ini_info):
         self.doActions( window, bar, taskitem, ini_info, "final")
