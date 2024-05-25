@@ -1,7 +1,6 @@
 import tkinter as tk
 from ttkbootstrap import ttk
 from PIL import Image as Image, ImageTk as Itk
-from tkscrolledframe import ScrolledFrame
 import logging
 
 logger = None
@@ -35,13 +34,23 @@ class GuiManager:
 
         functionFrame = ttk.Frame(optionsWindow, height=240, width=340)
         functionFrame.pack(side="top", expand=0, fill="both")
-
-        scrolledFrame = ScrolledFrame(functionFrame, height=240, width=360)
-        scrolledFrame.pack(side="top", expand=0, fill="both")
-
-        scrolledFrame.bind_arrow_keys(functionFrame)
-        scrolledFrame.bind_scroll_wheel(functionFrame)
-        inner_frame = scrolledFrame.display_widget(tk.Frame)
+        
+        # Create a scrollable frame in the blue frame
+        scrollable_frame = ttk.Frame(functionFrame)
+        scrollable_frame.pack(fill=tk.BOTH, padx=20, pady=5)
+        
+        # Add a scrollbar
+        scrollbar = tk.Scrollbar(scrollable_frame, orient=tk.VERTICAL)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+    
+        # Configure the scrollable frame to use the scrollbar
+        canvas = tk.Canvas(scrollable_frame, yscrollcommand=scrollbar.set)
+        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.config(command=canvas.yview)
+    
+        # Create a frame inside the canvas to hold the labels and entry boxes
+        inner_frame = ttk.Frame(canvas)
+        canvas.create_window((0, 0), window=inner_frame, anchor="nw")        
 
         for row in range(len(ini_info.options)):
             vals = ini_info.options.keys()
@@ -132,7 +141,7 @@ class GuiManager:
         scrollable_frame.pack(fill=tk.BOTH, padx=20, pady=5)
     
         # Add a scrollbar
-        scrollbar = ttk.Scrollbar(scrollable_frame, orient=tk.VERTICAL)
+        scrollbar = tk.Scrollbar(scrollable_frame, orient=tk.VERTICAL)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
     
         # Configure the scrollable frame to use the scrollbar

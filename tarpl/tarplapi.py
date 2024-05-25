@@ -1,4 +1,4 @@
-import PySimpleGUI as sg
+
 from tkinter import messagebox as msgbox
 from tarpl.poplistbox import PopListbox
 from tarpl.tarplclasses import TarpLreturn
@@ -26,15 +26,24 @@ class TarpL:
         
     def ExecuteTarpL(self, actionstr, window):
         tarpltype = self.getTarpL(actionstr)
-        match tarpltype:
-            case 'YESNO':
-                return self.YESNO(actionstr, window)
-            case 'MSGBOX':
-                return self.MSGBOX(actionstr, window)
-            case 'IFGOTO':                
-                return self.IFGOTO(actionstr)
-            case 'POPLIST':
-                return self.POPLIST(actionstr, window)
+        if tarpltype == 'YESNO':
+            return self.YESNO(actionstr, window)
+        elif tarpltype == 'MSGBOX':
+            return self.MSGBOX(actionstr, window)
+        elif tarpltype == 'IFGOTO':
+            return self.IFGOTO(actionstr)
+        elif tarpltype == 'POPLIST':
+            return self.POPLIST(actionstr, window)
+        
+        #match tarpltype:
+            #case 'YESNO':
+                #return self.YESNO(actionstr, window)
+            #case 'MSGBOX':
+                #return self.MSGBOX(actionstr, window)
+            #case 'IFGOTO':                
+                #return self.IFGOTO(actionstr)
+            #case 'POPLIST':
+                #return self.POPLIST(actionstr, window)
             
     def IFGOTO(self, instring):
         tarpLrtn = TarpLreturn()
