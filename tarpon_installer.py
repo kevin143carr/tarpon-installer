@@ -7,6 +7,7 @@ from managers.guimanager import GuiManager
 from task import Task
 import os.path
 from os import path
+import os
 import tkinter as tk
 import ttkbootstrap as ttk
 import threading
@@ -96,8 +97,12 @@ class mainClass:
 
     def main(self):
         ini_info = iniInfo()
-        self.window = ttk.Window(themename="superhero")
-        # self.window = tk.Tk()
+        
+        if sys.version_info[:3] < (3,9):
+            self.window = tk.Tk()
+        else:
+            self.window = ttk.Window(themename="superhero")
+
         logger.info("******************************************************************")
         logger.info("******************************************************************")
         logger.info(" ><###> Tarpon Installer <###>< is an open source install creator.")
