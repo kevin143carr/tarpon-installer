@@ -136,7 +136,7 @@ class GuiManager:
         functionTitleLabel = ttk.Label(title_frame,text=functiontitle, anchor="center", font="Arial 16 bold")
         functionTitleLabel.pack(padx=5, pady=10, anchor="center")
         
-        options_button = tk.Button(title_frame, text="Options", width=20, command=lambda: GuiManager.optionsDialog(window, ini_info))
+        options_button = ttk.Button(title_frame, text="Options", width=20, command=lambda: GuiManager.optionsDialog(window, ini_info))
         options_button.pack(fill=tk.X, pady=5, padx=5, side=tk.BOTTOM, anchor="s")        
         
         # Create a scrollable frame in the blue frame
@@ -164,19 +164,19 @@ class GuiManager:
             var = tk.StringVar()
             keyvalue = userinputkeys[i]
             label = ttk.Label(inner_frame, text=ini_info.userinput[keyvalue], justify="left")
-            label.grid(row=i, column=0, padx=5, pady=5, sticky="w")
+            label.grid(row=i, column=0, pady=5, sticky="w")
             entry = ttk.Entry(inner_frame, justify="left", textvariable=var)
-            entry.grid(row=i, column=1, padx=5, pady=5)
+            entry.grid(row=i, column=1, pady=5)
             
             # Bind the focus in event to the on_focus_in function for each entry box
             entry.bind("<FocusIn>", self.on_focus_in)
             ini_info.userinput[keyvalue] = var                      
                         
-        # Bind the scrollbar to the canvas
-        def update_scroll_region(event):
-            canvas.configure(scrollregion=canvas.bbox("all"))                       
+        ## Bind the scrollbar to the canvas
+        #def update_scroll_region(event):
+            #canvas.configure(scrollregion=canvas.bbox("all"))                       
             
-        canvas.bind("<Configure>", update_scroll_region)       
+        #canvas.bind("<Configure>", update_scroll_region)       
 
 
         if (len(ini_info.options) == 0):

@@ -96,8 +96,8 @@ class mainClass:
 
     def main(self):
         ini_info = iniInfo()
-        # self.window = ttk.Window(themename="superhero")
-        self.window = tk.Tk()
+        self.window = ttk.Window(themename="superhero")
+        # self.window = tk.Tk()
         logger.info("******************************************************************")
         logger.info("******************************************************************")
         logger.info(" ><###> Tarpon Installer <###>< is an open source install creator.")
