@@ -1,5 +1,6 @@
 import tkinter as tk
 from ttkbootstrap import ttk
+from tkscrolledframe import ScrolledFrame
 from PIL import Image as Image, ImageTk as Itk
 import logging
 
@@ -8,17 +9,9 @@ logger = None
 class GuiManager:
     bar = None
     taskitem = None
-    section = None
-        
-    border_effects = {
-        "flat": tk.FLAT,
-        "sunken": tk.SUNKEN,
-        "raised": tk.RAISED,
-        "groove": tk.GROOVE,
-        "ridge": tk.RIDGE
-        }    
+    section = None  
     
-    def optionsDialog(parent, ini_info):
+    def optionsDialog(parent, ini_info) -> None:
         optionsWindow = tk.Toplevel(parent)
         optionsWindow.geometry("600x300")
         # window.title(ini_info.installtitle)
@@ -35,22 +28,12 @@ class GuiManager:
         functionFrame = ttk.Frame(optionsWindow, height=240, width=340)
         functionFrame.pack(side="top", expand=0, fill="both")
         
-        # Create a scrollable frame in the blue frame
-        scrollable_frame = ttk.Frame(functionFrame)
-        scrollable_frame.pack(fill=tk.BOTH, padx=20, pady=5)
-        
-        # Add a scrollbar
-        scrollbar = tk.Scrollbar(scrollable_frame, orient=tk.VERTICAL)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-    
-        # Configure the scrollable frame to use the scrollbar
-        canvas = tk.Canvas(scrollable_frame, yscrollcommand=scrollbar.set)
-        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        scrollbar.config(command=canvas.yview)
-    
-        # Create a frame inside the canvas to hold the labels and entry boxes
-        inner_frame = ttk.Frame(canvas)
-        canvas.create_window((0, 0), window=inner_frame, anchor="nw")        
+        scrolledFrame = ScrolledFrame(functionFrame,scrollbars = "vertical")
+        scrolledFrame.pack(fill=tk.BOTH, padx=20, expand = "yes", pady=5)
+
+        scrolledFrame.bind_arrow_keys(functionFrame)
+        scrolledFrame.bind_scroll_wheel(functionFrame)
+        inner_frame = scrolledFrame.display_widget(tk.Frame)  
 
         for row in range(len(ini_info.options)):
             vals = ini_info.options.keys()
@@ -66,7 +49,7 @@ class GuiManager:
                     column=0, stick="W")
 
         optionsButton = ttk.Button(optionsWindow, text="Close", width=20, command=optionsWindow.destroy).place(relx=.5, y=280,anchor=tk.CENTER)
-        # optionsButton.pack()
+        optionsButton.pack()
         
     def buildLeftFrame(self, window, functiontitle, ini_info, installfunc):
         self.taskitem = tk.StringVar()
@@ -98,21 +81,22 @@ class GuiManager:
         install_button = ttk.Button(control_frame, text=ini_info.buttontext, command=lambda: installfunc(ini_info, install_button, window))
         install_button.pack(fill=tk.X, pady=5, padx=5, side=tk.BOTTOM, anchor="s")
            
-    def on_focus_in(self, event):
-        # Get the y-coordinate of the focused widget relative to the canvas
-        entry_y = canvas.canvasy(event.widget.winfo_rooty())
-        # Get the height of the canvas
-        canvas_height = canvas.winfo_height()
-        # Determine the scroll direction based on the position of the focused entry box
-        if entry_y > canvas_height:
-            # Scroll the canvas upward to make the entry box visible
-            canvas.yview_scroll(1, "units")
-        elif entry_y < 0:
-            # Scroll the canvas downward to make the entry box visible
-            canvas.yview_scroll(-1, "units")
-
+    def on_focus_in(self, event, entry: str)->None:
+        print("***{}***".format(entry))
+                
+        ## Get the y-coordinate of the focused widget relative to the canvas
+        #entry_y = canvas.canvasy(event.widget.winfo_rooty())
+        ## Get the height of the canvas
+        #canvas_height = canvas.winfo_height()
+        ## Determine the scroll direction based on the position of the focused entry box
+        #if entry_y > canvas_height:
+            ## Scroll the canvas upward to make the entry box visible
+            #canvas.yview_scroll(1, "units")
+        #elif entry_y < 0:
+            ## Scroll the canvas downward to make the entry box visible
+            #canvas.yview_scroll(-1, "units")
         
-    def buildRightFrame(self, window, functiontitle, ini_info, installfunc):
+    def buildRightFrame(self, window, functiontitle, ini_info, installfunc)->None:
         global canvas, entry_boxes
         
         self.section = tk.StringVar()
@@ -137,26 +121,18 @@ class GuiManager:
         functionTitleLabel.pack(padx=5, pady=10, anchor="center")
         
         options_button = ttk.Button(title_frame, text="Options", width=20, command=lambda: GuiManager.optionsDialog(window, ini_info))
-        options_button.pack(fill=tk.X, pady=5, padx=5, side=tk.BOTTOM, anchor="s")        
+        options_button.pack(fill=tk.X, pady=5, padx=5, side=tk.BOTTOM, anchor="s")
         
-        # Create a scrollable frame in the blue frame
-        scrollable_frame = ttk.Frame(title_frame)
-        scrollable_frame.pack(fill=tk.BOTH, padx=20, pady=5)
-    
-        # Add a scrollbar
-        scrollbar = tk.Scrollbar(scrollable_frame, orient=tk.VERTICAL)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-    
-        # Configure the scrollable frame to use the scrollbar
-        canvas = tk.Canvas(scrollable_frame, yscrollcommand=scrollbar.set)
-        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        scrollbar.config(command=canvas.yview)
-    
-        # Create a frame inside the canvas to hold the labels and entry boxes
-        inner_frame = ttk.Frame(canvas)
-        canvas.create_window((0, 0), window=inner_frame, anchor="nw")       
+        scrolledFrame = ScrolledFrame(title_frame,scrollbars = "vertical")
+        scrolledFrame.pack(fill=tk.BOTH, padx=20, expand = "yes", pady=5)
+
+        inner_frame = scrolledFrame.display_widget(tk.Frame)        
+        scrolledFrame.bind_arrow_keys(inner_frame)
+        scrolledFrame.bind_scroll_wheel(inner_frame)
     
         entry_boxes = []
+        
+        canvas = scrolledFrame
 
         # Add some labels and entry boxes to the inner frame
         userinputkeys = list(ini_info.userinput.keys())
@@ -169,7 +145,7 @@ class GuiManager:
             entry.grid(row=i, column=1, pady=5)
             
             # Bind the focus in event to the on_focus_in function for each entry box
-            entry.bind("<FocusIn>", self.on_focus_in)
+            entry.bind("<FocusIn>", lambda event, entry="{}".format(i): self.on_focus_in(event, entry))
             ini_info.userinput[keyvalue] = var                      
                         
         ## Bind the scrollbar to the canvas
@@ -180,15 +156,23 @@ class GuiManager:
 
 
         if (len(ini_info.options) == 0):
-            options_button.config(state=tk.DISABLED)
-        
-        
+            options_button.config(state=tk.DISABLED)       
         
     def buildGUI(self, window, functiontitle, ini_info, installfunc):
         global logger
         logger = logging.getLogger("logger")
+        geometrystr: str = ""
+        
+        screen_width = window.winfo_screenwidth()
+        screen_height = window.winfo_screenheight()
+        width = 820
+        height = 420
+        x = int((screen_width/2) - (width/2))
+        y = int((screen_height/2) - (height/1.5))
+        
+        geometrystr = f"{width}x{height}+{x}+{y}"
                     
-        window.geometry("820x420")
+        window.geometry(geometrystr)
         window.title(ini_info.installtitle)
         window.resizable(False,False)
         window.focusmodel(model="passive")
