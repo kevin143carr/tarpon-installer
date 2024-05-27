@@ -188,7 +188,7 @@ class GuiManager:
         global logger
         logger = logging.getLogger("logger")
                     
-        window.geometry("800x420")
+        window.geometry("820x420")
         window.title(ini_info.installtitle)
         window.resizable(False,False)
         window.focusmodel(model="passive")
