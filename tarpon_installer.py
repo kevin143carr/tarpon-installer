@@ -19,18 +19,25 @@ logger = None
 configfile = "config.ini"
 
 class mainClass:
+    """Using a main class because of the amount of work that needs to be done initially."""
     display_dict = {}
     rpm_manager = RpmManager()
     gui_manager = GuiManager()
 
     window = None
 
-    def installThread(self, ini_info, InstallButton, window):
+    def installThread(self, ini_info, InstallButton, window) -> None:
         InstallButton['state'] = tk.DISABLED
         installthread = threading.Thread(target=self.beginInstall, args=(ini_info, window))
         installthread.start()
 
-    def main(self):        
+    def main(self) -> None:
+        """This is the main entry point for the mainClass. It does not take any parameters
+        Args:
+            None
+        Returns:
+            None
+        """
         if sys.version_info[:3] < (3,9):
             self.window = tk.Tk()
         else:
@@ -51,7 +58,7 @@ class mainClass:
         self.gui_manager.buildGUI(self.window, functiontitle, ini_info, self.installThread)
         self.window.mainloop()
 
-    def beginInstall(self, ini_info, window):
+    def beginInstall(self, ini_info: iniInfo, window) -> None:
 
         for key in self.display_dict:
             if "Username" in key:
@@ -71,9 +78,9 @@ class mainClass:
             # Repos and RPMs are Linux only
  
             # Remote Install
-            if ini_info.buildtype == 'LINUX' and ini_info.installtype == 'REMOTE':
-                task.installRemoteRepo(ini_info.resources, ini_info.repo)
-                self.rpm_manager.installRPMsRemote(ini_info.resources, ini_info.rpms)
+            #if ini_info.buildtype == 'LINUX' and ini_info.installtype == 'REMOTE':
+                #task.installRemoteRepo(ini_info.resources, ini_info.repo)
+                #self.rpm_manager.installRPMsRemote(ini_info.resources, ini_info.rpms)
 
             # Local Install
             if ini_info.buildtype == 'LINUX':
@@ -101,7 +108,7 @@ class mainClass:
             logger.error(ex)
 
 
-def PrintHelp():
+def PrintHelp() -> None:
     print("************************************************************************")
     print("*  ><###> Tarpon Installer <###>< is an open source install creator.   *")
     print("*  specify config.ini file on the commandline                          *")
@@ -115,7 +122,7 @@ def PrintHelp():
     print("************************************************************************")
     raise SystemExit
 
-def isAdmin():
+def isAdmin() -> None:
     try:
         is_admin = (os.getuid() == 0)
     except AttributeError:

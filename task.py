@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-
-import time
 import paramiko
 import os
 import subprocess
@@ -10,6 +8,7 @@ from tarfile import TarFile
 from shutil import copyfile
 from pathlib import Path
 from fileutilities import FileUtilities
+from iniinfo import iniInfo
 from managers.actionmanager import ActionManager
 from stringutilities import StringUtilities
 from subprocess import PIPE
@@ -28,48 +27,11 @@ class Task:
     logger = logging.getLogger("logger")
     lock = threading.Lock()
 
-    def loginSSH(self):
+    def loginSSH(self) -> None:
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         self.ssh.connect(hostname = self.hostname, username = self.username, password = self.password)
 
-    def installRemoteRepo(self, resources, repo):
-        ftp = self.ssh.open_sftp()
-        for key in repo:
-            self.logger.info('copying and extracting Repo files {} to {}'.format(key, repo[key]))
-            self.ssh.exec_command('mkdir {}'.format(repo[key]))
-            src = "{}/{}".format(resources, key)
-            dst = "{}/{}".format(repo[key],key)
-            ftp.put(src , dst)
-            stdin, stdout, stderr = self.ssh.exec_command('tar xvfz {}/{}'.format(repo[key],key))
-            for line in iter(stdout.readline,""):
-                self.logger.info (line, end="")
-            stdin, stdout, stderr = self.ssh.exec_command('chmod 775 -f {}/{}'.format(repo[key],key))
-            for line in iter(stdout.readline,""):
-                self.logger.info (line, end="")
-        ftp.close()
-
-    def installLocalRepo(self, resources, repo):
-        for key in repo:
-            self.logger.info('copying and extracting Repo files {} to {}'.format(key, repo[key]))
-            if key != "installpkg.sh":
-                os.mkdir('{}'.format(repo[key]))
-            src = "{}/{}".format(resources, key)
-            dst = "{}/{}".format(repo[key],key)
-            try:
-                shutil.copy(src, dst)
-            except:
-                copyfile(src)
-            try:    
-                p = subprocess.run(['tar', 'xvfz', '{}/{}'.format(repo[key],key), '-C', '/root'])
-            except:
-                p = subprocess.check_output('tar xvfz {}/{}'.format(repo[key],key), '-C', '/root', shell=True)        
-            for line in str(p).splitlines():
-                self.logger.info(line, end="")
-            p = subprocess.check_output('chmod 775 -f {}'.format(repo[key]), shell=True)
-            for line in str(p).splitlines():
-                self.logger.info(line, end="\n")
-
-    def copyFromResourcesLocal(self, window, bar, taskitem, ini_info):
+    def copyFromResourcesLocal(self, window, bar, taskitem, ini_info: iniInfo) -> None:
         count = 0
         for key in ini_info.files:
             count += 1;
@@ -190,7 +152,7 @@ class Task:
             else:
                 self.logger.error("Error copying file {}/{}, it does not exist".format(ini_info.resources,key))
 
-    def copyFromResourcesSSH(self, resources, files):
+    def copyFromResourcesSSH(self, resources, files) -> None:
         ftp = self.ssh.open_sftp()
         for key in files:
             my_file = Path("{}/{}".format(resources,key))
@@ -222,13 +184,13 @@ class Task:
                 self.logger.error("Error copying file {}/{}, it does not exist".format(resources,key))
         ftp.close()
 
-    def copyFromResources(self, window, bar, taskitem, ini_info):
+    def copyFromResources(self, window, bar, taskitem, ini_info: iniInfo) -> None:
         if(ini_info.installtype == 'REMOTE' and ini_info.buildtype == 'LINUX'):
             self.copyFromResourcesSSH(ini_info.resources, ini_info.files)
         elif ini_info.installtype == 'LOCAL':
             self.copyFromResourcesLocal(window, bar, taskitem, ini_info)                                                                   
             
-    def doActions(self, window, bar, taskitem, ini_info, type = "action"):
+    def doActions(self, window, bar, taskitem, ini_info: iniInfo, type = "action") -> None:
         if(ini_info.installtype == 'REMOTE' and ini_info.buildtype == 'LINUX'):
             ActionManager.doActionsSSH(ini_info.actions)
         elif ini_info.installtype == 'LOCAL':
@@ -240,7 +202,7 @@ class Task:
             except Exception as e:
                 self.logger.error(e)
 
-    def modifyFilesLocal(self, window, bar, taskitem, files, ini_info):
+    def modifyFilesLocal(self, window, bar, taskitem, files, ini_info: iniInfo) -> None:
         count = 0
         for file in files:
             try:              
@@ -281,7 +243,7 @@ class Task:
                 continue
 
 
-    def modifyFilesSSH(self, files):
+    def modifyFilesSSH(self, files) -> None:
         for file in files:
             result = files[file].split("||")
             file = file.split("-",1)
@@ -289,13 +251,13 @@ class Task:
             for line in iter(stderr.readline,""):
                 self.logger.info (line, end="")
 
-    def modifyFiles(self, window, bar, taskitem, ini_info):
+    def modifyFiles(self, window, bar, taskitem, ini_info: iniInfo) -> None:
         if(ini_info.installtype == 'REMOTE' and ini_info.buildtype == 'LINUX'):
             self.modifyFilesSSH(ini_info.modify)
         else:
             self.modifyFilesLocal(window, bar, taskitem, ini_info.modify, ini_info)
 
-    def finalActions(self, window, bar, taskitem, ini_info):
+    def finalActions(self, window, bar, taskitem, ini_info: iniInfo) -> None:
         self.doActions( window, bar, taskitem, ini_info, "final")
 
     def __init__(self, username, password, hostname, resources):
