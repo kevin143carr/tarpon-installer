@@ -81,7 +81,7 @@ class GuiManager:
         install_button.pack(fill=tk.X, pady=5, padx=5, side=tk.BOTTOM, anchor="s")
            
     def on_focus_in(self, event, entry: str)->None:
-        movetoval =  int(entry)/(entry_boxes-1)
+        movetoval =  int(entry)/(entry_boxes)
         canvas.yview_moveto(movetoval)
         
     def buildRightFrame(self, window, functiontitle, ini_info, installfunc)->None:

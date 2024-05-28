@@ -8,6 +8,7 @@ from task import Task
 import os.path
 from os import path
 import os
+import platform
 import tkinter as tk
 import ttkbootstrap as ttk
 import threading
@@ -29,10 +30,7 @@ class mainClass:
         installthread = threading.Thread(target=self.beginInstall, args=(ini_info, window))
         installthread.start()
 
-    def main(self):
-        ini_info = iniInfo()
-        ini_info.readConfigFile(configfile)
-        
+    def main(self):        
         if sys.version_info[:3] < (3,9):
             self.window = tk.Tk()
         else:
@@ -126,10 +124,13 @@ def isAdmin():
 
 
 if __name__ == "__main__":
+    global ini_info
+    
     params = {}
     option = ""
     skipImport = False
     debuglevel = None
+    ini_info = iniInfo()
 
     logger = logging.getLogger("logger")
     
@@ -182,12 +183,21 @@ if __name__ == "__main__":
     else:
         logging.basicConfig(filename="{}.log".format(os.path.splitext(configfile)[0]),
                         filemode='w', level = logging.INFO)
-
+        
+    ini_info.readConfigFile(configfile)    
+        
     if isAdmin():
         logger.info("Executing as Administrator")
     else:
         logger.info("Elevating Permissions because Administrator = {}".format(isAdmin()))
-        elevate(graphical = True)
+        if ini_info.adminrights == True:
+            if (platform.system() == 'Windows'):
+                elevate(graphical = True)
+            else:
+                logger.error("This install requires admin/root privelages")
+                print("Error - This install requires admin/root privelages")
+                print("** Set the [adminrights] value to False in the xxxx.ini file if not needed. **")
+                raise SystemExit
     
     mc = mainClass()
     mc.main()
