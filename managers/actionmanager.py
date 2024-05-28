@@ -2,6 +2,7 @@ from tkinter import messagebox as msgbox
 import logging
 import threading
 from managers.processmanager import ProcessManager
+from iniinfo import iniInfo
 from tarpl.tarplapi import TarpL
 from tarpl.tarplapi import TarpLreturn
 from tarpl.tarplclasses import TarpLAPIEnum
@@ -9,13 +10,14 @@ from stringutilities import StringUtilities
 
 
 class ActionManager:
+    """ This class handles the action portions of the .ini file """
     logger = logging.getLogger("logger")
     process_manager = ProcessManager()
     string_utilities =  StringUtilities()
     _tarpL = TarpL()
     lock = threading.Lock()
     
-    def doActionsSSH(self, actions):
+    def doActionsSSH(self, actions) -> None:
         for action in actions:
             if '%host%' in actions[action]:
                 actions[action] = actions[action].replace("%host%",self.hostname)
@@ -25,7 +27,21 @@ class ActionManager:
                 self.logger.info (line, end="")        
 
 
-    def doActionsLocal(self, window, bar, taskitem, ini_info, final=False):
+    def doActionsLocal(self, window, bar, taskitem, ini_info: iniInfo, final=False) -> None:
+        """
+        This class executes local actions from the .ini file.
+        
+        Args:
+            self:       This class
+            window:     Either ttk window or ttkboostrap window
+            bar:        pointer to the progressbar
+            taskitem:   This is the string for the current task
+            ini_info:   Information from the ini file
+            final:      Whether this is initial or final actions
+            
+        Returns:
+            None
+        """
         count = 0
         enablegoto = False
         gotoindex = ""
