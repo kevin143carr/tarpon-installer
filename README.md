@@ -18,7 +18,8 @@ logoimg = mylogo.png\
 installtitle = MY INSTALLER NAME GOES HERE\
 startupinfo = information about the installer like: "This will install MY APP on this machine"\
 buttontext = The word for the install button usually just 'Install', but it can say any word.\
-watchdog = True - This will allow tarpon_installer to use the watchdog app which will kill stalled processes.
+watchdog = True/False - This will allow tarpon_installer to use the watchdog app which will kill stalled processes.\
+adminrights = True/False - This forces the application to be run as privelaged user.
 
 
 ## [USERINFO] # Information needed to log into the machine
