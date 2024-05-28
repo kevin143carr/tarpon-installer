@@ -48,8 +48,7 @@ class GuiManager:
             cb.grid(row=row,
                     column=0, stick="W")
 
-        optionsButton = ttk.Button(optionsWindow, text="Close", width=20, command=optionsWindow.destroy).place(relx=.5, y=280,anchor=tk.CENTER)
-        optionsButton.pack()
+        ttk.Button(optionsWindow, text="Close", width=20, command=optionsWindow.destroy).place(relx=.5, y=280,anchor=tk.CENTER)
         
     def buildLeftFrame(self, window, functiontitle, ini_info, installfunc):
         self.taskitem = tk.StringVar()
@@ -82,19 +81,8 @@ class GuiManager:
         install_button.pack(fill=tk.X, pady=5, padx=5, side=tk.BOTTOM, anchor="s")
            
     def on_focus_in(self, event, entry: str)->None:
-        print("***{}***".format(entry))
-                
-        ## Get the y-coordinate of the focused widget relative to the canvas
-        #entry_y = canvas.canvasy(event.widget.winfo_rooty())
-        ## Get the height of the canvas
-        #canvas_height = canvas.winfo_height()
-        ## Determine the scroll direction based on the position of the focused entry box
-        #if entry_y > canvas_height:
-            ## Scroll the canvas upward to make the entry box visible
-            #canvas.yview_scroll(1, "units")
-        #elif entry_y < 0:
-            ## Scroll the canvas downward to make the entry box visible
-            #canvas.yview_scroll(-1, "units")
+        movetoval =  int(entry)/(entry_boxes-1)
+        canvas.yview_moveto(movetoval)
         
     def buildRightFrame(self, window, functiontitle, ini_info, installfunc)->None:
         global canvas, entry_boxes
@@ -129,10 +117,8 @@ class GuiManager:
         inner_frame = scrolledFrame.display_widget(tk.Frame)        
         scrolledFrame.bind_arrow_keys(inner_frame)
         scrolledFrame.bind_scroll_wheel(inner_frame)
-    
-        entry_boxes = []
-        
-        canvas = scrolledFrame
+            
+        canvas = scrolledFrame._canvas
 
         # Add some labels and entry boxes to the inner frame
         userinputkeys = list(ini_info.userinput.keys())
@@ -147,13 +133,8 @@ class GuiManager:
             # Bind the focus in event to the on_focus_in function for each entry box
             entry.bind("<FocusIn>", lambda event, entry="{}".format(i): self.on_focus_in(event, entry))
             ini_info.userinput[keyvalue] = var                      
-                        
-        ## Bind the scrollbar to the canvas
-        #def update_scroll_region(event):
-            #canvas.configure(scrollregion=canvas.bbox("all"))                       
-            
-        #canvas.bind("<Configure>", update_scroll_region)       
-
+        
+        entry_boxes = len(ini_info.userinput)    
 
         if (len(ini_info.options) == 0):
             options_button.config(state=tk.DISABLED)       

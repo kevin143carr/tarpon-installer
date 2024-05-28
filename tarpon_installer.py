@@ -1,9 +1,9 @@
 import sys
 import ctypes
 from elevate import elevate
-from configparser import ConfigParser
 from managers.rpmmanager import RpmManager
 from managers.guimanager import GuiManager
+from iniinfo import iniInfo
 from task import Task
 import os.path
 from os import path
@@ -13,74 +13,9 @@ import ttkbootstrap as ttk
 import threading
 import logging
 
-configfile = "config.ini"
 version = "4.0.4"
 logger = None
-
-class iniInfo:
-    username = ""
-    password = ""
-    host = ""
-    buildtype = ""
-    installtype = ""
-    resources = ""
-    startinfo = ""
-    installtitle = ""
-    logoimage = ""
-    buttontext = ""
-    watchdog = bool()
-    files = dict()
-    repo = dict()
-    rpms = dict()
-    actions = dict()
-    modify = dict()
-    finalactions = dict()
-    options = dict()
-    optionvals = dict()
-    userinput = dict()
-    variables = dict()
-    returnvars = dict()
-
-    def __init__(self):
-        config_object = ConfigParser()
-        config_object.optionxform = str
-        try:
-            config_object.read(configfile)
-            startup = config_object["STARTUP"]
-            self.startinfo = startup['startupinfo']
-            self.installtitle = startup['installtitle']
-            self.logoimage = startup['logoimg']
-            self.buttontext = startup['buttontext']
-            self.watchdog = eval(startup['watchdog'])
-        except Exception as ex:
-            logger.error(ex)
-            print("Missing keyword {} in the [STARTUP] section".format(ex))
-            raise SystemExit
-        
-        try:
-            userinfo = config_object["USERINFO"]
-            serverinfo = config_object["SERVERCONFIG"]
-            build = config_object["BUILD"]
-            self.resources = build["resources"]
-            self.files = config_object._sections['FILES']
-            self.username = userinfo["username"]
-            self.password = userinfo["password"]
-            self.host = serverinfo["host"]
-            self.buildtype = build["buildtype"]
-            self.installtype = build["installtype"]
-            self.repo = config_object._sections['REPO']
-            self.rpms = config_object._sections['RPM']
-            self.actions = config_object._sections['ACTIONS']
-            self.modify = config_object._sections['MODIFY']
-            self.finalactions = config_object._sections['FINAL']
-            self.options = config_object._sections['OPTIONS']
-            self.userinput = config_object._sections['USERINPUT']
-            self.variables = config_object._sections['VARIABLES']
-        except Exception as ex:
-            logger.error(ex)
-            print("Missing keyword in .ini file.  check you .ini file for the following: {}".format(ex))
-            raise SystemExit
-            
+configfile = "config.ini"
 
 class mainClass:
     display_dict = {}
@@ -91,12 +26,12 @@ class mainClass:
 
     def installThread(self, ini_info, InstallButton, window):
         InstallButton['state'] = tk.DISABLED
-        finished = False
         installthread = threading.Thread(target=self.beginInstall, args=(ini_info, window))
         installthread.start()
 
     def main(self):
         ini_info = iniInfo()
+        ini_info.readConfigFile(configfile)
         
         if sys.version_info[:3] < (3,9):
             self.window = tk.Tk()
@@ -252,7 +187,7 @@ if __name__ == "__main__":
         logger.info("Executing as Administrator")
     else:
         logger.info("Elevating Permissions because Administrator = {}".format(isAdmin()))
-        # elevate(graphical = True)
+        elevate(graphical = True)
     
     mc = mainClass()
     mc.main()
