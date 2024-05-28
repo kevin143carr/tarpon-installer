@@ -69,7 +69,7 @@ class GuiManager:
         
         # Create a LabelFrame below the image with yellow background
         control_frame = ttk.Frame(left_frame, relief=tk.RAISED, borderwidth=1)
-        control_frame.pack(fill=tk.BOTH, expand=True, pady=5)
+        control_frame.pack(fill=tk.BOTH, expand=True, pady=5, padx=5)
         
         # Create a Label inside the control frame for status
         status_label = ttk.Label(control_frame, wraplength = 350, textvariable=self.taskitem,width=40, anchor="w", justify="left")        
