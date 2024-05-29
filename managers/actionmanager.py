@@ -65,10 +65,7 @@ class ActionManager:
                 count += 1;
                 bar['value'] = (count/len(ini_info.actions.keys()))*100
                 exec_option = '1'
-    
-                if '%host%' in ini_info.actions[action]:
-                    ini_info.actions[action] = ini_info.actions[action].replace("%host%",ini_info.host)
-
+                
                 # check for user input otherwise it returns string in ini_info.actions[action]
                 finalstr = self.string_utilities.checkForUserVariable(ini_info.actions[action], ini_info)
 

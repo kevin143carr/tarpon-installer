@@ -6,7 +6,6 @@ logger = None
 class iniInfo:
     username = ""
     password = ""
-    host = ""
     buildtype = ""
     installtype = ""
     resources = ""
@@ -48,13 +47,11 @@ class iniInfo:
         
         try:
             userinfo = config_object["USERINFO"]
-            serverinfo = config_object["SERVERCONFIG"]
             build = config_object["BUILD"]
             self.resources = build["resources"]
             self.files = config_object._sections['FILES']
             self.username = userinfo["username"]
             self.password = userinfo["password"]
-            self.host = serverinfo["host"]
             self.buildtype = build["buildtype"]
             self.installtype = build["installtype"]
             self.repo = config_object._sections['REPO']
