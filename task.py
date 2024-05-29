@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 import paramiko
 import os
-import subprocess
 import shutil
+import tkinter as tk
+from ttkbootstrap import ttk
 from zipfile import ZipFile
 from tarfile import TarFile
 from shutil import copyfile
@@ -11,7 +12,6 @@ from fileutilities import FileUtilities
 from iniinfo import iniInfo
 from managers.actionmanager import ActionManager
 from stringutilities import StringUtilities
-from subprocess import PIPE
 import logging
 import threading
 
@@ -31,7 +31,7 @@ class Task:
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         self.ssh.connect(hostname = self.hostname, username = self.username, password = self.password)
 
-    def copyFromResourcesLocal(self, window, bar, taskitem, ini_info: iniInfo) -> None:
+    def copyFromResourcesLocal(self, window, bar: ttk.Progressbar, taskitem: tk.StringVar, ini_info: iniInfo) -> None:
         count = 0
         for key in ini_info.files:
             count += 1;
@@ -184,26 +184,27 @@ class Task:
                 self.logger.error("Error copying file {}/{}, it does not exist".format(resources,key))
         ftp.close()
 
-    def copyFromResources(self, window, bar, taskitem, ini_info: iniInfo) -> None:
+    def copyFromResources(self, window, bar: ttk.Progressbar, taskitem, ini_info: iniInfo) -> None:
         if(ini_info.installtype == 'REMOTE' and ini_info.buildtype == 'LINUX'):
             self.copyFromResourcesSSH(ini_info.resources, ini_info.files)
         elif ini_info.installtype == 'LOCAL':
             self.copyFromResourcesLocal(window, bar, taskitem, ini_info)                                                                   
             
-    def doActions(self, window, bar, taskitem, ini_info: iniInfo, type = "action") -> None:
+    def doActions(self, window, bar: ttk.Progressbar, taskitem: tk.StringVar, ini_info: iniInfo, actiontype: str = "action") -> None:
         if(ini_info.installtype == 'REMOTE' and ini_info.buildtype == 'LINUX'):
             ActionManager.doActionsSSH(ini_info.actions)
         elif ini_info.installtype == 'LOCAL':
             try:                
-                if(type == "action"):
+                if(actiontype == "action"):
                     self.action_manager.doActionsLocal(window, bar, taskitem, ini_info)
-                elif(type == "final"):
+                elif(actiontype == "final"):
                     self.action_manager.doActionsLocal(window, bar, taskitem, ini_info, True)
             except Exception as e:
                 self.logger.error(e)
 
-    def modifyFilesLocal(self, window, bar, taskitem, files, ini_info: iniInfo) -> None:
+    def modifyFilesLocal(self, window, bar: ttk.Progressbar, taskitem: tk.StringVar, ini_info: iniInfo) -> None:
         count = 0
+        files = ini_info.modify
         for file in files:
             try:              
                 count += 1;
@@ -255,7 +256,7 @@ class Task:
         if(ini_info.installtype == 'REMOTE' and ini_info.buildtype == 'LINUX'):
             self.modifyFilesSSH(ini_info.modify)
         else:
-            self.modifyFilesLocal(window, bar, taskitem, ini_info.modify, ini_info)
+            self.modifyFilesLocal(window, bar, taskitem, ini_info)
 
     def finalActions(self, window, bar, taskitem, ini_info: iniInfo) -> None:
         self.doActions( window, bar, taskitem, ini_info, "final")

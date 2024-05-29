@@ -1,5 +1,11 @@
+import sys
+import platform
 import tkinter as tk
-from ttkbootstrap import ttk
+if sys.version_info[:3] < (3,9):
+    from ttkbootstrap import ttk
+else:
+    import ttkbootstrap as ttk
+from tkinter import font    
 from tkscrolledframe import ScrolledFrame
 from PIL import Image as Image, ImageTk as Itk
 import logging
@@ -87,6 +93,8 @@ class GuiManager:
     def buildRightFrame(self, window, functiontitle, ini_info, installfunc)->None:
         global canvas, entry_boxes
         
+        isosx = platform.system() == "Darwin"
+        
         self.section = tk.StringVar()
         
         right_frame = ttk.Frame(window, width=400, height=420)
@@ -117,8 +125,12 @@ class GuiManager:
         inner_frame = scrolledFrame.display_widget(tk.Frame)        
         scrolledFrame.bind_arrow_keys(inner_frame)
         scrolledFrame.bind_scroll_wheel(inner_frame)
-            
+       
+        window.update()     
         canvas = scrolledFrame._canvas
+        canvas.update_idletasks()          
+        widthofframe = canvas.winfo_width()
+        entryboxlen = self.calculateEntryBoxWidth(ini_info.userinput, widthofframe)        
 
         # Add some labels and entry boxes to the inner frame
         userinputkeys = list(ini_info.userinput.keys())
@@ -127,8 +139,11 @@ class GuiManager:
             keyvalue = userinputkeys[i]
             label = ttk.Label(inner_frame, text=ini_info.userinput[keyvalue], justify="left")
             label.grid(row=i, column=0, pady=5, sticky="w")
-            entry = ttk.Entry(inner_frame, justify="left", textvariable=var)
-            entry.grid(row=i, column=1, pady=5)
+            if isosx:
+                entry = ttk.Entry(inner_frame, justify="left", textvariable=var)
+            else:
+                entry = ttk.Entry(inner_frame, justify="left", textvariable=var, width=entryboxlen)
+            entry.grid(row=i, column=1, pady=5, sticky="e")
             
             # Bind the focus in event to the on_focus_in function for each entry box
             entry.bind("<FocusIn>", lambda event, entry="{}".format(i): self.on_focus_in(event, entry))
@@ -137,7 +152,32 @@ class GuiManager:
         entry_boxes = len(ini_info.userinput)    
 
         if (len(ini_info.options) == 0):
-            options_button.config(state=tk.DISABLED)       
+            options_button.config(state=tk.DISABLED)
+            
+    def calculateEntryBoxWidth(self, userinput: dict, widthofframe: int) -> int:
+        if sys.version_info[:3] < (3,9):
+            root = tk.Tk()
+        else:
+            root = ttk.Window(themename="superhero")
+            
+        root.withdraw()  # Hide the root window
+        average_char_width = font.Font().measure('1')  
+                
+        maxlabelwidth = 0
+        userinputkeys = list(userinput.keys())
+        for i in range(len(userinput)):        
+            key = userinputkeys[i]
+            widthoflabel = font.Font().measure(userinput[key])
+            if(widthoflabel > maxlabelwidth):
+                maxlabelwidth = widthoflabel
+                
+        charwidthofframe = widthofframe//average_char_width
+        charwidthoflabel =  maxlabelwidth//average_char_width
+        
+        entrycharactersize = max(1, charwidthofframe-charwidthoflabel)        
+        root.destroy()
+        
+        return   entrycharactersize - (average_char_width)            
         
     def buildGUI(self, window, functiontitle, ini_info, installfunc):
         global logger
