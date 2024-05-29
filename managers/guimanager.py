@@ -45,7 +45,8 @@ class GuiManager:
             vals = ini_info.options.keys()
             value = list(vals)[row]
 
-            ini_info.optionvals[value]=tk.StringVar(value='0')
+            if value not in ini_info.optionvals:
+                ini_info.optionvals[value]=tk.StringVar(value='0')
 
             lb = ttk.Label(inner_frame, text=ini_info.options[value])
             cb = ttk.Checkbutton(inner_frame, variable=ini_info.optionvals[value], onvalue='1', offvalue='0')
