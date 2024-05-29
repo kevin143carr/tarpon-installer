@@ -17,7 +17,7 @@ class GuiManager:
     taskitem = None
     section = None  
     
-    def optionsDialog(parent, ini_info) -> None:
+    def optionsDialog(parent: tk.Tk, ini_info) -> None:
         optionsWindow = tk.Toplevel(parent)
         optionsWindow.geometry("600x300")
         # window.title(ini_info.installtitle)
