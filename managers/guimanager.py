@@ -17,7 +17,7 @@ class GuiManager:
     taskitem = None
     section = None  
     
-    def optionsDialog(parent, ini_info) -> None:
+    def optionsDialog(parent: tk.Tk, ini_info) -> None:
         optionsWindow = tk.Toplevel(parent)
         optionsWindow.geometry("600x300")
         # window.title(ini_info.installtitle)
@@ -45,7 +45,8 @@ class GuiManager:
             vals = ini_info.options.keys()
             value = list(vals)[row]
 
-            ini_info.optionvals[value]=tk.StringVar(value='0')
+            if value not in ini_info.optionvals:
+                ini_info.optionvals[value]=tk.StringVar(value='0')
 
             lb = ttk.Label(inner_frame, text=ini_info.options[value])
             cb = ttk.Checkbutton(inner_frame, variable=ini_info.optionvals[value], onvalue='1', offvalue='0')
@@ -174,10 +175,10 @@ class GuiManager:
         charwidthofframe = widthofframe//average_char_width
         charwidthoflabel =  maxlabelwidth//average_char_width
         
-        entrycharactersize = max(1, charwidthofframe-charwidthoflabel)        
-        root.destroy()
+        entrycharactersize = max(1, charwidthofframe-charwidthoflabel)
         
-        return   entrycharactersize - (average_char_width)            
+        root.destroy()        
+        return   entrycharactersize + (average_char_width)            
         
     def buildGUI(self, window, functiontitle, ini_info, installfunc):
         global logger
