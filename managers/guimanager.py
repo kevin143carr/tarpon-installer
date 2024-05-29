@@ -174,10 +174,10 @@ class GuiManager:
         charwidthofframe = widthofframe//average_char_width
         charwidthoflabel =  maxlabelwidth//average_char_width
         
-        entrycharactersize = max(1, charwidthofframe-charwidthoflabel)        
-        root.destroy()
+        entrycharactersize = max(1, charwidthofframe-charwidthoflabel)
         
-        return   entrycharactersize - (average_char_width)            
+        root.destroy()        
+        return   entrycharactersize + (average_char_width)            
         
     def buildGUI(self, window, functiontitle, ini_info, installfunc):
         global logger
