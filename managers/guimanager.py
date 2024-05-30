@@ -120,11 +120,11 @@ class GuiManager:
         functionTitleLabel = ttk.Label(title_frame,text=functiontitle, anchor="center", font="Arial 16 bold")
         functionTitleLabel.pack(padx=5, pady=10, anchor="center")
         
-        options_button = ttk.Button(title_frame, text="Options", width=20, command=lambda: GuiManager.optionsDialog(window, ini_info))
-        options_button.pack(fill=tk.X, pady=5, padx=5, side=tk.BOTTOM, anchor="s")
+        options_button = ttk.Button(title_frame, text="Options", width=18, command=lambda: GuiManager.optionsDialog(window, ini_info))
+        options_button.pack(fill=tk.X, pady=5, padx=10, side=tk.BOTTOM, anchor="s")
         
         scrolledFrame = ScrolledFrame(title_frame,scrollbars = "vertical")
-        scrolledFrame.pack(fill=tk.BOTH, padx=20, expand = "yes", pady=5)
+        scrolledFrame.pack(fill=tk.BOTH, padx=10, expand = "yes", pady=5)
 
         inner_frame = scrolledFrame.display_widget(tk.Frame)        
         scrolledFrame.bind_arrow_keys(inner_frame)
@@ -134,7 +134,7 @@ class GuiManager:
         canvas = scrolledFrame._canvas
         canvas.update_idletasks()          
         widthofframe = canvas.winfo_width()
-        entryboxlen = self.calculateEntryBoxWidth(ini_info.userinput, widthofframe)        
+        entryboxlen = self.calculateEntryBoxWidth(window, ini_info.userinput, widthofframe)        
 
         # Add some labels and entry boxes to the inner frame
         userinputkeys = list(ini_info.userinput.keys())
@@ -142,12 +142,12 @@ class GuiManager:
             var = tk.StringVar()
             keyvalue = userinputkeys[i]
             label = ttk.Label(inner_frame, text=ini_info.userinput[keyvalue], justify="left")
-            label.grid(row=i, column=0, pady=5, sticky="w")
+            label.grid(row=i, column=0, pady=5, padx=5, sticky="w")
             if isosx:
                 entry = ttk.Entry(inner_frame, justify="left", textvariable=var)
             else:
                 entry = ttk.Entry(inner_frame, justify="left", textvariable=var, width=entryboxlen)
-            entry.grid(row=i, column=1, pady=5, sticky="e")
+            entry.grid(row=i, column=1, pady=5, padx=5, sticky="ew")
             
             # Bind the focus in event to the on_focus_in function for each entry box
             entry.bind("<FocusIn>", lambda event, entry="{}".format(i): self.on_focus_in(event, entry))
@@ -158,13 +158,11 @@ class GuiManager:
         if (len(ini_info.options) == 0):
             options_button.config(state=tk.DISABLED)
             
-    def calculateEntryBoxWidth(self, userinput: dict, widthofframe: int) -> int:
-        if sys.version_info[:3] < (3,9):
-            root = tk.Tk()
-        else:
-            root = ttk.Window(themename=self.themename)
+    def calculateEntryBoxWidth(self, window, userinput: dict, widthofframe: int) -> int:
             
-        root.withdraw()  # Hide the root window
+        right_frame = ttk.Frame(window)
+            
+        # right_frame.withdraw()  # Hide the root window
         average_char_width = font.Font().measure('1')  
                 
         maxlabelwidth = 0
@@ -180,7 +178,7 @@ class GuiManager:
         
         entrycharactersize = max(1, charwidthofframe-charwidthoflabel)
         
-        root.destroy()        
+        right_frame.destroy()        
         return   entrycharactersize + (average_char_width)            
         
     def buildGUI(self, window, functiontitle, ini_info: iniInfo, installfunc):
