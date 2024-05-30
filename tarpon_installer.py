@@ -1,4 +1,4 @@
-import sys
+import sys, getopt
 import ctypes
 from elevate import elevate
 from managers.rpmmanager import RpmManager
@@ -65,10 +65,8 @@ class mainClass:
                 ini_info.username = self.display_dict[key].get()
             if "Password" in key:
                 ini_info.password = self.display_dict[key].get()
-            if "Host IP" in key:
-                ini_info.host = self.display_dict[key].get()
 
-        task = Task(ini_info.username, ini_info.password, ini_info.host, ini_info.resources)
+        task = Task(ini_info)
 
         # if Remote Type then login via SSH
         if ini_info.installtype == 'REMOTE': 
@@ -113,12 +111,12 @@ def PrintHelp() -> None:
     print("*  ><###> Tarpon Installer <###>< is an open source install creator.   *")
     print("*  specify config.ini file on the commandline                          *")
     print("*                                                                      *")
-    print("*  Usage: tarpon_installer.exe yourconfig.ini                          *")
-    print("*  Alt Usage: tarpon_installer.exe -t yourconfig.ini -debuglevel DEBUG *")
+    print("*  Usage: tarpon_installer.exe -t yourconfig.ini                       *")
+    print("*  Alt Usage: tarpon_installer.exe -t yourconfig.ini --debuglevel DEBUG*")
     print("*                                                                      *")
     print("*  debug levels are: INFO (default) and DEBUG                          *")
     print("*                                                                      *")
-    print("*  VERSION {}                                                          *".format(version))
+    print(f"*  VERSION {version}                                                  *")
     print("************************************************************************")
     raise SystemExit
 
@@ -138,44 +136,28 @@ if __name__ == "__main__":
     skipImport = False
     debuglevel = None
     ini_info = iniInfo()
+    arglist = []
 
     logger = logging.getLogger("logger")
+    print(f"len of args {len(sys.argv)}")
     
-    for arg in sys.argv:
-        if arg[0:1] == "-":
-            option = arg
-        else:
-            params[option] = arg
-
-    i = 0
-    for item in params:
-        print("parameter {}: {}".format(i, params[item]))
-        i = i + 1    
-
-    if len(sys.argv) < 2:
-        PrintHelp()
-
-    if len(sys.argv) == 2:
-        for arg in sys.argv:
-            if arg[0:1] == "-":
-                option = arg
-            else:
-                params[option] = arg
+    try:
+        # during elevation an additional arg of the .exe itself is added
+        # and messes things up.  So let's remove it.
+        for args in sys.argv[1:]:
+            if "tarpon_installer.exe" not in args:
+                arglist.append(args)
                 
-        for item in params:
-            configfile = params[item]
-                
-    elif len(sys.argv) > 3:            
-        if "-t" in params:
-            configfile = params["-t"]
-    
-        if "-debuglevel" in params:
-            debuglevel = params["-debuglevel"]
-    else:
+        opts, args = getopt.getopt(arglist,"t:d",["debuglevel=","configfile="])
+    except getopt.GetoptError:
         PrintHelp()
-
-    for item in params:
-        logger.info("parameter {}".format(params[item]))
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt in ("-t", "--configfile"):
+            configfile = arg
+            print(f"using {configfile} for installation instruction")
+        elif opt in ("-d", "--debuglevel"):
+            debuglevel = arg
 
     if path.exists(configfile) == False:
         logger.error("ERROR: ><###> Cannot Find Configuration File - '{}'. <###><".format(configfile))
@@ -199,7 +181,7 @@ if __name__ == "__main__":
         logger.info("Elevating Permissions because Administrator = {}".format(isAdmin()))
         if ini_info.adminrights == True:
             if (platform.system() == 'Windows'):
-                elevate(graphical = True)
+                elevate(show_console = True)
             else:
                 logger.error("This install requires admin/root privelages")
                 print("Error - This install requires admin/root privelages")

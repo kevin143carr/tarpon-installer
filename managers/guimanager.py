@@ -55,7 +55,8 @@ class GuiManager:
             cb.grid(row=row,
                     column=0, stick="W")
 
-        ttk.Button(optionsWindow, text="Close", width=20, command=optionsWindow.destroy).place(relx=.5, y=280,anchor=tk.CENTER)
+        optionbutton = ttk.Button(optionsWindow, text="Close", width=20, command=optionsWindow.destroy)
+        optionbutton.pack()
         
     def buildLeftFrame(self, window, functiontitle, ini_info, installfunc):
         self.taskitem = tk.StringVar()

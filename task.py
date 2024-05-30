@@ -261,8 +261,7 @@ class Task:
     def finalActions(self, window, bar, taskitem, ini_info: iniInfo) -> None:
         self.doActions( window, bar, taskitem, ini_info, "final")
 
-    def __init__(self, username, password, hostname, resources):
-        self.username = username
-        self.password = password
-        self.hostname = hostname    
-        self.resources = resources
+    def __init__(self, ini_info: iniInfo):
+        self.username = ini_info.username
+        self.password = ini_info.password
+        self.resources = ini_info.resources
