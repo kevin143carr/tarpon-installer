@@ -41,7 +41,7 @@ class mainClass:
         if sys.version_info[:3] < (3,9):
             self.window = tk.Tk()
         else:
-            self.window = ttk.Window(themename="superhero")
+            self.window = ttk.Window(themename=ini_info.themename)
 
         logger.info("******************************************************************")
         logger.info("******************************************************************")

@@ -26,6 +26,7 @@ class iniInfo:
     userinput = dict()
     variables = dict()
     returnvars = dict()
+    themename = "superhero"
 
     def readConfigFile(self, configfile):
         logger = logging.getLogger("logger")
@@ -40,6 +41,7 @@ class iniInfo:
             self.buttontext = startup['buttontext']
             self.watchdog = eval(startup['watchdog'])
             self.adminrights = eval(startup['adminrights'])
+            self.themename = startup["themename"]
         except Exception as ex:
             logger.error(ex)
             print("Missing keyword {} in the [STARTUP] section".format(ex))

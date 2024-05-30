@@ -9,15 +9,17 @@ from tkinter import font
 from tkscrolledframe import ScrolledFrame
 from PIL import Image as Image, ImageTk as Itk
 import logging
+from iniinfo import iniInfo
 
 logger = None
 
 class GuiManager:
     bar = None
     taskitem = None
-    section = None  
+    section = None
+    themename = "superhero"
     
-    def optionsDialog(parent: tk.Tk, ini_info) -> None:
+    def optionsDialog(parent: tk.Tk, ini_info: iniInfo) -> None:
         optionsWindow = tk.Toplevel(parent)
         optionsWindow.geometry("600x300")
         # window.title(ini_info.installtitle)
@@ -58,7 +60,7 @@ class GuiManager:
         optionbutton = ttk.Button(optionsWindow, text="Close", width=20, command=optionsWindow.destroy)
         optionbutton.pack()
         
-    def buildLeftFrame(self, window, functiontitle, ini_info, installfunc):
+    def buildLeftFrame(self, window, functiontitle, ini_info: iniInfo, installfunc):
         self.taskitem = tk.StringVar()
         
         # Load image
@@ -92,7 +94,7 @@ class GuiManager:
         movetoval =  int(entry)/(entry_boxes)
         canvas.yview_moveto(movetoval)
         
-    def buildRightFrame(self, window, functiontitle, ini_info, installfunc)->None:
+    def buildRightFrame(self, window, functiontitle, ini_info: iniInfo, installfunc)->None:
         global canvas, entry_boxes
         
         isosx = platform.system() == "Darwin"
@@ -160,7 +162,7 @@ class GuiManager:
         if sys.version_info[:3] < (3,9):
             root = tk.Tk()
         else:
-            root = ttk.Window(themename="superhero")
+            root = ttk.Window(themename=self.themename)
             
         root.withdraw()  # Hide the root window
         average_char_width = font.Font().measure('1')  
@@ -181,10 +183,11 @@ class GuiManager:
         root.destroy()        
         return   entrycharactersize + (average_char_width)            
         
-    def buildGUI(self, window, functiontitle, ini_info, installfunc):
+    def buildGUI(self, window, functiontitle, ini_info: iniInfo, installfunc):
         global logger
         logger = logging.getLogger("logger")
         geometrystr: str = ""
+        self.themename = ini_info.themename
         
         screen_width = window.winfo_screenwidth()
         screen_height = window.winfo_screenheight()
