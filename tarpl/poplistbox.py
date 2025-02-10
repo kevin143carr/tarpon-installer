@@ -38,12 +38,12 @@ class PopListbox:
         
         listbox = tk.Listbox(frame, selectmode=tk.SINGLE)
         listbox.pack(pady=10, padx=10, fill=tk.BOTH, expand=True)
-        scrollbar = tk.Scrollbar(frame)
-        scrollbar.pack(side=tk.TOP, fill = tk.BOTH)
         listbox.insert(0, *items)
         listbox.pack()
-        listbox.config(yscrollcommand = scrollbar.set)
+        scrollbar = ttk.Scrollbar(listbox, orient=tk.VERTICAL, command=listbox.yview)
         scrollbar.config(command = listbox.yview)
+        listbox.config(yscrollcommand = scrollbar.set)
+        scrollbar.pack(side=tk.RIGHT, fill = tk.Y)
         
         get_selection_button = ttk.Button(root,
             text="Get selection",
