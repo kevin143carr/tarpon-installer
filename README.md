@@ -202,7 +202,7 @@ The result selection can be used as a variable of the action key\
 **Example:** 
 *getusernames = POPLIST::Please choose a username::INPUTLIST "JAMES, FRED, MARY, JOHN"::getusernameslistvariable*
 
-dothisactionnext1 = MSGBOX "You chose %getusernamesfilevariable%"
+dothisactionnext1 = MSGBOX "You chose %getusernamesfilevariable%"\
 dothisactionnext2 = MSGBOX "You chose %getusernameslistvariable%"
 
 ## IFGOTO - IFGOTO allows you to jump to an index name in the .ini file based on a condition 1 or 0 condition.
