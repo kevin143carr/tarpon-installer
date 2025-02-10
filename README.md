@@ -198,7 +198,7 @@ That requires a user to hit enter or press [OK] button if using the GUI.\
 The syntax is: POPLIST "Message in double quotes" INPUTFILE <filename to read> or you can do INPUTLIST "one,two,three,four"\
 The result selection can be used as a variable of the action key\
 **Example:** 
-*getusernames = POPLIST::Please choose a username::INPUTFILE c:\path\usernames.txt::getusernamesfilevariable*
+*getusernames = POPLIST::Please choose a username::INPUTFILE c:\path\usernames.txt::getusernamesfilevariable*\
 **Example:** 
 *getusernames = POPLIST::Please choose a username::INPUTLIST "JAMES, FRED, MARY, JOHN"::getusernameslistvariable*
 
