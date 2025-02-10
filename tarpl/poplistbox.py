@@ -12,30 +12,48 @@ class PopListbox:
         self.rtnval = listbox.get(indices)
         hasselected.set(True)
         return indices
-        
-    def showPopListbox(self, items, parentwindow):        
-        boxw = tk.Toplevel(parentwindow)
+    
+    def showPopListbox(self, items, parent):        
+        root = tk.Toplevel(parent)
         hasselected = tk.BooleanVar()
         
         hasselected.set(False)
         
-        #boxw.geometry("400x300")
-        boxw.title("Please Select One")
-        listbox = tk.Listbox(boxw, selectmode=tk.SINGLE)
-        listbox.pack(side = tk.LEFT, fill = tk.BOTH)
-        scrollbar = tk.Scrollbar(boxw)
-        scrollbar.pack(side=tk.RIGHT, fill = tk.BOTH)
+        root.geometry("400x300")
+        root.resizable(False, False)
+        
+        root.title("Please Select One")
+        # Center the popup to the parent window
+        parent_x = parent.winfo_x()
+        parent_y = parent.winfo_y()
+        parent_width = parent.winfo_width()
+        parent_height = parent.winfo_height()
+    
+        x_position = parent_x + (parent_width // 2) - (400 // 2)
+        y_position = parent_y + (parent_height // 2) - (300 // 2)
+        root.geometry(f"400x300+{x_position}+{y_position}")        
+        
+        frame = tk.Frame(root)
+        frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        listbox = tk.Listbox(frame, selectmode=tk.SINGLE)
+        listbox.pack(pady=10, padx=10, fill=tk.BOTH, expand=True)
+        scrollbar = tk.Scrollbar(frame)
+        scrollbar.pack(side=tk.TOP, fill = tk.BOTH)
         listbox.insert(0, *items)
         listbox.pack()
         listbox.config(yscrollcommand = scrollbar.set)
         scrollbar.config(command = listbox.yview)
-        get_selection_button = ttk.Button(boxw,
+        
+        get_selection_button = ttk.Button(root,
             text="Get selection",
-            command= lambda: self.get_selection(boxw, hasselected, listbox)
+            command= lambda: self.get_selection(root, hasselected, listbox)
         )        
-        get_selection_button.pack(side=tk.RIGHT, fill=tk.BOTH)
+        #get_selection_button.pack(fill=tk.BOTH)
+        get_selection_button.pack(pady=5, padx=10, fill=tk.X)
         
         time.sleep(1)
-        boxw.wait_variable(hasselected)
-        boxw.destroy()
-        return self.rtnval
+        root.wait_variable(hasselected)
+        root.destroy()
+        return self.rtnval    
+        
