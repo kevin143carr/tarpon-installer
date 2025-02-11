@@ -13,7 +13,7 @@ class PopListbox:
         hasselected.set(True)
         return indices
     
-    def showPopListbox(self, items, parent):        
+    def showPopListbox(self, items, parent, titletext):        
         root = tk.Toplevel(parent)
         hasselected = tk.BooleanVar()
         
@@ -22,7 +22,7 @@ class PopListbox:
         root.geometry("400x300")
         root.resizable(False, False)
         
-        root.title("Please Select One")
+        root.title(titletext)
         # Center the popup to the parent window
         parent_x = parent.winfo_x()
         parent_y = parent.winfo_y()

@@ -60,9 +60,10 @@ class TarpL:
         try:
             splitstr = instring.split('::');
             inputype = self.getTarpL(splitstr[2])
+            titletext = splitstr[1]
             if inputype == 'INPUTLIST':
                 selectlist = splitstr[3].split(',')
-                rtnval = self.pop_listbox.showPopListbox(selectlist, window)
+                rtnval = self.pop_listbox.showPopListbox(selectlist, window, titletext)
                 if rtnval != "":
                     tarpLrtn.rtnstate = True
                     tarpLrtn.rtnvalue = rtnval
@@ -74,7 +75,7 @@ class TarpL:
                 fromfile = fp.readline()
                 print(fromfile)
                 selectlist = fromfile.split(',')
-                rtnval = self.pop_listbox.showPopListbox(selectlist, window)
+                rtnval = self.pop_listbox.showPopListbox(selectlist, window, titletext)
                 if rtnval != "":
                     tarpLrtn.rtnstate = True
                     tarpLrtn.rtnvalue = rtnval
