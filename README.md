@@ -210,8 +210,12 @@ If the a goto happens, the execution of the .ini found will continue from that p
 **Example:** 
 *makeuserdirectory = IFGOTO::test -d /usr/bin::iniindexnameyouwanttojumpto*
 
+## EXEC_PYSCRIPT - EXEC_PYSCRIPT allows you to exec a python .py file regardless of whether python is installed or not.
+The syntax is:  EXEC_PYSCRIPT::folder_if_any\pythonfiletoexecute.py::name_of_function_to_execute.
+**Example:**
+executepython = EXEC_PYSCRIPT::sample-python-scripts\reminder.py::popup_message
+
 # FINAL NOTES:
 Tarpon-Installer is a work in progress.  I have used it for many things.  I will start creating more\
 examples installer.ini files in the future to show the true power.\
 Thanks, Kevin Carr
-
