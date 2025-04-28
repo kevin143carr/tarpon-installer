@@ -1,4 +1,5 @@
 
+import os
 from tkinter import messagebox as msgbox
 from tarpl.poplistbox import PopListbox
 from tarpl.tarplclasses import TarpLreturn
@@ -6,7 +7,7 @@ from tarpl.tarplclasses import TarpLAPIEnum
 
 #Tarpon Installer Language
 class TarpL:
-    API = ['YESNO', 'MSGBOX', 'IFGOTO', 'POPLIST', 'INPUTLIST', 'INPUTFILE']
+    API = ['YESNO', 'MSGBOX', 'IFGOTO', 'POPLIST', 'INPUTLIST', 'INPUTFILE','EXEC_PYSCRIPT']
     pop_listbox = PopListbox()  
     
     def CheckForTarpL(self, inputstr):
@@ -34,6 +35,8 @@ class TarpL:
             return self.IFGOTO(actionstr)
         elif tarpltype == 'POPLIST':
             return self.POPLIST(actionstr, window)
+        elif tarpltype == 'EXEC_PYSCRIPT':
+            return self.EXEC_PYSCRIPT(actionstr)
         
         #match tarpltype:
             #case 'YESNO':
@@ -110,5 +113,37 @@ class TarpL:
             tarpLrtn.tarpltype = TarpLAPIEnum.MSGBOX
         except Exception as ex:
             print("Error in yes no {}".format(ex))
+            
+        return tarpLrtn
+        
+    def EXEC_PYSCRIPT (self, instring):
+        tarpLrtn = TarpLreturn()
+        splitstr = instring.split('::');
+        script_filename =  splitstr[1]
+        function_name = splitstr[2]
+        
+        base_path = os.path.abspath(".")
+        script_path = os.path.join(base_path, script_filename)
+
+        if not os.path.isfile(script_path):
+            print(f"Error: Script file '{script_filename}' not found.")
+            return
+
+        # Load and execute the script in a fresh namespace
+        namespace = {}
+        with open(script_path, 'r') as f:
+            script_code = compile(f.read(), script_path, 'exec')
+            exec(script_code, namespace)
+
+        if function_name not in namespace:
+            print(f"Error: Function '{function_name}' not found in '{script_filename}'.")
+            return
+
+        # Call the function
+        func = namespace[function_name]
+        if callable(func):
+            func()
+        else:
+            print(f"Error: '{function_name}' is not callable.")
             
         return tarpLrtn
