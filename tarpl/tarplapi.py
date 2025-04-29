@@ -7,8 +7,8 @@ from tarpl.tarplclasses import TarpLAPIEnum
 
 #Tarpon Installer Language
 class TarpL:
-    API = ['YESNO', 'MSGBOX', 'IFGOTO', 'POPLIST', 'INPUTLIST', 'INPUTFILE','EXEC_PYSCRIPT']
-    pop_listbox = PopListbox()  
+    API = ['YESNO', 'MSGBOX', 'IFGOTO', 'POPLIST', 'INPUTLIST', 'INPUTFILE','EXEC_PYFUNC']
+    pop_listbox = PopListbox()    
     
     def CheckForTarpL(self, inputstr):
         res = any(ele in inputstr for ele in self.API)
@@ -35,8 +35,8 @@ class TarpL:
             return self.IFGOTO(actionstr)
         elif tarpltype == 'POPLIST':
             return self.POPLIST(actionstr, window)
-        elif tarpltype == 'EXEC_PYSCRIPT':
-            return self.EXEC_PYSCRIPT(actionstr)
+        elif tarpltype == 'EXEC_PYFUNC':
+            return self.EXEC_PYFUNC(actionstr)
         
         #match tarpltype:
             #case 'YESNO':
@@ -115,35 +115,51 @@ class TarpL:
             print("Error in yes no {}".format(ex))
             
         return tarpLrtn
+    
+    
+    
+    def parse_arg(self, val):
+        # Try to convert to int, float, or leave as string
+        for cast in (int, float):
+            try:
+                return cast(val)
+            except ValueError:
+                continue
+        return val      
         
-    def EXEC_PYSCRIPT (self, instring):
+    def EXEC_PYFUNC (self, instring):
         tarpLrtn = TarpLreturn()
         splitstr = instring.split('::');
         script_filename =  splitstr[1]
         function_name = splitstr[2]
+        args_string =  splitstr[3]
         
         base_path = os.path.abspath(".")
         script_path = os.path.join(base_path, script_filename)
-
+    
         if not os.path.isfile(script_path):
             print(f"Error: Script file '{script_filename}' not found.")
             return
-
-        # Load and execute the script in a fresh namespace
+    
+        # Split the string into a list of raw strings
+        args = []
+        if args_string:
+            args = [arg.strip() for arg in args_string.split(',') if arg.strip()]
+    
         namespace = {}
-        with open(script_path, 'r') as f:
-            script_code = compile(f.read(), script_path, 'exec')
-            exec(script_code, namespace)
-
-        if function_name not in namespace:
-            print(f"Error: Function '{function_name}' not found in '{script_filename}'.")
-            return
-
-        # Call the function
-        func = namespace[function_name]
-        if callable(func):
-            func()
-        else:
-            print(f"Error: '{function_name}' is not callable.")
+        try:
+            with open(script_path, 'r') as f:
+                script_code = compile(f.read(), script_path, 'exec')
+                exec(script_code, namespace)
+    
+            func = namespace.get(function_name)
+            if not callable(func):
+                print(f"Error: '{function_name}' is not callable or not found.")
+                return
+    
+            func(*args)
+    
+        except Exception as e:
+            print(f"Error while executing function: {e}")
             
-        return tarpLrtn
+        return tarpLrtn    
