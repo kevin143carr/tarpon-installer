@@ -74,9 +74,9 @@ class ActionManager:
                     
                 if(exec_option != '0'):
                     isTarpL = self._tarpL.CheckForTarpL(finalstr)
-                    text = finalstr.split('::');
+                    
                     if (isTarpL == True):
-                        tarpLrtn = self._tarpL.ExecuteTarpL(finalstr, window)
+                        tarpLrtn = self._tarpL.ExecuteTarpL(finalstr, window, ini_info)
                         if tarpLrtn.rtnstate == False:
                             self.lock.release()
                             continue;

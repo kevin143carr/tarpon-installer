@@ -1,5 +1,6 @@
 
 import os
+from iniinfo import iniInfo
 from tkinter import messagebox as msgbox
 from tarpl.poplistbox import PopListbox
 from tarpl.tarplclasses import TarpLreturn
@@ -7,7 +8,7 @@ from tarpl.tarplclasses import TarpLAPIEnum
 
 #Tarpon Installer Language
 class TarpL:
-    API = ['YESNO', 'MSGBOX', 'IFGOTO', 'POPLIST', 'INPUTLIST', 'INPUTFILE','EXEC_PYFUNC']
+    API = ['YESNO', 'MSGBOX', 'IFGOTO', 'POPLIST', 'INPUTLIST', 'INPUTFILE','EXEC_PYFUNC', 'IFOPTION']
     pop_listbox = PopListbox()    
     
     def CheckForTarpL(self, inputstr):
@@ -25,7 +26,7 @@ class TarpL:
         else:
             return ""
         
-    def ExecuteTarpL(self, actionstr, window):
+    def ExecuteTarpL(self, actionstr, window, ini_info: iniInfo):
         tarpltype = self.getTarpL(actionstr)
         if tarpltype == 'YESNO':
             return self.YESNO(actionstr, window)
@@ -37,6 +38,8 @@ class TarpL:
             return self.POPLIST(actionstr, window)
         elif tarpltype == 'EXEC_PYFUNC':
             return self.EXEC_PYFUNC(actionstr)
+        elif tarpltype == 'IFOPTION':
+            return self.IFOPTION(actionstr, ini_info)        
         
         #match tarpltype:
             #case 'YESNO':
@@ -46,16 +49,7 @@ class TarpL:
             #case 'IFGOTO':                
                 #return self.IFGOTO(actionstr)
             #case 'POPLIST':
-                #return self.POPLIST(actionstr, window)
-            
-    def IFGOTO(self, instring):
-        tarpLrtn = TarpLreturn()
-        splitstr = instring.split('::');
-        tarpLrtn.rtnstate = True        
-        tarpLrtn.rtnvar = splitstr[2]
-        tarpLrtn.rtnvalue = splitstr[1]
-        tarpLrtn.tarpltype = TarpLAPIEnum.IFGOTO
-        return tarpLrtn
+                #return self.POPLIST(actionstr, window)            
     
     def POPLIST (self, instring, window):
         tarpLrtn = TarpLreturn()
@@ -134,12 +128,15 @@ class TarpL:
         function_name = splitstr[2]
         args_string =  splitstr[3]
         
+        tarpLrtn.rtnstate = False
+        tarpLrtn.tarpltype = TarpLAPIEnum.EXEC_PYFUNC                
+        
         base_path = os.path.abspath(".")
         script_path = os.path.join(base_path, script_filename)
     
         if not os.path.isfile(script_path):
             print(f"Error: Script file '{script_filename}' not found.")
-            return
+            return tarpLrtn
     
         # Split the string into a list of raw strings
         args = []
@@ -155,11 +152,39 @@ class TarpL:
             func = namespace.get(function_name)
             if not callable(func):
                 print(f"Error: '{function_name}' is not callable or not found.")
-                return
+                return tarpLrtn
     
             func(*args)
     
         except Exception as e:
             print(f"Error while executing function: {e}")
             
+        return tarpLrtn
+    
+    def IFGOTO(self, instring):
+        tarpLrtn = TarpLreturn()
+        splitstr = instring.split('::');
+        tarpLrtn.rtnstate = True        
+        tarpLrtn.rtnvar = splitstr[2]
+        tarpLrtn.rtnvalue = splitstr[1]
+        tarpLrtn.tarpltype = TarpLAPIEnum.IFGOTO
         return tarpLrtn    
+    
+    def IFOPTION (self, instring: str, ini_info: iniInfo):
+        tarpLrtn = TarpLreturn()
+        splitstr = instring.split('::');
+        exec_option = '1'
+        
+        if splitstr[1] in ini_info.optionvals.keys():
+            exec_option = ini_info.optionvals[splitstr[1]].get()
+            if(exec_option != '0'):            
+                tarpLrtn.rtnvalue =  splitstr[2]
+            else:
+                tarpLrtn.rtnvalue =  "echo option {} not set".format(splitstr[1])
+        else:
+            tarpLrtn.rtnvalue =  "echo option {} not found".format(splitstr[1])
+        
+            
+        tarpLrtn.rtnstate = True
+        tarpLrtn.tarpltype = TarpLAPIEnum.IFOPTION        
+        return tarpLrtn

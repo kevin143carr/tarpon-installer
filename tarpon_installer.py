@@ -14,7 +14,7 @@ import ttkbootstrap as ttk
 import threading
 import logging
 
-version = "4.0.7"
+version = "4.0.8"
 logger = None
 configfile = "config.ini"
 

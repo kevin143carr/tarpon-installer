@@ -6,7 +6,9 @@ class TarpLAPIEnum(Enum):
     POPLIST = 3
     INPUTLIST = 4
     INPUTFILE = 5
-    IFGOTO = 6  
+    IFGOTO = 6
+    EXEC_PYFUNC = 7
+    IFOPTION = 8
 
 class TarpLreturn:
     rtnstate = bool()
