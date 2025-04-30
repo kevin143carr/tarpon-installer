@@ -211,7 +211,7 @@ return '0' to indicate true.  You can modify commands for Windows to return 0 fo
 If the a goto happens, the execution of the .ini found will continue from that point.\
 **Examples:** 
 *checklinuxuserdirectory = IFGOTO::[ -d "/usr/bin" ]; exit $?::iniindexnameyouwanttojumpto*\
-*checkwindowsdirectory = ::IF EXIST "C:\Windows" (cmd /c exit 0) ELSE (cmd /c exit 1) & cmd /c exit %ERRORLEVEL%::iniindexnameyouwanttojumpto*\
+*checkwindowsdirectory = IFGOTO::IF EXIST "C:\Windows" (cmd /c exit 0) ELSE (cmd /c exit 1) & cmd /c exit %ERRORLEVEL%::iniindexnameyouwanttojumpto*\
 
 ## EXEC_PYFUNC - EXEC_PYFUNC allows you to call a function from a .py file regardless of whether python is installed or not.
 The syntax is:  EXEC_PYFUNC::folder_if_any\pythonfiletoexecute.py::name_of_function_to_execute::parameters,seperated,by,commas\
