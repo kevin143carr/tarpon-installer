@@ -223,6 +223,8 @@ SYNTAX: IFOPTION::optionname::code to execute\\
 *ifoptiontest2 = IFOPTION::optionmakeadirectory::echo optionmakeadirectory must have been checked*\
 *ifoptiontest3 = IFOPTION::optionporkythepig::echo optionporkythepig must have been checked*\
 
+## AUTOCHECKOPTION - AUTOCHECKOPTION (Coming Soon), allows an option to be automatically selected based upon a different option selection.
+
 ## EXEC_PYFUNC - EXEC_PYFUNC allows you to call a function from a .py file regardless of whether python is installed or not.
 SYNTAX:  EXEC_PYFUNC::folder_if_any\pythonfiletoexecute.py::name_of_function_to_execute::parameters,seperated,by,commas\\
 It can only handle string parameters right now!\
