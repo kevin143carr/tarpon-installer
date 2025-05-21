@@ -10,6 +10,9 @@ from tkscrolledframe import ScrolledFrame
 from PIL import Image as Image, ImageTk as Itk
 import logging
 from iniinfo import iniInfo
+from tarpl.tarplapi import TarpL
+from tarpl.tarplapi import TarpLreturn
+from tarpl.tarplclasses import TarpLAPIEnum
 
 logger = None
 
@@ -18,47 +21,96 @@ class GuiManager:
     taskitem = None
     section = None
     themename = "superhero"
+    _tarpL = TarpL()
     
-    def optionsDialog(parent: tk.Tk, ini_info: iniInfo) -> None:
+    def on_checkbox_toggle(self, changed_key, otheroption, ini_info):
+        print ("{changed_key}, {otheroption}")
+        if ini_info.optionvals[changed_key].get() == '1':
+            ini_info.optionvals[otheroption].set('1')        
+        
+        # Example rule: if "OptionA" is checked, check "OptionB"
+        # You can add more logic here if needed    
+    
+    def optionsDialog(self, parent: tk.Tk, ini_info: iniInfo) -> None:
         optionsWindow = tk.Toplevel(parent)
-        optionsWindow.geometry("600x300")
-        # window.title(ini_info.installtitle)
-        optionsWindow.resizable(False,False)
+        optionsWindow.resizable(False, False)
         optionsWindow.focusmodel(model="active")
         optionsWindow.after(100, lambda: optionsWindow.focus_force())
-
-        # This centers the window
-        optionsWindow.wait_visibility()
-        x = parent.winfo_x() + parent.winfo_width()//2 - optionsWindow.winfo_width()//2
-        y = parent.winfo_y() + parent.winfo_height()//2 - optionsWindow.winfo_height()//2
-        optionsWindow.geometry(f"+{x}+{y}")
-
-        functionFrame = ttk.Frame(optionsWindow, height=240, width=340)
-        functionFrame.pack(side="top", expand=0, fill="both")
-        
-        scrolledFrame = ScrolledFrame(functionFrame,scrollbars = "vertical")
-        scrolledFrame.pack(fill=tk.BOTH, padx=20, expand = "yes", pady=5)
-
+    
+        # Main content frame
+        content_frame = ttk.Frame(optionsWindow)
+        content_frame.pack(side="top", fill="both", expand=True)
+    
+        # Scrolling content area
+        functionFrame = ttk.Frame(content_frame)
+        functionFrame.pack(side="top", fill="both", expand=True)
+    
+        scrolledFrame = ScrolledFrame(functionFrame, scrollbars="vertical")
+        scrolledFrame.pack(fill=tk.BOTH, expand=True, padx=20, pady=5)
+    
         scrolledFrame.bind_arrow_keys(functionFrame)
         scrolledFrame.bind_scroll_wheel(functionFrame)
-        inner_frame = scrolledFrame.display_widget(tk.Frame)  
-
-        for row in range(len(ini_info.options)):
-            vals = ini_info.options.keys()
-            value = list(vals)[row]
-
+        inner_frame = scrolledFrame.display_widget(tk.Frame)
+    
+        for row, value in enumerate(ini_info.options):
             if value not in ini_info.optionvals:
-                ini_info.optionvals[value]=tk.StringVar(value='0')
-
-            lb = ttk.Label(inner_frame, text=ini_info.options[value])
-            cb = ttk.Checkbutton(inner_frame, variable=ini_info.optionvals[value], onvalue='1', offvalue='0')
-            lb.grid(row=row,
-                    column=1, stick="W")
-            cb.grid(row=row,
-                    column=0, stick="W")
-
-        optionbutton = ttk.Button(optionsWindow, text="Close", width=20, command=optionsWindow.destroy)
-        optionbutton.pack()
+                ini_info.optionvals[value] = tk.StringVar(value='0')
+    
+            isTarpL = self._tarpL.CheckForTarpL(ini_info.options[value])
+            if isTarpL and 'ALSOCHECKOPTION' in ini_info.options[value]:
+                optionparams = ini_info.options[value].split('::')
+                label_text = optionparams[2]
+                other_option_key = optionparams[1]
+    
+                if other_option_key not in ini_info.optionvals:
+                    ini_info.optionvals[other_option_key] = tk.StringVar(value='0')
+    
+                lb = ttk.Label(inner_frame, text=label_text)
+                cb = ttk.Checkbutton(
+                    inner_frame,
+                    variable=ini_info.optionvals[value],
+                    onvalue='1',
+                    offvalue='0',
+                    command=lambda actionstr=ini_info.options[value],
+                                   val=value,
+                                   other=other_option_key: self._tarpL.ExecuteTarpL(
+                        actionstr, ini_info, optionone=val, optiontwo=other
+                    )
+                )
+            else:
+                lb = ttk.Label(inner_frame, text=ini_info.options[value])
+                cb = ttk.Checkbutton(
+                    inner_frame,
+                    variable=ini_info.optionvals[value],
+                    onvalue='1',
+                    offvalue='0'
+                )
+    
+            lb.grid(row=row, column=1, sticky="w")
+            cb.grid(row=row, column=0, sticky="w")
+    
+        # Bottom frame for the close button, centered
+        bottom_frame = ttk.Frame(optionsWindow)
+        bottom_frame.pack(side="bottom", fill="x", pady=10)
+    
+        optionbutton = ttk.Button(bottom_frame, text="Close", width=20, command=optionsWindow.destroy)
+        optionbutton.pack(anchor="center")
+    
+        # Allow the window to size itself based on content
+        optionsWindow.update_idletasks()
+    
+        # Center the window on screen
+        window_width = optionsWindow.winfo_width()
+        window_height = optionsWindow.winfo_height()
+        screen_width = optionsWindow.winfo_screenwidth()
+        screen_height = optionsWindow.winfo_screenheight()
+    
+        x = max(0, min(parent.winfo_x() + parent.winfo_width() // 2 - window_width // 2,
+                       screen_width - window_width))
+        y = max(0, min(parent.winfo_y() + parent.winfo_height() // 2 - window_height // 2,
+                       screen_height - window_height))
+    
+        optionsWindow.geometry(f"{window_width}x{window_height}+{x}+{y}")
         
     def buildLeftFrame(self, window, functiontitle, ini_info: iniInfo, installfunc):
         self.taskitem = tk.StringVar()
@@ -120,7 +172,8 @@ class GuiManager:
         functionTitleLabel = ttk.Label(title_frame,text=functiontitle, anchor="center", font="Arial 16 bold")
         functionTitleLabel.pack(padx=5, pady=10, anchor="center")
         
-        options_button = ttk.Button(title_frame, text="Options", width=18, command=lambda: GuiManager.optionsDialog(window, ini_info))
+        gm = GuiManager()
+        options_button = ttk.Button(title_frame, text="Options", width=18, command=lambda: gm.optionsDialog(window, ini_info))
         options_button.pack(fill=tk.X, pady=5, padx=10, side=tk.BOTTOM, anchor="s")
         
         scrolledFrame = ScrolledFrame(title_frame,scrollbars = "vertical")

@@ -9,6 +9,7 @@ class TarpLAPIEnum(Enum):
     IFGOTO = 6
     EXEC_PYFUNC = 7
     IFOPTION = 8
+    ALSOCHECKOPTION = 9
 
 class TarpLreturn:
     rtnstate = bool()

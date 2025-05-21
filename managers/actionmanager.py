@@ -76,7 +76,7 @@ class ActionManager:
                     isTarpL = self._tarpL.CheckForTarpL(finalstr)
                     
                     if (isTarpL == True):
-                        tarpLrtn = self._tarpL.ExecuteTarpL(finalstr, window, ini_info)
+                        tarpLrtn = self._tarpL.ExecuteTarpL(finalstr, ini_info, window)
                         if tarpLrtn.rtnstate == False:
                             self.lock.release()
                             continue;

@@ -8,7 +8,7 @@ from tarpl.tarplclasses import TarpLAPIEnum
 
 #Tarpon Installer Language
 class TarpL:
-    API = ['YESNO', 'MSGBOX', 'IFGOTO', 'POPLIST', 'INPUTLIST', 'INPUTFILE','EXEC_PYFUNC', 'IFOPTION']
+    API = ['YESNO', 'MSGBOX', 'IFGOTO', 'POPLIST', 'INPUTLIST', 'INPUTFILE','EXEC_PYFUNC', 'IFOPTION', 'ALSOCHECKOPTION']
     pop_listbox = PopListbox()    
     
     def CheckForTarpL(self, inputstr):
@@ -26,7 +26,7 @@ class TarpL:
         else:
             return ""
         
-    def ExecuteTarpL(self, actionstr, window, ini_info: iniInfo):
+    def ExecuteTarpL(self, actionstr, ini_info: iniInfo, window = None, optionone: str = 'none', optiontwo: str = 'none'):
         tarpltype = self.getTarpL(actionstr)
         if tarpltype == 'YESNO':
             return self.YESNO(actionstr, window)
@@ -39,17 +39,9 @@ class TarpL:
         elif tarpltype == 'EXEC_PYFUNC':
             return self.EXEC_PYFUNC(actionstr)
         elif tarpltype == 'IFOPTION':
-            return self.IFOPTION(actionstr, ini_info)        
-        
-        #match tarpltype:
-            #case 'YESNO':
-                #return self.YESNO(actionstr, window)
-            #case 'MSGBOX':
-                #return self.MSGBOX(actionstr, window)
-            #case 'IFGOTO':                
-                #return self.IFGOTO(actionstr)
-            #case 'POPLIST':
-                #return self.POPLIST(actionstr, window)            
+            return self.IFOPTION(actionstr, ini_info)
+        elif tarpltype == 'ALSOCHECKOPTION':
+            return self.ALSOCHECKOPTION(ini_info, optionone, optiontwo)                   
     
     def POPLIST (self, instring, window):
         tarpLrtn = TarpLreturn()
@@ -187,4 +179,11 @@ class TarpL:
             
         tarpLrtn.rtnstate = True
         tarpLrtn.tarpltype = TarpLAPIEnum.IFOPTION        
+        return tarpLrtn
+    
+    def ALSOCHECKOPTION (self, ini_info: iniInfo, changed_key, otheroption):
+        tarpLrtn = TarpLreturn()
+        
+        if ini_info.optionvals[changed_key].get() == '1':
+            ini_info.optionvals[otheroption].set('1')            
         return tarpLrtn
