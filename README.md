@@ -180,16 +180,17 @@ The {ADD} Designator will add a line to the last line of the file.  It wil creat
 # SPECIAL ACTION COMMANDS  AKA TARPL (Tarpon Language)
 ## YESNO - YESNO allows you to popup a question to a user given them a choice of Yes or No.
 SYNTAX:  YESNO::string to display::action to take\
-If Yes then the action after the '::' token will be taken.\
-**Example:**\
-*rebootornot = YESNO::Do you want to reboot your system now?::echo "## - rebooting in 10 seconds ##"; sleep 10; reboot*\
+If Yes then the action after the '::' token will be taken.
+
+**Example:** \
+*rebootornot = YESNO::Do you want to reboot your system now?::echo "## - rebooting in 10 seconds ##"; sleep 10; reboot*
 
 ## MSGBOX - MSGBOX simply pop up a message dialog in the GUI,  or a displays text in a console application.
 That requires a user to hit enter or press [OK] button if using the GUI.\
-SYNTAX:  MSGBOX "string to display"\
-\
-**Example:** \ 
-*popupmessagetouser1 = MSGBOX "Please make sure this %hostIP% is the correct IP address."*\
+SYNTAX:  MSGBOX "string to display"
+
+**Example:** \
+*popupmessagetouser1 = MSGBOX "Please make sure this %hostIP% is the correct IP address."*
 
 ## (NOT IMPLEMENTED YET) [IF][THEN][ELSE] - [IF][THEN][ELSE] allow for conditional statements within actions.
 
@@ -236,8 +237,9 @@ SYNTAX: ALSOCHECKOPTION::optionyouwantchecked::information about option\
 *optionpopupmessagelater = Popup a message to you later*
 
 ## EXEC_PYFUNC - EXEC_PYFUNC allows you to call a function from a .py file regardless of whether python is installed or not.
-SYNTAX:  EXEC_PYFUNC::folder_if_any\pythonfiletoexecute.py::name_of_function_to_execute::parameters,seperated,by,commas\\
-It can only handle string parameters right now!\
+SYNTAX:  EXEC_PYFUNC::folder_if_any\pythonfiletoexecute.py::name_of_function_to_execute::parameters,seperated,by,commas\
+It can only handle string parameters right now!
+
 **Example:**\
 *executepython = EXEC_PYFUNC::sample-python-scripts\reminder.py::popup_message::"I Forgot","To Eat","Breakfast"*
 
