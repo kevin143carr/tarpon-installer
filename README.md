@@ -188,11 +188,11 @@ If Yes then the action after the '::' token will be taken.\
 That requires a user to hit enter or press [OK] button if using the GUI.\
 SYNTAX:  MSGBOX "string to display"\
 **Example:**\ 
-*popupmessagetouser1 = MSGBOX "Please make sure this %hostIP% is the correct IP address."*
+*popupmessagetouser1 = MSGBOX "Please make sure this %hostIP% is the correct IP address."*\
 
 ## (NOT IMPLEMENTED YET) [IF][THEN][ELSE] - [IF][THEN][ELSE] allow for conditional statements within actions.
 **Example:**\ 
-*checkipaddress = [IF]%hostIP% == 127.0.0.1[THEN]MSGBOX "You are using localhost"[ELSE]MSGBOX "You are not using localhost"*
+*checkipaddress = [IF]%hostIP% == 127.0.0.1[THEN]MSGBOX "You are using localhost"[ELSE]MSGBOX "You are not using localhost"*\
 
 ## POPLIST - POPLIST allows a user to populate a list based on a comma delimitted string or file and select one.  
 SYNTAX: POPLIST "Message in double quotes" INPUTFILE <filename to read> or you can do INPUTLIST "one,two,three,four"\\
