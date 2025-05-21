@@ -229,7 +229,7 @@ SYNTAX: ALSOCHECKOPTION::optionyouwantchecked::information about option\\
 
 ## EXEC_PYFUNC - EXEC_PYFUNC allows you to call a function from a .py file regardless of whether python is installed or not.
 SYNTAX:  EXEC_PYFUNC::folder_if_any\pythonfiletoexecute.py::name_of_function_to_execute::parameters,seperated,by,commas\\
-It can only handle string parameters right now!\\
+It can only handle string parameters right now!\
 **Example:**\
 *executepython = EXEC_PYFUNC::sample-python-scripts\reminder.py::popup_message::"I Forgot","To Eat","Breakfast"*\
 
