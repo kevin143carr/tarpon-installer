@@ -187,20 +187,25 @@ If Yes then the action after the '::' token will be taken.\
 ## MSGBOX - MSGBOX simply pop up a message dialog in the GUI,  or a displays text in a console application.
 That requires a user to hit enter or press [OK] button if using the GUI.\
 SYNTAX:  MSGBOX "string to display"\
-**Example:**\ 
+\
+**Example:** \ 
 *popupmessagetouser1 = MSGBOX "Please make sure this %hostIP% is the correct IP address."*\
 
 ## (NOT IMPLEMENTED YET) [IF][THEN][ELSE] - [IF][THEN][ELSE] allow for conditional statements within actions.
-**Example:**\ 
-*checkipaddress = [IF]%hostIP% == 127.0.0.1[THEN]MSGBOX "You are using localhost"[ELSE]MSGBOX "You are not using localhost"*\
+
+**Example:**
+
+*checkipaddress = [IF]%hostIP% == 127.0.0.1[THEN]MSGBOX "You are using localhost"[ELSE]MSGBOX "You are not using localhost"*
 
 ## POPLIST - POPLIST allows a user to populate a list based on a comma delimitted string or file and select one.  
-SYNTAX: POPLIST "Message in double quotes" INPUTFILE <filename to read> or you can do INPUTLIST "one,two,three,four"\
+SYNTAX: POPLIST::Message for user::INPUTFILE <filename to read> or you can do INPUTLIST "one,two,three,four"\
 The result selection can be used as a variable of the action key\
-**Example:**\ 
-*getusernames1 = POPLIST::Please choose a username::INPUTFILE::c:\path\usernames.txt::getusernamesfilevariable*\
-**Example:**\
-*getusernames2 = POPLIST::Please choose a username::INPUTLIST::"JAMES, FRED, MARY, JOHN"::getusernameslistvariable*\
+\
+**Example:** \
+*getusernames1 = POPLIST::Please choose a username::INPUTFILE::c:\path\usernames.txt::getusernamesfilevariable*
+\
+**Example:** \
+*getusernames2 = POPLIST::Please choose a username::INPUTLIST::"JAMES, FRED, MARY, JOHN"::getusernameslistvariable*
 
 dothisactionnext1 = MSGBOX "You chose %getusernamesfilevariable%"\
 dothisactionnext2 = MSGBOX "You chose %getusernameslistvariable%"
@@ -211,28 +216,30 @@ SYNTAX: IFGOTO::command that returns 0 or 1::indexname\
 If the condition is '0' then the jump to an index name will happen, this is because many of the linux commands\
 return '0' to indicate true.  You can modify commands for Windows to return 0 for true;
 If the a goto happens, the execution of the .ini found will continue from that point.\
+\
 **Examples:**\
 *checklinuxuserdirectory = IFGOTO::[ -d "/usr/bin" ]; exit $?::iniindexnameyouwanttojumpto*\
 *checkwindowsdirectory = IFGOTO::IF EXIST "C:\Windows" (cmd /c exit 0) ELSE (cmd /c exit 1) & cmd /c exit %ERRORLEVEL%::iniindexnameyouwanttojumpto*\
 
 ## IFOPTION - IFOPTION verifies if an option was checked and then if checked, executes the code.
 SYNTAX: IFOPTION::optionname::code to execute\
+\
 **Examples:**\
 *ifoptiontest1 = IFOPTION::optionpopupmessagelater::echo optionpopupmessagelater must have been checked*\
 *ifoptiontest2 = IFOPTION::optionmakeadirectory::echo optionmakeadirectory must have been checked*\
-*ifoptiontest3 = IFOPTION::optionporkythepig::echo optionporkythepig must have been checked*\
+*ifoptiontest3 = IFOPTION::optionporkythepig::echo optionporkythepig must have been checked*
 
 ## ALSOCHECKOPTION - ALSOCHECKOPTION allows an option to be automatically selected based upon a different option selection.
 SYNTAX: ALSOCHECKOPTION::optionyouwantchecked::information about option\
 **Examples:**\
 *optionmakeadirectory = ALSOCHECKOPTION::optionpopupmessagelater::Create a directory in your home folder*\
-*optionpopupmessagelater = Popup a message to you later*\
+*optionpopupmessagelater = Popup a message to you later*
 
 ## EXEC_PYFUNC - EXEC_PYFUNC allows you to call a function from a .py file regardless of whether python is installed or not.
 SYNTAX:  EXEC_PYFUNC::folder_if_any\pythonfiletoexecute.py::name_of_function_to_execute::parameters,seperated,by,commas\\
 It can only handle string parameters right now!\
 **Example:**\
-*executepython = EXEC_PYFUNC::sample-python-scripts\reminder.py::popup_message::"I Forgot","To Eat","Breakfast"*\
+*executepython = EXEC_PYFUNC::sample-python-scripts\reminder.py::popup_message::"I Forgot","To Eat","Breakfast"*
 
 # FINAL NOTES:
 Tarpon-Installer is a work in progress.  I have used it for many things.  I will start creating more\
