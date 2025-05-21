@@ -195,12 +195,12 @@ SYNTAX:  MSGBOX "string to display"\
 *checkipaddress = [IF]%hostIP% == 127.0.0.1[THEN]MSGBOX "You are using localhost"[ELSE]MSGBOX "You are not using localhost"*\
 
 ## POPLIST - POPLIST allows a user to populate a list based on a comma delimitted string or file and select one.  
-SYNTAX: POPLIST "Message in double quotes" INPUTFILE <filename to read> or you can do INPUTLIST "one,two,three,four"\\
+SYNTAX: POPLIST "Message in double quotes" INPUTFILE <filename to read> or you can do INPUTLIST "one,two,three,four"\
 The result selection can be used as a variable of the action key\
 **Example:**\ 
 *getusernames1 = POPLIST::Please choose a username::INPUTFILE::c:\path\usernames.txt::getusernamesfilevariable*\
 **Example:**\
-*getusernames2 = POPLIST::Please choose a username::INPUTLIST::"JAMES, FRED, MARY, JOHN"::getusernameslistvariable*
+*getusernames2 = POPLIST::Please choose a username::INPUTLIST::"JAMES, FRED, MARY, JOHN"::getusernameslistvariable*\
 
 dothisactionnext1 = MSGBOX "You chose %getusernamesfilevariable%"\
 dothisactionnext2 = MSGBOX "You chose %getusernameslistvariable%"
