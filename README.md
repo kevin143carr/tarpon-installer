@@ -206,7 +206,8 @@ dothisactionnext1 = MSGBOX "You chose %getusernamesfilevariable%"\
 dothisactionnext2 = MSGBOX "You chose %getusernameslistvariable%"
 
 ## IFGOTO - IFGOTO allows you to jump to an index name in the .ini file based on a 1 or 0 condition.
-SYNTAX: IFGOTO::command that returns 0 or 1::indexname\\
+SYNTAX: IFGOTO::command that returns 0 or 1::indexname\
+\
 If the condition is '0' then the jump to an index name will happen, this is because many of the linux commands\
 return '0' to indicate true.  You can modify commands for Windows to return 0 for true;
 If the a goto happens, the execution of the .ini found will continue from that point.\
