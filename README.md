@@ -179,14 +179,14 @@ The {ADD} Designator will add a line to the last line of the file.  It wil creat
 
 # SPECIAL ACTION COMMANDS  AKA TARPL (Tarpon Language)
 ## YESNO - YESNO allows you to popup a question to a user given them a choice of Yes or No.
-SYNTAX:  YESNO::string to display::action to take\\
-If Yes then the action after the '::' token will be taken.\\
+SYNTAX:  YESNO::string to display::action to take\
+If Yes then the action after the '::' token will be taken.\
 **Example:**\
 *rebootornot = YESNO::Do you want to reboot your system now?::echo "## - rebooting in 10 seconds ##"; sleep 10; reboot*\
 
 ## MSGBOX - MSGBOX simply pop up a message dialog in the GUI,  or a displays text in a console application.
 That requires a user to hit enter or press [OK] button if using the GUI.\
-SYNTAX:  MSGBOX "string to display"\\
+SYNTAX:  MSGBOX "string to display"\
 **Example:**\ 
 *popupmessagetouser1 = MSGBOX "Please make sure this %hostIP% is the correct IP address."*
 
@@ -196,7 +196,7 @@ SYNTAX:  MSGBOX "string to display"\\
 
 ## POPLIST - POPLIST allows a user to populate a list based on a comma delimitted string or file and select one.  
 SYNTAX: POPLIST "Message in double quotes" INPUTFILE <filename to read> or you can do INPUTLIST "one,two,three,four"\\
-The result selection can be used as a variable of the action key\\
+The result selection can be used as a variable of the action key\
 **Example:**\ 
 *getusernames1 = POPLIST::Please choose a username::INPUTFILE::c:\path\usernames.txt::getusernamesfilevariable*\
 **Example:**\
@@ -209,20 +209,20 @@ dothisactionnext2 = MSGBOX "You chose %getusernameslistvariable%"
 SYNTAX: IFGOTO::command that returns 0 or 1::indexname\\
 If the condition is '0' then the jump to an index name will happen, this is because many of the linux commands\
 return '0' to indicate true.  You can modify commands for Windows to return 0 for true;
-If the a goto happens, the execution of the .ini found will continue from that point.\\
+If the a goto happens, the execution of the .ini found will continue from that point.\
 **Examples:**\
 *checklinuxuserdirectory = IFGOTO::[ -d "/usr/bin" ]; exit $?::iniindexnameyouwanttojumpto*\
 *checkwindowsdirectory = IFGOTO::IF EXIST "C:\Windows" (cmd /c exit 0) ELSE (cmd /c exit 1) & cmd /c exit %ERRORLEVEL%::iniindexnameyouwanttojumpto*\
 
 ## IFOPTION - IFOPTION verifies if an option was checked and then if checked, executes the code.
-SYNTAX: IFOPTION::optionname::code to execute\\
+SYNTAX: IFOPTION::optionname::code to execute\
 **Examples:**\
 *ifoptiontest1 = IFOPTION::optionpopupmessagelater::echo optionpopupmessagelater must have been checked*\
 *ifoptiontest2 = IFOPTION::optionmakeadirectory::echo optionmakeadirectory must have been checked*\
 *ifoptiontest3 = IFOPTION::optionporkythepig::echo optionporkythepig must have been checked*\
 
 ## ALSOCHECKOPTION - ALSOCHECKOPTION allows an option to be automatically selected based upon a different option selection.
-SYNTAX: ALSOCHECKOPTION::optionyouwantchecked::information about option\\
+SYNTAX: ALSOCHECKOPTION::optionyouwantchecked::information about option\
 **Examples:**\
 *optionmakeadirectory = ALSOCHECKOPTION::optionpopupmessagelater::Create a directory in your home folder*\
 *optionpopupmessagelater = Popup a message to you later*\
