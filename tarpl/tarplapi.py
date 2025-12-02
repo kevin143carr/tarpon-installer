@@ -184,6 +184,13 @@ class TarpL:
     def ALSOCHECKOPTION (self, ini_info: iniInfo, changed_key, otheroption):
         tarpLrtn = TarpLreturn()
         
-        if ini_info.optionvals[changed_key].get() == '1':
-            ini_info.optionvals[otheroption].set('1')            
+        options = otheroption.split(',')
+        
+        if len(options) > 1:
+            for option in options:                
+                if ini_info.optionvals[changed_key].get() == '1':
+                    ini_info.optionvals[option].set('1')
+        else:
+            if ini_info.optionvals[changed_key].get() == '1':
+                ini_info.optionvals[otheroption].set('1')
         return tarpLrtn
