@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
-import paramiko
 import os
+import sys
+import paramiko
 import shutil
 import tkinter as tk
-from ttkbootstrap import ttk
+try:
+    from ttkbootstrap import ttk
+except ImportError:
+    import ttkbootstrap as ttk
 from zipfile import ZipFile
 from tarfile import TarFile
 from shutil import copyfile

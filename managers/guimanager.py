@@ -1,9 +1,9 @@
 import sys
 import platform
 import tkinter as tk
-if sys.version_info[:3] < (3,9):
+try:
     from ttkbootstrap import ttk
-else:
+except ImportError:
     import ttkbootstrap as ttk
 from tkinter import font    
 from tkscrolledframe import ScrolledFrame
