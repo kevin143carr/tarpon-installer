@@ -61,13 +61,8 @@ class GuiManager:
                 optionparams = ini_info.options[value].split('::')
                 label_text = optionparams[2]
                 other_option_key = optionparams[1]
-                
-                other_options_keys =  other_option_key.split(',')
-    
-                if len(other_options_keys) > 1:
-                    for option in other_options_keys:
-                        ini_info.optionvals[option] = tk.StringVar(value='0')
-                elif other_option_key not in ini_info.optionvals:
+                                
+                if other_option_key not in ini_info.optionvals:
                     ini_info.optionvals[other_option_key] = tk.StringVar(value='0')
     
                 lb = ttk.Label(inner_frame, text=label_text)
