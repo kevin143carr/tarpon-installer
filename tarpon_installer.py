@@ -1,4 +1,5 @@
-import sys, getopt
+import argparse
+import sys
 import ctypes
 from elevate import elevate
 from managers.rpmmanager import RpmManager
@@ -13,10 +14,10 @@ import tkinter as tk
 import ttkbootstrap as ttk
 import threading
 import logging
+from typing import List
 
-version = "4.0.10"
-logger = None
-configfile = "config.ini"
+VERSION = "4.0.10"
+DEFAULT_CONFIGFILE = "config.ini"
 
 class mainClass:
     """Using a main class because of the amount of work that needs to be done initially."""
@@ -25,33 +26,29 @@ class mainClass:
     gui_manager = GuiManager()
 
     window = None
+    logger = logging.getLogger("logger")
 
     def installThread(self, ini_info, InstallButton, window) -> None:
         InstallButton['state'] = tk.DISABLED
         installthread = threading.Thread(target=self.beginInstall, args=(ini_info, window))
         installthread.start()
 
-    def main(self) -> None:
-        """This is the main entry point for the mainClass. It does not take any parameters
-        Args:
-            None
-        Returns:
-            None
-        """
+    def main(self, ini_info: iniInfo) -> None:
+        """Main entry point for the GUI workflow."""
         if sys.version_info[:3] < (3,9):
             self.window = tk.Tk()
         else:
             self.window = ttk.Window(themename=ini_info.themename)
 
-        logger.info("******************************************************************")
-        logger.info("******************************************************************")
-        logger.info(" ><###> Tarpon Installer <###>< is an open source install creator.")
-        logger.info(" It has been made open source under the MIT Licensing agreement.")
-        logger.info(" Feel free to use, modify and distribute")
-        logger.info(" as needed, as long as this banner remains in place")
-        logger.info("*  VERSION {}".format(version))
-        logger.info("******************************************************************")
-        logger.info("******************************************************************")
+        self.logger.info("******************************************************************")
+        self.logger.info("******************************************************************")
+        self.logger.info(" ><###> Tarpon Installer <###>< is an open source install creator.")
+        self.logger.info(" It has been made open source under the MIT Licensing agreement.")
+        self.logger.info(" Feel free to use, modify and distribute")
+        self.logger.info(" as needed, as long as this banner remains in place")
+        self.logger.info("*  VERSION {}".format(VERSION))
+        self.logger.info("******************************************************************")
+        self.logger.info("******************************************************************")
 
         functiontitle = 'Important Installation Information Needed'
 
@@ -103,90 +100,200 @@ class mainClass:
             
                 
         except Exception as ex:
-            logger.error(ex)
+            self.logger.error(ex)
 
 
-def PrintHelp() -> None:
-    print("************************************************************************")
-    print("*  ><###> Tarpon Installer <###>< is an open source install creator.   *")
-    print("*  specify config.ini file on the commandline                          *")
-    print("*                                                                      *")
-    print("*  Usage: tarpon_installer.exe -t yourconfig.ini                       *")
-    print("*  Alt Usage: tarpon_installer.exe -t yourconfig.ini --debuglevel DEBUG*")
-    print("*                                                                      *")
-    print("*  debug levels are: INFO (default) and DEBUG                          *")
-    print("*                                                                      *")
-    print(f"*  VERSION {version}                                                  *")
-    print("************************************************************************")
-    raise SystemExit
+def parse_args(argv: List[str]) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        prog="tarpon_installer",
+        description="Tarpon Installer - config-driven installer for Windows/Linux."
+    )
+    parser.add_argument(
+        "-t",
+        "--configfile",
+        default=DEFAULT_CONFIGFILE,
+        help="Path to configuration .ini file (default: config.ini).",
+    )
+    parser.add_argument(
+        "-d",
+        "--debuglevel",
+        choices=["INFO", "DEBUG"],
+        default="INFO",
+        help="Logging level (default: INFO).",
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version="%(prog)s {}".format(VERSION),
+    )
+    parser.add_argument(
+        "--headless",
+        action="store_true",
+        help="Run without GUI and execute the .ini directly.",
+    )
+    parser.add_argument(
+        "--userinput",
+        action="append",
+        default=[],
+        metavar="KEY=VALUE",
+        help="Set a USERINPUT value when running headless. May be used multiple times.",
+    )
+    parser.add_argument(
+        "--option",
+        action="append",
+        default=[],
+        metavar="OPTION",
+        help="Enable an option when running headless. May be used multiple times.",
+    )
+    return parser.parse_args(argv)
 
-def isAdmin() -> None:
+
+def setup_logging(configfile: str, debuglevel: str) -> None:
+    level = logging.DEBUG if debuglevel == "DEBUG" else logging.INFO
+    logging.basicConfig(
+        filename="{}.log".format(os.path.splitext(configfile)[0]),
+        filemode="w",
+        level=level,
+    )
+
+
+def is_admin() -> bool:
     try:
-        is_admin = (os.getuid() == 0)
+        is_admin_value = (os.getuid() == 0)
     except AttributeError:
-        is_admin = ctypes.windll.shell32.IsUserAnAdmin() != 0
-    return is_admin
+        is_admin_value = ctypes.windll.shell32.IsUserAnAdmin() != 0
+    return is_admin_value
+
+
+def ensure_admin(ini_info: iniInfo, logger: logging.Logger) -> None:
+    if is_admin():
+        logger.info("Executing as Administrator")
+        return
+
+    logger.info("Elevating Permissions because Administrator = False")
+    if ini_info.adminrights is True:
+        if platform.system() == "Windows":
+            elevate(show_console=True)
+        else:
+            logger.error("This install requires admin/root privelages")
+            raise SystemExit(
+                "Error - This install requires admin/root privelages. "
+                "Set [adminrights] = False in the .ini file if not needed."
+            )
+
+
+class HeadlessVar:
+    def __init__(self, value: str = "") -> None:
+        self._value = value
+
+    def get(self) -> str:
+        return self._value
+
+    def set(self, value: str) -> None:
+        self._value = value
+
+
+class DummyWindow:
+    def update_idletasks(self) -> None:
+        return
+
+
+class DummyBar:
+    def __setitem__(self, key: str, value) -> None:
+        return
+
+
+def parse_userinput_overrides(values: List[str]) -> dict:
+    overrides = {}
+    for entry in values:
+        if "=" not in entry:
+            raise ValueError(f"Invalid --userinput '{entry}'. Expected KEY=VALUE.")
+        key, value = entry.split("=", 1)
+        overrides[key] = value
+    return overrides
+
+
+def setup_headless_inputs(
+    ini_info: iniInfo,
+    userinput_overrides: dict,
+    enabled_options: List[str],
+    logger: logging.Logger,
+) -> None:
+    for key in ini_info.userinput:
+        ini_info.userinput[key] = HeadlessVar(userinput_overrides.get(key, ""))
+
+    for key in userinput_overrides:
+        if key not in ini_info.userinput:
+            logger.warning("Headless USERINPUT override provided but key not found: %s", key)
+
+    for key in ini_info.options:
+        ini_info.optionvals[key] = HeadlessVar("1" if key in enabled_options else "0")
+
+    for key in enabled_options:
+        if key not in ini_info.options:
+            logger.warning("Headless option enabled but key not found: %s", key)
+
+
+def run_headless(ini_info: iniInfo, logger: logging.Logger) -> None:
+    window = DummyWindow()
+    bar = DummyBar()
+    taskitem = HeadlessVar()
+
+    task = Task(ini_info)
+    if ini_info.installtype == "REMOTE":
+        task.loginSSH()
+
+    if ini_info.buildtype == "LINUX":
+        logger.info("SECTION: INSTALLING RPMs")
+        RpmManager().installLocalRPMs(
+            window, bar, taskitem, ini_info.resources, ini_info.rpms, ini_info.watchdog
+        )
+
+    logger.info("SECTION: COPYING FILES")
+    task.copyFromResources(window, bar, taskitem, ini_info)
+
+    logger.info("SECTION: ACTIONS")
+    task.doActions(window, bar, taskitem, ini_info)
+
+    logger.info("SECTION: MODIFYING FILES")
+    task.modifyFiles(window, bar, taskitem, ini_info)
+
+    logger.info("SECTION: FINAL ACTIONS")
+    task.finalActions(window, bar, taskitem, ini_info)
+
+
+def main(argv: List[str]) -> int:
+    # During elevation an additional arg of the .exe itself is added and messes things up.
+    filtered_args = [arg for arg in argv if "tarpon_installer.exe" not in arg]
+    args = parse_args(filtered_args)
+
+    if path.exists(args.configfile) is False:
+        print("ERROR: ><###> Cannot Find Configuration File - '{}'.".format(args.configfile))
+        return 2
+
+    setup_logging(args.configfile, args.debuglevel)
+    logger = logging.getLogger("logger")
+
+    ini_info = iniInfo()
+    ini_info.readConfigFile(args.configfile)
+
+    ensure_admin(ini_info, logger)
+
+    if args.headless:
+        os.environ["TARPL_HEADLESS"] = "1"
+        try:
+            userinput_overrides = parse_userinput_overrides(args.userinput)
+        except ValueError as ex:
+            logger.error(str(ex))
+            return 2
+
+        setup_headless_inputs(ini_info, userinput_overrides, args.option, logger)
+        run_headless(ini_info, logger)
+    else:
+        app = mainClass()
+        app.main(ini_info)
+    return 0
 
 
 if __name__ == "__main__":
-    global ini_info
-    
-    params = {}
-    option = ""
-    skipImport = False
-    debuglevel = None
-    ini_info = iniInfo()
-    arglist = []
-
-    logger = logging.getLogger("logger")
-    print(f"len of args {len(sys.argv)}")
-    
-    try:
-        # during elevation an additional arg of the .exe itself is added
-        # and messes things up.  So let's remove it.
-        for args in sys.argv[1:]:
-            if "tarpon_installer.exe" not in args:
-                arglist.append(args)
-                
-        opts, args = getopt.getopt(arglist,"t:d",["debuglevel=","configfile="])
-    except getopt.GetoptError:
-        PrintHelp()
-        sys.exit(2)
-    for opt, arg in opts:
-        if opt in ("-t", "--configfile"):
-            configfile = arg
-            print(f"using {configfile} for installation instruction")
-        elif opt in ("-d", "--debuglevel"):
-            debuglevel = arg
-
-    if path.exists(configfile) == False:
-        logger.error("ERROR: ><###> Cannot Find Configuration File - '{}'. <###><".format(configfile))
-        PrintHelp()
-
-    if debuglevel == None:
-        logging.basicConfig(filename="{}.log".format(os.path.splitext(configfile)[0]),
-                        filemode='w', level = logging.INFO)
-    elif 'DEBUG' in debuglevel:
-        logging.basicConfig(filename="{}.log".format(os.path.splitext(configfile)[0]),
-                        filemode='w', level = logging.DEBUG)
-    else:
-        logging.basicConfig(filename="{}.log".format(os.path.splitext(configfile)[0]),
-                        filemode='w', level = logging.INFO)
-        
-    ini_info.readConfigFile(configfile)    
-        
-    if isAdmin():
-        logger.info("Executing as Administrator")
-    else:
-        logger.info("Elevating Permissions because Administrator = {}".format(isAdmin()))
-        if ini_info.adminrights == True:
-            if (platform.system() == 'Windows'):
-                elevate(show_console = True)
-            else:
-                logger.error("This install requires admin/root privelages")
-                print("Error - This install requires admin/root privelages")
-                print("** Set the [adminrights] value to False in the xxxx.ini file if not needed. **")
-                raise SystemExit
-    
-    mc = mainClass()
-    mc.main()
+    raise SystemExit(main(sys.argv[1:]))

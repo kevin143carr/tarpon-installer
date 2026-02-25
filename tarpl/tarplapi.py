@@ -43,6 +43,9 @@ class TarpL:
         elif tarpltype == 'ALSOCHECKOPTION':
             return self.ALSOCHECKOPTION(ini_info, optionone, optiontwo)                   
     
+    def _is_headless(self) -> bool:
+        return os.environ.get("TARPL_HEADLESS", "").strip().lower() in {"1", "true", "yes", "on"}
+
     def POPLIST (self, instring, window):
         tarpLrtn = TarpLreturn()
         rtnval = None
@@ -50,6 +53,28 @@ class TarpL:
             splitstr = instring.split('::');
             inputype = self.getTarpL(splitstr[2])
             titletext = splitstr[1]
+            if self._is_headless():
+                if inputype == 'INPUTLIST':
+                    selectlist = splitstr[3].split(',')
+                elif inputype == 'INPUTFILE':
+                    fp = open(splitstr[3], "r")
+                    fromfile = fp.readline()
+                    fp.close()
+                    selectlist = fromfile.split(',')
+                else:
+                    selectlist = []
+
+                selectlist = [item.strip() for item in selectlist if item.strip()]
+                if selectlist:
+                    tarpLrtn.rtnstate = True
+                    tarpLrtn.rtnvalue = selectlist[0]
+                    tarpLrtn.rtnvar = splitstr[4]
+                    tarpLrtn.tarpltype = TarpLAPIEnum.POPLIST
+                else:
+                    tarpLrtn.rtnstate = False
+                    tarpLrtn.tarpltype = TarpLAPIEnum.POPLIST
+                return tarpLrtn
+
             if inputype == 'INPUTLIST':
                 selectlist = splitstr[3].split(',')
                 rtnval = self.pop_listbox.showPopListbox(selectlist, window, titletext)
@@ -82,6 +107,11 @@ class TarpL:
         tarpLrtn = TarpLreturn()        
         try:
             splitstr = instring.split('::');
+            if self._is_headless():
+                tarpLrtn.rtnstate = True
+                tarpLrtn.rtnvalue = splitstr[2]
+                tarpLrtn.tarpltype = TarpLAPIEnum.YESNO
+                return tarpLrtn
             tarpLrtn.rtnstate = msgbox.askyesno("User Question", splitstr[1], parent = window);
             tarpLrtn.rtnvalue = splitstr[2]
             tarpLrtn.tarpltype = TarpLAPIEnum.YESNO
@@ -94,6 +124,10 @@ class TarpL:
         tarpLrtn = TarpLreturn()         
         try:
             splitstr = instring.split('::');
+            if self._is_headless():
+                tarpLrtn.rtnstate = False
+                tarpLrtn.tarpltype = TarpLAPIEnum.MSGBOX
+                return tarpLrtn
             answer = msgbox.showinfo("Information", splitstr[1], parent = window);
             tarpLrtn.rtnstate = False
             tarpLrtn.tarpltype = TarpLAPIEnum.MSGBOX
