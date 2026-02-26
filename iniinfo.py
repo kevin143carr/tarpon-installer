@@ -1,32 +1,35 @@
 from configparser import ConfigParser
 import logging
 
-logger = None 
+logger = None
+
 
 class iniInfo:
-    username = ""
-    password = ""
-    buildtype = ""
-    installtype = ""
-    resources = ""
-    startinfo = ""
-    installtitle = ""
-    logoimage = ""
-    buttontext = ""
-    watchdog = bool()
-    adminrights = bool()
-    files = dict()
-    repo = dict()
-    rpms = dict()
-    actions = dict()
-    modify = dict()
-    finalactions = dict()
-    options = dict()
-    optionvals = dict()
-    userinput = dict()
-    variables = dict()
-    returnvars = dict()
-    themename = "superhero"
+    def __init__(self) -> None:
+        self.username = ""
+        self.password = ""
+        self.hostname = ""
+        self.buildtype = ""
+        self.installtype = ""
+        self.resources = ""
+        self.startinfo = ""
+        self.installtitle = ""
+        self.logoimage = ""
+        self.buttontext = ""
+        self.watchdog = False
+        self.adminrights = False
+        self.files = {}
+        self.repo = {}
+        self.rpms = {}
+        self.actions = {}
+        self.modify = {}
+        self.finalactions = {}
+        self.options = {}
+        self.optionvals = {}
+        self.userinput = {}
+        self.variables = {}
+        self.returnvars = {}
+        self.themename = "superhero"
 
     def readConfigFile(self, configfile):
         logger = logging.getLogger("logger")
@@ -39,8 +42,8 @@ class iniInfo:
             self.installtitle = startup['installtitle']
             self.logoimage = startup['logoimg']
             self.buttontext = startup['buttontext']
-            self.watchdog = eval(startup['watchdog'])
-            self.adminrights = eval(startup['adminrights'])
+            self.watchdog = config_object.getboolean("STARTUP", "watchdog")
+            self.adminrights = config_object.getboolean("STARTUP", "adminrights")
             self.themename = startup["themename"]
         except Exception as ex:
             logger.error(ex)
@@ -64,6 +67,8 @@ class iniInfo:
             self.options = config_object._sections['OPTIONS']
             self.userinput = config_object._sections['USERINPUT']
             self.variables = config_object._sections['VARIABLES']
+            if config_object.has_section("SERVERCONFIG") and "host" in config_object["SERVERCONFIG"]:
+                self.hostname = config_object["SERVERCONFIG"]["host"]
         except Exception as ex:
             logger.error(ex)
             print("Missing keyword in .ini file.  check you .ini file for the following: {}".format(ex))

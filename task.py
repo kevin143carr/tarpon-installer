@@ -20,16 +20,17 @@ import logging
 import threading
 
 class Task:
-    ssh = paramiko.SSHClient()
-    username = ""
-    password = ""
-    hostname = ""
-    resources = ""
-    file_utilities = FileUtilities()
-    action_manager =  ActionManager()
-    string_utilities =  StringUtilities()
-    logger = logging.getLogger("logger")
-    lock = threading.Lock()
+    def __init__(self, ini_info: iniInfo):
+        self.ssh = paramiko.SSHClient()
+        self.username = ini_info.username
+        self.password = ini_info.password
+        self.hostname = ini_info.hostname
+        self.resources = ini_info.resources
+        self.file_utilities = FileUtilities()
+        self.action_manager = ActionManager()
+        self.string_utilities = StringUtilities()
+        self.logger = logging.getLogger("logger")
+        self.lock = threading.Lock()
 
     def loginSSH(self) -> None:
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -37,12 +38,15 @@ class Task:
 
     def copyFromResourcesLocal(self, window, bar: ttk.Progressbar, taskitem: tk.StringVar, ini_info: iniInfo) -> None:
         count = 0
+        resources_path = Path(ini_info.resources)
+        if not resources_path.is_absolute():
+            resources_path = Path.cwd() / resources_path
         for key in ini_info.files:
             count += 1;
             bar['value'] = (count/len(ini_info.files.keys()))*100
             window.update_idletasks()
             firstfile = 0
-            my_file = Path("{}/{}/{}".format(os.getcwd(),ini_info.resources,key))
+            my_file = resources_path / key
 
             if ini_info.buildtype != 'LINUX':
                 # check for user input
@@ -64,7 +68,7 @@ class Task:
                     self.logger.warning("Directory {} can not be created".format(ini_info.files[key]))
 
                 dirtest = key.split('/')
-                src = "{}/{}".format(ini_info.resources, key)
+                src = str(resources_path / key)
                 if '.' in ini_info.files[key]: # contains a file name, so do not append a filename from 'key'
                     dst = "{}".format(ini_info.files[key])
                 else:
@@ -158,13 +162,16 @@ class Task:
 
     def copyFromResourcesSSH(self, resources, files) -> None:
         ftp = self.ssh.open_sftp()
+        resources_path = Path(resources)
+        if not resources_path.is_absolute():
+            resources_path = Path.cwd() / resources_path
         for key in files:
-            my_file = Path("{}/{}".format(resources,key))
+            my_file = resources_path / key
             if my_file.is_file():
                 self.logger.info('copying and extracting file {} to {}'.format(key, files[key]))
                 self.ssh.exec_command('mkdir -p {}'.format(files[key]))
                 dirtest = key.split('/')
-                src = "{}{}".format(resources, key)
+                src = str(resources_path / key)
                 if '.' in files[key]: # contains a file name, so do not append a filename from 'key'
                     dst = "{}".format(files[key])
                 else:
@@ -174,8 +181,8 @@ class Task:
                     else:
                         dst = "{}/{}".format(files[key],key)
 
-                if(os.path.exists("{}/{}".format(os.getcwd(), src)) == False):
-                    self.logger.error("Error could not find this file: {}/{}".format(os.getcwd(), src))
+                if(os.path.exists(src) == False):
+                    self.logger.error("Error could not find this file: {}".format(src))
                     continue
 
                 ftp.put(src , dst)
@@ -196,7 +203,9 @@ class Task:
             
     def doActions(self, window, bar: ttk.Progressbar, taskitem: tk.StringVar, ini_info: iniInfo, actiontype: str = "action") -> None:
         if(ini_info.installtype == 'REMOTE' and ini_info.buildtype == 'LINUX'):
-            ActionManager.doActionsSSH(ini_info.actions)
+            self.action_manager.ssh = self.ssh
+            self.action_manager.hostname = self.hostname
+            self.action_manager.doActionsSSH(ini_info.actions)
         elif ini_info.installtype == 'LOCAL':
             try:                
                 if(actiontype == "action"):
@@ -265,7 +274,4 @@ class Task:
     def finalActions(self, window, bar, taskitem, ini_info: iniInfo) -> None:
         self.doActions( window, bar, taskitem, ini_info, "final")
 
-    def __init__(self, ini_info: iniInfo):
-        self.username = ini_info.username
-        self.password = ini_info.password
-        self.resources = ini_info.resources
+ 
