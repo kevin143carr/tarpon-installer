@@ -2,32 +2,34 @@ from configparser import ConfigParser
 import logging
 from typing import Dict, Mapping
 
+logger = None
+
 
 class iniInfo:
     def __init__(self) -> None:
         self.username = ""
         self.password = ""
+        self.hostname = ""
         self.buildtype = ""
         self.installtype = ""
         self.resources = ""
-        self.host = ""
         self.startinfo = ""
         self.installtitle = ""
         self.logoimage = ""
         self.buttontext = ""
         self.watchdog = False
         self.adminrights = False
-        self.files: Dict[str, str] = {}
-        self.repo: Dict[str, str] = {}
-        self.rpms: Dict[str, str] = {}
-        self.actions: Dict[str, str] = {}
-        self.modify: Dict[str, str] = {}
-        self.finalactions: Dict[str, str] = {}
-        self.options: Dict[str, str] = {}
-        self.optionvals: Dict[str, str] = {}
-        self.userinput: Dict[str, str] = {}
-        self.variables: Dict[str, str] = {}
-        self.returnvars: Dict[str, str] = {}
+        self.files = {}
+        self.repo = {}
+        self.rpms = {}
+        self.actions = {}
+        self.modify = {}
+        self.finalactions = {}
+        self.options = {}
+        self.optionvals = {}
+        self.userinput = {}
+        self.variables = {}
+        self.returnvars = {}
         self.themename = "superhero"
 
     def _require_section(self, config: ConfigParser, name: str) -> Mapping[str, str]:
@@ -61,39 +63,39 @@ class iniInfo:
         config_object.read(configfile)
 
         try:
-            startup = self._require_section(config_object, "STARTUP")
-            self.startinfo = self._require_option(startup, "startupinfo")
-            self.installtitle = self._require_option(startup, "installtitle")
-            self.logoimage = self._require_option(startup, "logoimg")
-            self.buttontext = self._require_option(startup, "buttontext")
-            self.watchdog = self._parse_bool(startup, "watchdog")
-            self.adminrights = self._parse_bool(startup, "adminrights")
-            self.themename = self._require_option(startup, "themename")
+            config_object.read(configfile)
+            startup = config_object["STARTUP"]
+            self.startinfo = startup['startupinfo']
+            self.installtitle = startup['installtitle']
+            self.logoimage = startup['logoimg']
+            self.buttontext = startup['buttontext']
+            self.watchdog = config_object.getboolean("STARTUP", "watchdog")
+            self.adminrights = config_object.getboolean("STARTUP", "adminrights")
+            self.themename = startup["themename"]
         except Exception as ex:
             logger.error(ex)
             raise SystemExit("Missing keyword {} in the [STARTUP] section".format(ex))
 
         try:
-            userinfo = self._require_section(config_object, "USERINFO")
-            build = self._require_section(config_object, "BUILD")
-            serverconfig = self._optional_section(config_object, "SERVERCONFIG")
-            self.resources = self._require_option(build, "resources")
-            self.files = self._section_items(config_object, "FILES")
-            self.username = self._require_option(userinfo, "username")
-            self.password = self._require_option(userinfo, "password")
-            self.buildtype = self._require_option(build, "buildtype")
-            self.installtype = self._require_option(build, "installtype")
-            self.host = serverconfig.get("host", "")
-            self.repo = self._section_items(config_object, "REPO")
-            self.rpms = self._section_items(config_object, "RPM")
-            self.actions = self._section_items(config_object, "ACTIONS")
-            self.modify = self._section_items(config_object, "MODIFY")
-            self.finalactions = self._section_items(config_object, "FINAL")
-            self.options = self._section_items(config_object, "OPTIONS")
-            self.userinput = self._section_items(config_object, "USERINPUT")
-            self.variables = self._section_items(config_object, "VARIABLES")
+            userinfo = config_object["USERINFO"]
+            build = config_object["BUILD"]
+            self.resources = build["resources"]
+            self.files = config_object._sections['FILES']
+            self.username = userinfo["username"]
+            self.password = userinfo["password"]
+            self.buildtype = build["buildtype"]
+            self.installtype = build["installtype"]
+            self.repo = config_object._sections['REPO']
+            self.rpms = config_object._sections['RPM']
+            self.actions = config_object._sections['ACTIONS']
+            self.modify = config_object._sections['MODIFY']
+            self.finalactions = config_object._sections['FINAL']
+            self.options = config_object._sections['OPTIONS']
+            self.userinput = config_object._sections['USERINPUT']
+            self.variables = config_object._sections['VARIABLES']
+            if config_object.has_section("SERVERCONFIG") and "host" in config_object["SERVERCONFIG"]:
+                self.hostname = config_object["SERVERCONFIG"]["host"]
         except Exception as ex:
             logger.error(ex)
-            raise SystemExit(
-                "Missing keyword in .ini file. Check your .ini file for the following: {}".format(ex)
-            )
+            print("Missing keyword in .ini file.  check you .ini file for the following: {}".format(ex))
+            raise SystemExit

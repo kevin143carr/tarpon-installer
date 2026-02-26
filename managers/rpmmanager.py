@@ -5,9 +5,10 @@ from managers.processmanager import ProcessManager
 import logging
 
 class RpmManager:
-    file_utilities = FileUtilities()
-    process_manager =  ProcessManager()
-    logger = logging.getLogger("logger")
+    def __init__(self) -> None:
+        self.file_utilities = FileUtilities()
+        self.process_manager = ProcessManager()
+        self.logger = logging.getLogger("logger")
     
     def installRPMsRemote(self, resources, rpms):
         for key in rpms:
