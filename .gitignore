@@ -1,7 +1,10 @@
 /tarpon-installer.pyproj
 /tarpon-installer.sln
 .vs
-/__pycache__
+__pycache__/
+**/__pycache__/
+*.pyc
+.pytest_cache/
 /build/tarpon_installer
 /resources
 /win_local_config_3_2_7.ini
