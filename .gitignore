@@ -2,6 +2,7 @@
 /tarpon-installer.sln
 .vs
 /__pycache__
+**/__pycache__/
 /build/tarpon_installer
 /resources
 /win_local_config_3_2_7.ini

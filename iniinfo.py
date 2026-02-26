@@ -10,6 +10,7 @@ class iniInfo:
         self.buildtype = ""
         self.installtype = ""
         self.resources = ""
+        self.host = ""
         self.startinfo = ""
         self.installtitle = ""
         self.logoimage = ""
@@ -47,6 +48,11 @@ class iniInfo:
         self._require_section(config, name)
         return dict(config.items(name, raw=True))
 
+    def _optional_section(self, config: ConfigParser, name: str) -> Mapping[str, str]:
+        if config.has_section(name):
+            return config[name]
+        return {}
+
     def readConfigFile(self, configfile: str) -> None:
         logger = logging.getLogger("logger")
         config_object = ConfigParser(interpolation=None)
@@ -70,12 +76,14 @@ class iniInfo:
         try:
             userinfo = self._require_section(config_object, "USERINFO")
             build = self._require_section(config_object, "BUILD")
+            serverconfig = self._optional_section(config_object, "SERVERCONFIG")
             self.resources = self._require_option(build, "resources")
             self.files = self._section_items(config_object, "FILES")
             self.username = self._require_option(userinfo, "username")
             self.password = self._require_option(userinfo, "password")
             self.buildtype = self._require_option(build, "buildtype")
             self.installtype = self._require_option(build, "installtype")
+            self.host = serverconfig.get("host", "")
             self.repo = self._section_items(config_object, "REPO")
             self.rpms = self._section_items(config_object, "RPM")
             self.actions = self._section_items(config_object, "ACTIONS")

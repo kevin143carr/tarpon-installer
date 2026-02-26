@@ -145,6 +145,11 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
         metavar="OPTION",
         help="Enable an option when running headless. May be used multiple times.",
     )
+    parser.add_argument(
+        "--strict-tokens",
+        action="store_true",
+        help="Fail headless runs if unresolved %tokens% remain.",
+    )
     return parser.parse_args(argv)
 
 
@@ -234,6 +239,64 @@ def setup_headless_inputs(
             logger.warning("Headless option enabled but key not found: %s", key)
 
 
+def _find_unresolved_tokens(value: str) -> List[str]:
+    tokens = []
+    start = 0
+    while True:
+        start = value.find("%", start)
+        if start == -1:
+            break
+        end = value.find("%", start + 1)
+        if end == -1:
+            break
+        token = value[start + 1:end]
+        if token:
+            tokens.append(token)
+        start = end + 1
+    return tokens
+
+
+def _collect_declared_returnvars(ini_info: iniInfo) -> set:
+    declared = set()
+    sources = [
+        ini_info.actions,
+        ini_info.finalactions,
+    ]
+    for source in sources:
+        for value in source.values():
+            if "POPLIST::" in str(value):
+                parts = str(value).split("::")
+                if len(parts) >= 5:
+                    declared.add(parts[4].strip())
+    return declared
+
+
+def _collect_unresolved_tokens(ini_info: iniInfo, declared_returnvars: set) -> List[str]:
+    unresolved = set()
+    sources = [
+        ini_info.files,
+        ini_info.actions,
+        ini_info.modify,
+        ini_info.finalactions,
+    ]
+    for source in sources:
+        for value in source.values():
+            for token in _find_unresolved_tokens(str(value)):
+                if token == "username" and getattr(ini_info, "username", ""):
+                    continue
+                if token in ini_info.userinput:
+                    continue
+                elif token in ini_info.variables:
+                    continue
+                elif token in ini_info.returnvars:
+                    continue
+                elif token in declared_returnvars:
+                    continue
+                else:
+                    unresolved.add(token)
+    return sorted(unresolved)
+
+
 def run_headless(ini_info: iniInfo, logger: logging.Logger) -> None:
     window = DummyWindow()
     bar = DummyBar()
@@ -288,6 +351,12 @@ def main(argv: List[str]) -> int:
             return 2
 
         setup_headless_inputs(ini_info, userinput_overrides, args.option, logger)
+        if args.strict_tokens:
+            declared_returnvars = _collect_declared_returnvars(ini_info)
+            unresolved = _collect_unresolved_tokens(ini_info, declared_returnvars)
+            if unresolved:
+                logger.error("Unresolved tokens: %s", ", ".join(unresolved))
+                return 2
         run_headless(ini_info, logger)
     else:
         app = mainClass()
