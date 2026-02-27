@@ -4,6 +4,7 @@
 __pycache__/
 **/__pycache__/
 *.pyc
+*.log
 .pytest_cache/
 /build/tarpon_installer
 /resources
