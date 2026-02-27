@@ -17,7 +17,7 @@ import logging
 from typing import List
 from ui_thread import set_var, quit_window
 
-VERSION = "4.0.10"
+VERSION = "5.0.0"
 DEFAULT_CONFIGFILE = "config.ini"
 
 class mainClass:
