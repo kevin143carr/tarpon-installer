@@ -3,6 +3,7 @@ import subprocess
 from fileutilities import FileUtilities
 from managers.processmanager import ProcessManager
 import logging
+from ui_thread import set_bar_value, set_var
 
 class RpmManager:
     def __init__(self) -> None:
@@ -23,7 +24,7 @@ class RpmManager:
         count = 0
         for key in rpms:
             count += 1;
-            bar['value'] = (count/len(rpms.keys()))*100
+            set_bar_value(window, bar, (count/len(rpms.keys()))*100)
             
             self.logger.info('install RPMs {} {}'.format(key, rpms[key]))
             try:
@@ -37,7 +38,7 @@ class RpmManager:
                         
                 taskstr = 'Installing RPM - {}'.format(execstr)
                 self.logger.info(taskstr)
-                taskitem.set(taskstr)
+                set_var(window, taskitem, taskstr)
                 
                 self.process_manager.executeProcs(execstr, watchdog)
                     

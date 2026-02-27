@@ -24,6 +24,7 @@ from fileutilities import FileUtilities
 from iniinfo import iniInfo
 from managers.actionmanager import ActionManager
 from stringutilities import StringUtilities
+from ui_thread import set_bar_value, set_var, update_idletasks
 
 class Task:
     def __init__(self, ini_info: iniInfo):
@@ -38,6 +39,13 @@ class Task:
         self.logger = logging.getLogger("logger")
         self.lock = threading.Lock()
 
+    def _set_progress(self, window, bar: ttk.Progressbar, count: int, total: int) -> None:
+        if total <= 0:
+            set_bar_value(window, bar, 0)
+            return
+        set_bar_value(window, bar, (count / total) * 100)
+        update_idletasks(window)
+
     def loginSSH(self) -> None:
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         self.ssh.connect(hostname = self.hostname, username = self.username, password = self.password)
@@ -49,8 +57,7 @@ class Task:
             resources_path = Path.cwd() / resources_path
         for key in ini_info.files:
             count += 1;
-            bar['value'] = (count/len(ini_info.files.keys()))*100
-            window.update_idletasks()
+            self._set_progress(window, bar, count, len(ini_info.files.keys()))
             firstfile = 0
             my_file = resources_path / key
 
@@ -63,7 +70,7 @@ class Task:
             if my_file.is_file():
                 taskstr = 'copying and extracting file {} to {}'.format(key, ini_info.files[key])
                 self.logger.info(taskstr)
-                taskitem.set(taskstr)
+                set_var(window, taskitem, taskstr)
                 try:
                     if '.' in ini_info.files[key]: # contains a file name
                         dirname = os.path.dirname(os.path.abspath(ini_info.files[key])) # just get the path
@@ -244,7 +251,7 @@ class Task:
 
                 taskstr = 'Modifying File {} with {}'.format(file, modifywith)
                 self.logger.info(taskstr)
-                taskitem.set(taskstr)
+                set_var(window, taskitem, taskstr)
 
                 if my_file.is_file():
                     modcontent = modifywith.split("||")

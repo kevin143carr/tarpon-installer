@@ -15,6 +15,7 @@ import ttkbootstrap as ttk
 import threading
 import logging
 from typing import List
+from ui_thread import set_var, quit_window
 
 VERSION = "4.0.10"
 DEFAULT_CONFIGFILE = "config.ini"
@@ -79,24 +80,24 @@ class mainClass:
 
             # Local Install
             if ini_info.buildtype == 'LINUX':
-                self.gui_manager.section.set("SECTION: INSTALLING RPMs")
+                set_var(window, self.gui_manager.section, "SECTION: INSTALLING RPMs")
                 self.rpm_manager.installLocalRPMs(window, self.gui_manager.bar, self.gui_manager.taskitem, ini_info.resources, ini_info.rpms, ini_info.watchdog)
 
-            self.gui_manager.section.set("SECTION: COPYING FILES")
+            set_var(window, self.gui_manager.section, "SECTION: COPYING FILES")
             task.copyFromResources(window, self.gui_manager.bar, self.gui_manager.taskitem, ini_info)
 
-            self.gui_manager.section.set("SECTION: ACTIONS")
-            self.gui_manager.taskitem.set("")
+            set_var(window, self.gui_manager.section, "SECTION: ACTIONS")
+            set_var(window, self.gui_manager.taskitem, "")
             task.doActions(window, self.gui_manager.bar, self.gui_manager.taskitem, ini_info)
 
-            self.gui_manager.section.set("SECTION: MODIFYING FILES")
-            self.gui_manager.taskitem.set("")        
+            set_var(window, self.gui_manager.section, "SECTION: MODIFYING FILES")
+            set_var(window, self.gui_manager.taskitem, "")
             task.modifyFiles(window, self.gui_manager.bar, self.gui_manager.taskitem, ini_info)
 
-            self.gui_manager.section.set("SECTION: FINAL ACTIONS")
-            self.gui_manager.taskitem.set("")
+            set_var(window, self.gui_manager.section, "SECTION: FINAL ACTIONS")
+            set_var(window, self.gui_manager.taskitem, "")
             task.finalActions(window, self.gui_manager.bar, self.gui_manager.taskitem, ini_info)
-            self.window.quit()
+            quit_window(self.window)
             
                 
         except Exception as ex:

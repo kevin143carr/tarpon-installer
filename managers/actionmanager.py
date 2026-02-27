@@ -7,6 +7,7 @@ from tarpl.tarplapi import TarpL
 from tarpl.tarplapi import TarpLreturn
 from tarpl.tarplclasses import TarpLAPIEnum
 from stringutilities import StringUtilities
+from ui_thread import set_bar_value, set_var
 
 
 class ActionManager:
@@ -66,7 +67,7 @@ class ActionManager:
                 self.lock.acquire()
     
                 count += 1;
-                bar['value'] = (count/len(ini_info.actions.keys()))*100
+                set_bar_value(window, bar, (count/len(ini_info.actions.keys()))*100)
                 exec_option = '1'
                 
                 # check for user input otherwise it returns string in ini_info.actions[action]
@@ -96,7 +97,7 @@ class ActionManager:
                                 finalstr = tarpLrtn.rtnvalue;
                                
                     taskstr = 'Executing {} with {}'.format(action, finalstr)
-                    taskitem.set(taskstr)  
+                    set_var(window, taskitem, taskstr)
     
                     if(finalstr != None):
                         if self.logger.level == logging.DEBUG:
