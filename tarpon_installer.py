@@ -19,6 +19,8 @@ from ui_thread import set_var, quit_window
 
 VERSION = "5.0.0"
 DEFAULT_CONFIGFILE = "config.ini"
+DEFAULT_ICON_PNG = "assets/icons/tarpon_installer_image.png"
+DEFAULT_ICON_ICO = "assets/icons/tarpon_installer.ico"
 
 class mainClass:
     """Using a main class because of the amount of work that needs to be done initially."""
@@ -28,6 +30,34 @@ class mainClass:
 
     window = None
     logger = logging.getLogger("logger")
+
+    def _resource_path(self, relative_path: str) -> str:
+        base_path = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+        return os.path.join(base_path, relative_path)
+
+    def _set_app_icon(self) -> None:
+        """Set a custom window/app icon when icon assets are available."""
+        if self.window is None:
+            return
+
+        icon_png = self._resource_path(DEFAULT_ICON_PNG)
+        icon_ico = self._resource_path(DEFAULT_ICON_ICO)
+
+        try:
+            if os.path.exists(icon_png):
+                app_icon = tk.PhotoImage(file=icon_png)
+                self.window.iconphoto(True, app_icon)
+                # Keep a reference so Tk doesn't garbage-collect the icon.
+                setattr(self.window, "_app_icon_ref", app_icon)
+        except Exception as ex:
+            self.logger.warning("Could not apply PNG app icon: %s", ex)
+
+        if platform.system() == "Windows":
+            try:
+                if os.path.exists(icon_ico):
+                    self.window.iconbitmap(default=icon_ico)
+            except Exception as ex:
+                self.logger.warning("Could not apply ICO app icon: %s", ex)
 
     def installThread(self, ini_info, InstallButton, window) -> None:
         InstallButton['state'] = tk.DISABLED
@@ -40,6 +70,8 @@ class mainClass:
             self.window = tk.Tk()
         else:
             self.window = ttk.Window(themename=ini_info.themename)
+
+        self._set_app_icon()
 
         self.logger.info("******************************************************************")
         self.logger.info("******************************************************************")

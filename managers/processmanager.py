@@ -30,6 +30,18 @@ class ProcessManager:
                 self.executeProcs(action, True)
                 
         watchdogfile.close()    
+
+    def _log_subprocess_output(self, stdout: str, stderr: str, debug: bool = False) -> None:
+        out_logger = self.logger.debug if debug else self.logger.info
+        err_logger = self.logger.debug if debug else self.logger.error
+
+        for line in str(stdout).splitlines():
+            if line:
+                out_logger(line)
+
+        for line in str(stderr).splitlines():
+            if line:
+                err_logger(line)
     
     def executeProcsDebug(self, action, watchdog = False, timeout = 180):
         start = timeit.default_timer()
@@ -51,11 +63,7 @@ class ProcessManager:
             pidval = "PID [{}]".format(p.pid)
             self.checkForWatchdogEvent(pidval, action)
         
-        for line in str(stdout).splitlines():
-            self.logger.debug(line)
-                
-        for line in str(stderr).splitlines():
-            self.logger.debug(line)
+        self._log_subprocess_output(stdout, stderr, debug=True)
         elapsed = timeit.default_timer() - start
         self.logger.info("ACTION END COMMAND [{}] RC [{}] ELAPSED [{:.2f}s]".format(action, p.returncode, elapsed))
         return p.returncode            
@@ -63,11 +71,11 @@ class ProcessManager:
     def executeProcs(self, action, watchdog = False, timeout = 180):
         start = timeit.default_timer()
         self.logger.info("ACTION START COMMAND [{}] TIMEOUT [{}s]".format(action, timeout))
-        p = subprocess.Popen(action, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                             start_new_session=False)
+        p = subprocess.Popen(action, shell=True, stdout=PIPE, stderr=PIPE,
+                             start_new_session=False, text=True)
         self.logger.info("PID [{}] COMMAND [{}]".format(p.pid, action))
         try:
-            p.communicate(timeout=timeout)
+            stdout, stderr = p.communicate(timeout=timeout)
         except subprocess.TimeoutExpired:
             p.kill()
             p.communicate()
@@ -80,6 +88,7 @@ class ProcessManager:
             pidval = "PID [{}]".format(p.pid)
             self.checkForWatchdogEvent(pidval, action)
 
+        self._log_subprocess_output(stdout, stderr, debug=False)
         elapsed = timeit.default_timer() - start
         self.logger.info("ACTION END COMMAND [{}] RC [{}] ELAPSED [{:.2f}s]".format(action, p.returncode, elapsed))
         return p.returncode
