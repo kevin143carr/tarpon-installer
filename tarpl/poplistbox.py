@@ -9,9 +9,7 @@ class PopListbox:
         # This returns a tuple containing the indices (= the position)
         # of the items selected by the user.
         indices = listbox.curselection()
-        if not indices:
-            return indices
-        self.rtnval = listbox.get(indices[0])
+        self.rtnval = listbox.get(indices)
         hasselected.set(True)
         return indices
     

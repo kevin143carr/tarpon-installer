@@ -16,19 +16,15 @@ from tarpl.tarplclasses import TarpLAPIEnum
 
 logger = None
 
-
 class GuiManager:
-    def __init__(self) -> None:
-        self.bar = None
-        self.taskitem = None
-        self.section = None
-        self.themename = "superhero"
-        self._tarpL = TarpL()
-        self.canvas = None
-        self.entry_boxes = 0
+    bar = None
+    taskitem = None
+    section = None
+    themename = "superhero"
+    _tarpL = TarpL()
     
     def on_checkbox_toggle(self, changed_key, otheroption, ini_info):
-        print("{}, {}".format(changed_key, otheroption))
+        print ("{changed_key}, {otheroption}")
         if ini_info.optionvals[changed_key].get() == '1':
             ini_info.optionvals[otheroption].set('1')        
         
@@ -147,12 +143,12 @@ class GuiManager:
         install_button.pack(fill=tk.X, pady=5, padx=5, side=tk.BOTTOM, anchor="s")
            
     def on_focus_in(self, event, entry: str)->None:
-        if not self.canvas or self.entry_boxes == 0:
-            return
-        movetoval = int(entry) / self.entry_boxes
-        self.canvas.yview_moveto(movetoval)
+        movetoval =  int(entry)/(entry_boxes)
+        canvas.yview_moveto(movetoval)
         
     def buildRightFrame(self, window, functiontitle, ini_info: iniInfo, installfunc)->None:
+        global canvas, entry_boxes
+        
         isosx = platform.system() == "Darwin"
         
         self.section = tk.StringVar()
@@ -176,7 +172,8 @@ class GuiManager:
         functionTitleLabel = ttk.Label(title_frame,text=functiontitle, anchor="center", font="Arial 16 bold")
         functionTitleLabel.pack(padx=5, pady=10, anchor="center")
         
-        options_button = ttk.Button(title_frame, text="Options", width=18, command=lambda: self.optionsDialog(window, ini_info))
+        gm = GuiManager()
+        options_button = ttk.Button(title_frame, text="Options", width=18, command=lambda: gm.optionsDialog(window, ini_info))
         options_button.pack(fill=tk.X, pady=5, padx=10, side=tk.BOTTOM, anchor="s")
         
         scrolledFrame = ScrolledFrame(title_frame,scrollbars = "vertical")
@@ -187,9 +184,9 @@ class GuiManager:
         scrolledFrame.bind_scroll_wheel(inner_frame)
        
         window.update()     
-        self.canvas = scrolledFrame._canvas
-        self.canvas.update_idletasks()
-        widthofframe = self.canvas.winfo_width()
+        canvas = scrolledFrame._canvas
+        canvas.update_idletasks()          
+        widthofframe = canvas.winfo_width()
         entryboxlen = self.calculateEntryBoxWidth(window, ini_info.userinput, widthofframe)        
 
         # Add some labels and entry boxes to the inner frame
@@ -209,7 +206,7 @@ class GuiManager:
             entry.bind("<FocusIn>", lambda event, entry="{}".format(i): self.on_focus_in(event, entry))
             ini_info.userinput[keyvalue] = var                      
         
-        self.entry_boxes = len(ini_info.userinput)
+        entry_boxes = len(ini_info.userinput)    
 
         if (len(ini_info.options) == 0):
             options_button.config(state=tk.DISABLED)

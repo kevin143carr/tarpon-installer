@@ -11,14 +11,11 @@ from stringutilities import StringUtilities
 
 class ActionManager:
     """ This class handles the action portions of the .ini file """
-    def __init__(self) -> None:
-        self.logger = logging.getLogger("logger")
-        self.process_manager = ProcessManager()
-        self.string_utilities = StringUtilities()
-        self._tarpL = TarpL()
-        self.lock = threading.Lock()
-        self.ssh = None
-        self.hostname = ""
+    logger = logging.getLogger("logger")
+    process_manager = ProcessManager()
+    string_utilities =  StringUtilities()
+    _tarpL = TarpL()
+    lock = threading.Lock()
     
     def doActionsSSH(self, actions) -> None:
         for action in actions:
@@ -117,9 +114,9 @@ class ActionManager:
     
             except Exception as e:
                 if "Process timed out" in str(e):
-                    self.logger.error("Timeout Error in Action {}".format(str(e)))
+                    ActionManager.logger.error("Timeout Error in Action {}".format(str(e)))
                 else:
-                    self.logger.error("Error in Action {}".format(str(e)))
+                    ActionManager.logger.error("Error in Action {}".format(str(e)))
     
                 self.lock.release()
                 continue                                           

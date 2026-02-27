@@ -12,8 +12,7 @@ class TarpLAPIEnum(Enum):
     ALSOCHECKOPTION = 9
 
 class TarpLreturn:
-    def __init__(self) -> None:
-        self.rtnstate = False
-        self.rtnvalue = ""
-        self.rtnvar = ""
-        self.tarpltype = TarpLAPIEnum
+    rtnstate = bool()
+    rtnvalue = str()
+    rtnvar = str()
+    tarpltype = TarpLAPIEnum
