@@ -60,36 +60,33 @@ class Task:
             self._set_progress(window, bar, count, len(ini_info.files.keys()))
             firstfile = 0
             my_file = resources_path / key
-
-            if ini_info.buildtype != 'LINUX':
-                # check for user input
-                userinput = self.string_utilities.checkForUserVariable(ini_info.files[key], ini_info)
-                if(userinput != None):
-                    ini_info.files[key] = userinput
+            destination = self.string_utilities.checkForUserVariable(ini_info.files[key], ini_info)
+            if destination is None:
+                destination = ini_info.files[key]
 
             if my_file.is_file():
-                taskstr = 'copying and extracting file {} to {}'.format(key, ini_info.files[key])
+                taskstr = 'copying and extracting file {} to {}'.format(key, destination)
                 self.logger.info(taskstr)
                 set_var(window, taskitem, taskstr)
                 try:
-                    if '.' in ini_info.files[key]: # contains a file name
-                        dirname = os.path.dirname(os.path.abspath(ini_info.files[key])) # just get the path
+                    if '.' in destination: # contains a file name
+                        dirname = os.path.dirname(os.path.abspath(destination)) # just get the path
                         os.makedirs(dirname, exist_ok = True)
                     else:
-                        os.makedirs(ini_info.files[key], exist_ok = True)
+                        os.makedirs(destination, exist_ok = True)
                 except OSError:
-                    self.logger.warning("Directory {} can not be created".format(ini_info.files[key]))
+                    self.logger.warning("Directory {} can not be created".format(destination))
 
                 dirtest = key.split('/')
                 src = str(resources_path / key)
-                if '.' in ini_info.files[key]: # contains a file name, so do not append a filename from 'key'
-                    dst = "{}".format(ini_info.files[key])
+                if '.' in destination: # contains a file name, so do not append a filename from 'key'
+                    dst = "{}".format(destination)
                 else:
                     if (len(dirtest) > 1):
                         keyname = dirtest[1]
-                        dst = "{}/{}".format(ini_info.files[key],keyname)
+                        dst = "{}/{}".format(destination,keyname)
                     else:
-                        dst = "{}/{}".format(ini_info.files[key],key)
+                        dst = "{}/{}".format(destination,key)
 
                 copyfile(src,dst)
                 
@@ -132,7 +129,7 @@ class Task:
                                         filename += "/"
                                         filename += words[i+1]
     
-                            os.makedirs(ini_info.files[key] +"/" + filename, exist_ok = True)
+                            os.makedirs(destination +"/" + filename, exist_ok = True)
                             continue
         
                         # copy file (taken from zipfile's extract)
@@ -157,15 +154,15 @@ class Task:
                         else:
                             source = tf.getmember(file)
                             if(source.isdir()):
-                                os.makedirs(ini_info.files[key] +"/" + file, exist_ok = True)
+                                os.makedirs(destination +"/" + file, exist_ok = True)
                                 continue
                             else:
                                 source = tf.extractfile(source)
                                 if(hasdirectory == True):
                                     getfoldername = os.path.dirname(filename)
-                                    os.makedirs(ini_info.files[key] +"/" + getfoldername, exist_ok = True)
+                                    os.makedirs(destination +"/" + getfoldername, exist_ok = True)
                             
-                        target = open(os.path.join(ini_info.files[key], filename), "wb")                        
+                        target = open(os.path.join(destination, filename), "wb")
     
                         with source, target:
                             shutil.copyfileobj(source, target)
@@ -173,26 +170,29 @@ class Task:
             else:
                 self.logger.error("Error copying file {}/{}, it does not exist".format(ini_info.resources,key))
 
-    def copyFromResourcesSSH(self, resources, files) -> None:
+    def copyFromResourcesSSH(self, resources, files, ini_info: iniInfo) -> None:
         ftp = self.ssh.open_sftp()
         resources_path = Path(resources)
         if not resources_path.is_absolute():
             resources_path = Path.cwd() / resources_path
         for key in files:
+            destination = self.string_utilities.checkForUserVariable(files[key], ini_info)
+            if destination is None:
+                destination = files[key]
             my_file = resources_path / key
             if my_file.is_file():
-                self.logger.info('copying and extracting file {} to {}'.format(key, files[key]))
-                self.ssh.exec_command('mkdir -p {}'.format(files[key]))
+                self.logger.info('copying and extracting file {} to {}'.format(key, destination))
+                self.ssh.exec_command('mkdir -p {}'.format(destination))
                 dirtest = key.split('/')
                 src = str(resources_path / key)
-                if '.' in files[key]: # contains a file name, so do not append a filename from 'key'
-                    dst = "{}".format(files[key])
+                if '.' in destination: # contains a file name, so do not append a filename from 'key'
+                    dst = "{}".format(destination)
                 else:
                     if (len(dirtest) > 1):
                         keyname = dirtest[1]
-                        dst = "{}/{}".format(files[key],keyname)
+                        dst = "{}/{}".format(destination,keyname)
                     else:
-                        dst = "{}/{}".format(files[key],key)
+                        dst = "{}/{}".format(destination,key)
 
                 if(os.path.exists(src) == False):
                     self.logger.error("Error could not find this file: {}".format(src))
@@ -201,7 +201,7 @@ class Task:
                 ftp.put(src , dst)
 
                 if 'zip' in key:
-                    stdin, stdout, stderr = self.ssh.exec_command('unzip -o {}/{} -d {}'.format(files[key],key,files[key]))
+                    stdin, stdout, stderr = self.ssh.exec_command('unzip -o {}/{} -d {}'.format(destination,key,destination))
                     for line in iter(stdout.readline,""):
                         self.logger.info (line, end="")
             else:
@@ -210,7 +210,7 @@ class Task:
 
     def copyFromResources(self, window, bar: ttk.Progressbar, taskitem, ini_info: iniInfo) -> None:
         if(ini_info.installtype == 'REMOTE' and ini_info.buildtype == 'LINUX'):
-            self.copyFromResourcesSSH(ini_info.resources, ini_info.files)
+            self.copyFromResourcesSSH(ini_info.resources, ini_info.files, ini_info)
         elif ini_info.installtype == 'LOCAL':
             self.copyFromResourcesLocal(window, bar, taskitem, ini_info)                                                                   
             
