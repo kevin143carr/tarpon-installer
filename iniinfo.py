@@ -16,6 +16,8 @@ class iniInfo:
         self.startinfo = ""
         self.installtitle = ""
         self.logoimage = ""
+        self.iconpng = ""
+        self.iconico = ""
         self.buttontext = ""
         self.watchdog = False
         self.adminrights = False
@@ -28,6 +30,7 @@ class iniInfo:
         self.options = {}
         self.optionvals = {}
         self.userinput = {}
+        self.userinput_defaults = {}
         self.variables = {}
         self.returnvars = {}
         self.themename = "superhero"
@@ -68,6 +71,8 @@ class iniInfo:
             self.startinfo = startup['startupinfo']
             self.installtitle = startup['installtitle']
             self.logoimage = startup['logoimg']
+            self.iconpng = startup.get("iconpng", "")
+            self.iconico = startup.get("iconico", "")
             self.buttontext = startup['buttontext']
             self.watchdog = config_object.getboolean("STARTUP", "watchdog")
             self.adminrights = config_object.getboolean("STARTUP", "adminrights")
@@ -91,7 +96,16 @@ class iniInfo:
             self.modify = config_object._sections['MODIFY']
             self.finalactions = config_object._sections['FINAL']
             self.options = config_object._sections['OPTIONS']
-            self.userinput = config_object._sections['USERINPUT']
+            raw_userinput = config_object._sections['USERINPUT']
+            self.userinput = {}
+            self.userinput_defaults = {}
+            for key, value in raw_userinput.items():
+                parts = value.split("||", 1)
+                prompt = parts[0].strip()
+                default = parts[1].strip() if len(parts) > 1 else ""
+                self.userinput[key] = prompt
+                if default:
+                    self.userinput_defaults[key] = default
             self.variables = config_object._sections['VARIABLES']
             if config_object.has_section("SERVERCONFIG") and "host" in config_object["SERVERCONFIG"]:
                 self.hostname = config_object["SERVERCONFIG"]["host"]

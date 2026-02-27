@@ -20,6 +20,8 @@ Example:
 ```
 usegui = True
 logoimg = mylogo.png
+iconpng = myicon.png
+iconico = myicon.ico
 installtitle = MY INSTALLER NAME GOES HERE
 startupinfo = information about the installer like: "This will install MY APP on this machine"
 buttontext = Install
@@ -30,6 +32,7 @@ adminrights = True
 Notes:
 
 - `usegui` uses the GUI when `True`, console when `False`.
+- `iconpng` and `iconico` are optional window/app icons. Paths are resolved relative to the current working directory unless absolute.
 - `watchdog` enables the watchdog app to kill stalled processes.
 - `adminrights` forces the application to run as a privileged user.
 
@@ -71,12 +74,13 @@ resources = resources\
 ### `[USERINPUT]` (prompted inputs)
 
 Each key becomes a variable you can use in `[FILES]`, `[ACTIONS]`, and `[FINAL]` with `%key%`.
+You can optionally provide a default by appending `|| default value`.
 
 Example:
 
 ```
-userdatafolder = Please enter data folder name
-databaseip = Please enter database IP address
+userdatafolder = Please enter data folder name || c:\userdata
+databaseip = Please enter database IP address || 172.16.20.25
 ```
 
 Usage:

@@ -39,6 +39,7 @@ class GuiManager:
         # You can add more logic here if needed    
     
     def optionsDialog(self, parent: tk.Tk, ini_info: iniInfo) -> None:
+        # Pop up the options chooser and center it over the parent window.
         optionsWindow = tk.Toplevel(parent)
         optionsWindow.resizable(False, False)
         optionsWindow.focusmodel(model="active")
@@ -59,6 +60,7 @@ class GuiManager:
         scrolledFrame.bind_scroll_wheel(functionFrame)
         inner_frame = scrolledFrame.display_widget(tk.Frame)
     
+        # Build the option list with optional Tarpl behaviors.
         for row, value in enumerate(ini_info.options):
             if value not in ini_info.optionvals:
                 ini_info.optionvals[value] = tk.StringVar(value='0')
@@ -120,14 +122,15 @@ class GuiManager:
         optionsWindow.geometry(f"{window_width}x{window_height}+{x}+{y}")
         
     def buildLeftFrame(self, window, functiontitle, ini_info: iniInfo, installfunc):
+        # Left side: logo image, install task status, and install button.
         self.taskitem = tk.StringVar()
         
-        # Load image
+        # Load image (GUI logo)
         image = Image.open(ini_info.logoimage)  # Replace "image_path.jpg" with the path to your image
-        image = image.resize((300, 300))
+        image = image.resize((270, 270))
         photo = Itk.PhotoImage(image)
         
-        # Create the first frame with a red background
+        # Container for image + task status.
         left_frame = ttk.Frame(window, width=400, height=420)
         left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         
@@ -136,11 +139,11 @@ class GuiManager:
         label.image = photo  # Keep a reference to avoid garbage collection
         label.pack(padx=10, pady=5)
         
-        # Create a LabelFrame below the image with yellow background
+        # Status and install action area.
         control_frame = ttk.Frame(left_frame, relief=tk.RAISED, borderwidth=1)
-        control_frame.pack(fill=tk.BOTH, expand=True, pady=5, padx=5)
+        control_frame.pack(fill=tk.BOTH, expand=True, pady=5, padx=5, ipady=10)
         
-        # Create a Label inside the control frame for status
+        # Status label updated during install.
         status_label = ttk.Label(control_frame, wraplength = 350, textvariable=self.taskitem,width=40, anchor="w", justify="left")        
         status_label.pack(padx=5, pady=5, anchor="w")
                
@@ -150,12 +153,14 @@ class GuiManager:
         install_button.pack(fill=tk.X, pady=5, padx=5, side=tk.BOTTOM, anchor="s")
            
     def on_focus_in(self, event, entry: str)->None:
+        # Auto-scroll to keep the focused entry visible.
         if not self.canvas or self.entry_boxes == 0:
             return
         movetoval = int(entry) / self.entry_boxes
         self.canvas.yview_moveto(movetoval)
         
     def buildRightFrame(self, window, functiontitle, ini_info: iniInfo, installfunc)->None:
+        # Right side: title, section/progress, options, and user input form.
         isosx = platform.system() == "Darwin"
         
         self.section = tk.StringVar()
@@ -169,7 +174,7 @@ class GuiManager:
         title_label.pack(pady=(5, 5))
 
         self.section.set("SECTION:")
-        # Create a Label inside the control frame for status
+        # Section label updated as each install phase runs.
         section_label = ttk.Label(title_frame, textvariable=self.section, width=300, anchor="w", justify="left")
         section_label.pack(padx=5, pady=(5, 5))
         
@@ -195,7 +200,7 @@ class GuiManager:
         widthofframe = self.canvas.winfo_width()
         entryboxlen = self.calculateEntryBoxWidth(window, ini_info.userinput, widthofframe)        
 
-        # Add some labels and entry boxes to the inner frame
+        # Add labels + entry boxes for each USERINPUT key.
         userinputkeys = list(ini_info.userinput.keys())
         for i in range(len(ini_info.userinput)):
             var = tk.StringVar()
@@ -207,6 +212,10 @@ class GuiManager:
             else:
                 entry = ttk.Entry(inner_frame, justify="left", textvariable=var, width=entryboxlen)
             entry.grid(row=i, column=1, pady=5, padx=5, sticky="ew")
+
+            # Prefill defaults if provided in the INI (prompt || default).
+            if keyvalue in getattr(ini_info, "userinput_defaults", {}):
+                var.set(ini_info.userinput_defaults[keyvalue])
             
             # Bind the focus in event to the on_focus_in function for each entry box
             entry.bind("<FocusIn>", lambda event, entry="{}".format(i): self.on_focus_in(event, entry))
@@ -218,6 +227,7 @@ class GuiManager:
             options_button.config(state=tk.DISABLED)
             
     def calculateEntryBoxWidth(self, window, userinput: dict, widthofframe: int) -> int:
+        # Size entries to fit the widest label within the frame width.
             
         right_frame = ttk.Frame(window)
             
@@ -241,6 +251,7 @@ class GuiManager:
         return   entrycharactersize + (average_char_width)            
         
     def buildGUI(self, window, functiontitle, ini_info: iniInfo, installfunc):
+        # Main GUI window sizing and title setup.
         global logger
         logger = logging.getLogger("logger")
         geometrystr: str = ""

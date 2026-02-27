@@ -53,13 +53,22 @@ class mainClass:
         base_path = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
         return os.path.join(base_path, relative_path)
 
-    def _set_app_icon(self) -> None:
+    def _set_app_icon(self, ini_info: iniInfo) -> None:
         """Set a custom window/app icon when icon assets are available."""
         if self.window is None:
             return
 
-        icon_png = self._resource_path(DEFAULT_ICON_PNG)
-        icon_ico = self._resource_path(DEFAULT_ICON_ICO)
+        icon_png = ini_info.iconpng
+        if not icon_png:
+            icon_png = self._resource_path(DEFAULT_ICON_PNG)
+        elif not os.path.isabs(icon_png):
+            icon_png = os.path.join(os.getcwd(), icon_png)
+
+        icon_ico = ini_info.iconico
+        if not icon_ico:
+            icon_ico = self._resource_path(DEFAULT_ICON_ICO)
+        elif not os.path.isabs(icon_ico):
+            icon_ico = os.path.join(os.getcwd(), icon_ico)
 
         try:
             if os.path.exists(icon_png):
@@ -89,7 +98,7 @@ class mainClass:
         else:
             self.window = ttk.Window(themename=ini_info.themename)
 
-        self._set_app_icon()
+        self._set_app_icon(ini_info)
 
         self.logger.info("******************************************************************")
         self.logger.info("******************************************************************")
@@ -280,7 +289,10 @@ def setup_headless_inputs(
     logger: logging.Logger,
 ) -> None:
     for key in ini_info.userinput:
-        ini_info.userinput[key] = HeadlessVar(userinput_overrides.get(key, ""))
+        default_value = ""
+        if hasattr(ini_info, "userinput_defaults"):
+            default_value = ini_info.userinput_defaults.get(key, "")
+        ini_info.userinput[key] = HeadlessVar(userinput_overrides.get(key, default_value))
 
     for key in userinput_overrides:
         if key not in ini_info.userinput:
