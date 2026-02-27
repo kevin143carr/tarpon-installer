@@ -19,7 +19,8 @@ class FileUtilities:
             lines = f.readlines()
             f.close()
 
-        searchline_test = searchline.strip()
+        # Ignore leading whitespace for matching, but preserve original leading whitespace on write.
+        searchline_test = searchline.lstrip().rstrip()
         with open(file, "w") as f:
             found = False
             for line in lines:
@@ -28,11 +29,13 @@ class FileUtilities:
                     f.write(line)
                     continue;
 
-                linetest = line.strip()
+                linetest = line.lstrip().rstrip()
                 searchval = "{0}".format(linetest).lower().count("{0}".format(searchline_test).lower())
                 if(searchval != 0):
                     # print("linetest = {}\nsearchline_test = {}".format(linetest, searchline_test))
-                    f.write(update + "\n")
+                    leading_ws = line[:len(line) - len(line.lstrip())]
+                    update_text = update.lstrip().rstrip("\n")
+                    f.write(leading_ws + update_text + "\n")
                     found = True
                 else:
                     f.write(line)
