@@ -22,6 +22,24 @@ DEFAULT_CONFIGFILE = "config.ini"
 DEFAULT_ICON_PNG = "assets/icons/tarpon_installer_image.png"
 DEFAULT_ICON_ICO = "assets/icons/tarpon_installer.ico"
 
+
+def print_banner(file=None) -> None:
+    print("******************************************************************", file=file)
+    print("******************************************************************", file=file)
+    print(" ><###> Tarpon Installer <###>< is an open source install creator.", file=file)
+    print(" It has been made open source under the MIT Licensing agreement.", file=file)
+    print(" Feel free to use, modify and distribute", file=file)
+    print(" as needed, as long as this banner remains in place", file=file)
+    print("*  VERSION {}".format(VERSION), file=file)
+    print("******************************************************************", file=file)
+    print("******************************************************************", file=file)
+
+
+class BannerArgumentParser(argparse.ArgumentParser):
+    def print_help(self, file=None) -> None:
+        print_banner(file=file)
+        super().print_help(file=file)
+
 class mainClass:
     """Using a main class because of the amount of work that needs to be done initially."""
     display_dict = {}
@@ -136,8 +154,8 @@ class mainClass:
             self.logger.error(ex)
 
 
-def parse_args(argv: List[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
+def build_parser() -> argparse.ArgumentParser:
+    parser = BannerArgumentParser(
         prog="tarpon_installer",
         description="Tarpon Installer - config-driven installer for Windows/Linux."
     )
@@ -181,9 +199,13 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
     parser.add_argument(
         "--strict-tokens",
         action="store_true",
-        help="Fail headless runs if unresolved %tokens% remain.",
+        help="Fail headless runs if unresolved %%tokens%% remain.",
     )
-    return parser.parse_args(argv)
+    return parser
+
+
+def parse_args(argv: List[str]) -> argparse.Namespace:
+    return build_parser().parse_args(argv)
 
 
 def setup_logging(configfile: str, debuglevel: str) -> None:
@@ -361,6 +383,9 @@ def run_headless(ini_info: iniInfo, logger: logging.Logger) -> None:
 def main(argv: List[str]) -> int:
     # During elevation an additional arg of the .exe itself is added and messes things up.
     filtered_args = [arg for arg in argv if "tarpon_installer.exe" not in arg]
+    if not filtered_args:
+        build_parser().print_help()
+        return 0
     args = parse_args(filtered_args)
 
     if path.exists(args.configfile) is False:
