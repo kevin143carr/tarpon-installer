@@ -250,7 +250,7 @@ starttimer = timeout /t 10
 shutitdown = shutdown /r
 ```
 
-## Tarpl (Tarpon Language)
+## TarpL (Tarpon Language)
 
 ### `YESNO`
 
@@ -275,7 +275,7 @@ Shows a message dialog in the GUI or prints a message in console mode.
 Note:
 
 - `MSGBOX` is the correct way to deliberately show a user-facing message.
-- `echo` is still just a normal shell command. It does not become a Tarpl keyword or popup/message prompt.
+- `echo` is still just a normal shell command. It does not become a TarpL keyword or popup/message prompt.
 - In headless mode, `MSGBOX` prints a framed message and pauses for Enter. `echo` only appears as command output if it is logged or live-viewed.
 
 Syntax:
