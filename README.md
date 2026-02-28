@@ -250,7 +250,13 @@ starttimer = timeout /t 10
 shutitdown = shutdown /r
 ```
 
+---
+
 ## TarpL (Tarpon Language)
+
+TarpL is Tarpon Installer's inline command language for prompts, branching, option-driven behavior, and Python callbacks inside `[OPTIONS]`, `[ACTIONS]`, and `[FINAL]`.
+
+Use the examples below as a reference for the supported TarpL forms and their syntax.
 
 ### `YESNO`
 
