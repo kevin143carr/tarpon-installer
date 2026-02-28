@@ -22,6 +22,7 @@ class iniInfo:
         self.watchdog = False
         self.adminrights = False
         self.usegui = True
+        self.displayfinalerrors = False
         self.files = {}
         self.repo = {}
         self.rpms = {}
@@ -79,6 +80,7 @@ class iniInfo:
             self.watchdog = config_object.getboolean("STARTUP", "watchdog")
             self.adminrights = config_object.getboolean("STARTUP", "adminrights")
             self.themename = startup.get("themename", "superhero")
+            self.displayfinalerrors = startup.get("displayfinalerrors", "").strip().lower() in {"1", "true", "yes", "on"}
             if self.usegui:
                 if not self.startinfo:
                     raise KeyError("'startupinfo' option")

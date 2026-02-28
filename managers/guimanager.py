@@ -1,6 +1,7 @@
 import sys
 import platform
 import tkinter as tk
+from tkinter import scrolledtext
 if sys.version_info[:3] < (3, 9):
     try:
         from ttkbootstrap import ttk
@@ -132,6 +133,42 @@ class GuiManager:
                        screen_height - window_height))
     
         optionsWindow.geometry(f"{window_width}x{window_height}+{x}+{y}")
+
+    def showFinalErrorsDialog(self, parent: tk.Tk, errors) -> None:
+        error_window = tk.Toplevel(parent)
+        error_window.title("Installation Errors")
+        error_window.resizable(True, True)
+        error_window.transient(parent)
+        error_window.grab_set()
+
+        content_frame = ttk.Frame(error_window, padding=(18, 16, 18, 12))
+        content_frame.pack(fill=tk.BOTH, expand=True)
+
+        heading = ttk.Label(content_frame, text="Installation Errors", font=("Arial", 14, "bold"))
+        heading.pack(anchor="w")
+
+        subtitle = ttk.Label(
+            content_frame,
+            text="The following errors were recorded during this install.",
+            justify="left",
+            wraplength=520,
+        )
+        subtitle.pack(anchor="w", pady=(2, 10))
+
+        error_text = scrolledtext.ScrolledText(content_frame, width=72, height=12, wrap=tk.WORD)
+        error_text.pack(fill=tk.BOTH, expand=True)
+        error_text.insert("1.0", "\n\n".join(errors))
+        error_text.configure(state=tk.DISABLED)
+
+        button_frame = ttk.Frame(content_frame)
+        button_frame.pack(fill=tk.X, pady=(12, 0))
+
+        close_button = ttk.Button(button_frame, text="Close", width=18, command=error_window.destroy)
+        close_button.pack(anchor="e")
+
+        error_window.update_idletasks()
+        error_window.minsize(error_window.winfo_width(), error_window.winfo_height())
+        error_window.wait_window()
         
     def buildLeftFrame(self, window, functiontitle, ini_info: iniInfo, installfunc):
         # Left side: visible branding plus progress and current task status.

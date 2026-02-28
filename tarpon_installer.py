@@ -17,7 +17,7 @@ import logging
 from typing import List
 from stringutilities import StringUtilities
 from tarpl.tarplapi import TarpL
-from ui_thread import set_var, quit_window
+from ui_thread import call_on_ui_thread, set_var, quit_window
 
 VERSION = "5.0.0"
 DEFAULT_CONFIGFILE = "config.ini"
@@ -42,6 +42,25 @@ class BannerArgumentParser(argparse.ArgumentParser):
         print_banner(file=file)
         super().print_help(file=file)
 
+
+class FinalErrorCollector(logging.Handler):
+    def __init__(self, limit: int = 3) -> None:
+        super().__init__(level=logging.ERROR)
+        self.limit = limit
+        self.messages = []
+        self._lock = threading.Lock()
+
+    def emit(self, record: logging.LogRecord) -> None:
+        message = self.format(record) if self.formatter else record.getMessage()
+        with self._lock:
+            if len(self.messages) >= self.limit:
+                return
+            self.messages.append(message)
+
+    def get_messages(self) -> List[str]:
+        with self._lock:
+            return list(self.messages)
+
 class mainClass:
     """Using a main class because of the amount of work that needs to be done initially."""
     display_dict = {}
@@ -50,6 +69,7 @@ class mainClass:
 
     window = None
     logger = logging.getLogger("logger")
+    final_error_collector = None
 
     def _resource_path(self, relative_path: str) -> str:
         base_path = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
@@ -158,11 +178,19 @@ class mainClass:
             set_var(window, self.gui_manager.section, "SECTION: FINAL ACTIONS")
             set_var(window, self.gui_manager.taskitem, "")
             task.finalActions(window, self.gui_manager.bar, self.gui_manager.taskitem, ini_info)
-            quit_window(self.window)
-            
-                
         except Exception as ex:
             self.logger.error(ex)
+        finally:
+            if ini_info.displayfinalerrors and self.final_error_collector is not None:
+                collected_errors = self.final_error_collector.get_messages()
+                if collected_errors:
+                    call_on_ui_thread(
+                        self.window,
+                        self.gui_manager.showFinalErrorsDialog,
+                        self.window,
+                        collected_errors,
+                    )
+            quit_window(self.window)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -585,6 +613,10 @@ def main(argv: List[str]) -> int:
                 "Ignoring --userinput/--option/--strict-tokens/--liveviewlog because [STARTUP] usegui is True"
             )
         app = mainClass()
+        if ini_info.displayfinalerrors:
+            collector = FinalErrorCollector(limit=3)
+            logging.getLogger("logger").addHandler(collector)
+            app.final_error_collector = collector
         app.main(ini_info)
     return 0
 

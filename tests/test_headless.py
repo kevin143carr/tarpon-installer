@@ -3,6 +3,7 @@ from pathlib import Path
 
 from iniinfo import iniInfo
 from tarpon_installer import (
+    FinalErrorCollector,
     HeadlessVar,
     build_headless_summary_lines,
     prompt_for_headless_userinput,
@@ -191,3 +192,21 @@ def test_build_headless_summary_lines_includes_active_options_and_prompts() -> N
     assert "- MSGBOX: QA branch selected" in summary
     assert "- POPLIST: Pick deployment role" in summary
     assert "This should not appear" not in summary
+
+
+def test_final_error_collector_keeps_only_first_three_errors() -> None:
+    collector = FinalErrorCollector(limit=3)
+
+    for index in range(5):
+        record = logging.LogRecord(
+            name="logger",
+            level=logging.ERROR,
+            pathname=__file__,
+            lineno=1,
+            msg=f"error {index}",
+            args=(),
+            exc_info=None,
+        )
+        collector.emit(record)
+
+    assert collector.get_messages() == ["error 0", "error 1", "error 2"]

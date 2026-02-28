@@ -43,6 +43,7 @@ startupinfo = information about the installer like: "This will install MY APP on
 buttontext = Install
 watchdog = True
 adminrights = True
+displayfinalerrors = False
 ```
 
 Minimal non-GUI example:
@@ -64,6 +65,7 @@ Notes:
 - `iconpng` and `iconico` are optional window/app icons. Paths are resolved relative to the current working directory unless absolute.
 - `watchdog` enables the watchdog app to kill stalled processes.
 - `adminrights` forces the application to run as a privileged user.
+- `displayfinalerrors` shows a final scrollable GUI popup with up to the first 3 logged errors from the run. If omitted, it defaults to `False`.
 
 When `usegui = False`, you can still pass `--userinput KEY=VALUE`, `--option OPTION`, and `--strict-tokens` on the command line to control the non-GUI run.
 Add `--liveviewlog` if you want the non-GUI run to stream log output to the terminal while still writing the normal `.log` file.
