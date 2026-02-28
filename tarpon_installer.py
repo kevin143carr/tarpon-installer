@@ -15,6 +15,8 @@ import ttkbootstrap as ttk
 import threading
 import logging
 from typing import List
+from stringutilities import StringUtilities
+from tarpl.tarplapi import TarpL
 from ui_thread import set_var, quit_window
 
 VERSION = "5.0.0"
@@ -280,6 +282,29 @@ class DummyBar:
         return
 
 
+def _print_headless_terminal_block(title: str, message: str) -> None:
+    border = "=" * 72
+    print()
+    print(border)
+    print(title)
+    print("-" * 72)
+    print(message)
+    print(border)
+
+
+def prompt_for_headless_userinput(prompt_text: str) -> str:
+    _print_headless_terminal_block("USER INPUT REQUIRED", prompt_text)
+    while True:
+        try:
+            value = input("Enter value: ")
+        except EOFError as ex:
+            raise SystemExit("Error - No stdin available for required headless USERINPUT.") from ex
+
+        if value.strip() != "":
+            return value
+        print("A value is required.", file=sys.stderr)
+
+
 def parse_userinput_overrides(values: List[str]) -> dict:
     overrides = {}
     for entry in values:
@@ -321,7 +346,13 @@ def setup_headless_inputs(
         default_value = ""
         if hasattr(ini_info, "userinput_defaults"):
             default_value = ini_info.userinput_defaults.get(key, "")
-        ini_info.userinput[key] = HeadlessVar(userinput_overrides.get(key, default_value))
+        if key in userinput_overrides and userinput_overrides[key] != "":
+            value = userinput_overrides[key]
+        elif default_value != "":
+            value = default_value
+        else:
+            value = prompt_for_headless_userinput(ini_info.userinput[key])
+        ini_info.userinput[key] = HeadlessVar(value)
 
     for key in userinput_overrides:
         if key not in ini_info.userinput:
@@ -393,6 +424,90 @@ def _collect_unresolved_tokens(ini_info: iniInfo, declared_returnvars: set) -> L
     return sorted(unresolved)
 
 
+def _extract_headless_prompt_entries(ini_info: iniInfo) -> List[str]:
+    tarpl = TarpL()
+    string_utilities = StringUtilities()
+    prompt_entries = []
+
+    for source in (ini_info.actions, ini_info.finalactions):
+        for key, value in source.items():
+            if key in ini_info.options and ini_info.optionvals.get(key, HeadlessVar("0")).get() == "0":
+                continue
+
+            resolved_value = string_utilities.checkForUserVariable(str(value), ini_info)
+            while True:
+                tarpltype = tarpl.getTarpL(resolved_value)
+                if tarpltype != "IFTHENELSE":
+                    break
+                resolved_value = tarpl.IFTHENELSE(resolved_value, ini_info).rtnvalue
+
+            if tarpltype not in {"YESNO", "MSGBOX", "POPLIST"}:
+                continue
+
+            parts = resolved_value.split("::")
+            if len(parts) < 2:
+                continue
+            prompt_entries.append(f"- {tarpltype}: {parts[1].strip()}")
+
+    return prompt_entries
+
+
+def build_headless_summary_lines(configfile: str, ini_info: iniInfo) -> List[str]:
+    enabled_options = sorted(
+        key for key, value in ini_info.optionvals.items() if value.get() != "0"
+    )
+    userinput_defaults = [
+        f"- {key} = {ini_info.userinput[key].get()}"
+        for key in ini_info.userinput
+    ]
+    prompt_entries = _extract_headless_prompt_entries(ini_info)
+
+    lines = [
+        f"Config file: {configfile}",
+        "Mode: headless",
+        f"Install title: {ini_info.installtitle}",
+        f"Action prompt: {ini_info.buttontext}",
+        f"Build type: {ini_info.buildtype}",
+        f"Install type: {ini_info.installtype}",
+        f"Resources: {ini_info.resources}",
+        "",
+        "Enabled options:",
+    ]
+    if enabled_options:
+        lines.extend(f"- {option}" for option in enabled_options)
+    else:
+        lines.append("- None")
+
+    lines.extend(["", "User input defaults:"])
+    if userinput_defaults:
+        lines.extend(userinput_defaults)
+    else:
+        lines.append("- None")
+
+    lines.extend(["", "Expected user prompts:"])
+    if prompt_entries:
+        lines.extend(prompt_entries)
+    else:
+        lines.append("- None")
+
+    lines.extend(["", "Press Enter to begin..."])
+    return lines
+
+
+def show_headless_preflight_summary(configfile: str, ini_info: iniInfo) -> None:
+    border = "=" * 72
+    print()
+    print(border)
+    print("HEADLESS RUN SUMMARY")
+    print("-" * 72)
+    print("\n".join(build_headless_summary_lines(configfile, ini_info)))
+    print(border)
+    try:
+        input()
+    except EOFError:
+        return
+
+
 def run_headless(ini_info: iniInfo, logger: logging.Logger) -> None:
     window = DummyWindow()
     bar = DummyBar()
@@ -462,6 +577,7 @@ def main(argv: List[str]) -> int:
             if unresolved:
                 logger.error("Unresolved tokens: %s", ", ".join(unresolved))
                 return 2
+        show_headless_preflight_summary(args.configfile, ini_info)
         run_headless(ini_info, logger)
     else:
         if args.userinput or args.option or args.strict_tokens or args.liveviewlog:

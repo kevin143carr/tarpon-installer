@@ -1,5 +1,7 @@
 import os
 
+from iniinfo import iniInfo
+from managers.actionmanager import ActionManager
 from tarpl.tarplapi import TarpL
 from tarpl.tarplclasses import TarpLAPIEnum
 
@@ -124,3 +126,72 @@ def test_headless_poplist_reads_options_from_file(monkeypatch, capsys, tmp_path)
     assert result.rtnvalue == "Gamma"
     assert result.rtnvar == "selected_value"
     assert result.tarpltype == TarpLAPIEnum.POPLIST
+
+
+def test_if_then_else_returns_then_branch_when_condition_matches() -> None:
+    info = iniInfo()
+    info.variables = {"host": "127.0.0.1"}
+    info.userinput = {}
+    info.returnvars = {}
+
+    result = TarpL().IFTHENELSE(
+        "[IF]%host% == 127.0.0.1[THEN]echo localhost[ELSE]echo remote",
+        info,
+    )
+
+    assert result.rtnstate is True
+    assert result.rtnvalue == "echo localhost"
+    assert result.tarpltype == TarpLAPIEnum.IFTHENELSE
+
+
+def test_if_then_else_returns_else_branch_when_condition_does_not_match() -> None:
+    info = iniInfo()
+    info.variables = {"host": "10.0.0.9"}
+    info.userinput = {}
+    info.returnvars = {}
+
+    result = TarpL().IFTHENELSE(
+        "[IF]%host% == 127.0.0.1[THEN]echo localhost[ELSE]echo remote",
+        info,
+    )
+
+    assert result.rtnstate is True
+    assert result.rtnvalue == "echo remote"
+    assert result.tarpltype == TarpLAPIEnum.IFTHENELSE
+
+
+def test_action_manager_executes_nested_tarpl_branch_without_shelling(monkeypatch, capsys) -> None:
+    class DummyWindow:
+        def update_idletasks(self) -> None:
+            return None
+
+    class DummyVar:
+        def set(self, value: str) -> None:
+            return None
+
+    info = iniInfo()
+    info.installtype = "LOCAL"
+    info.watchdog = False
+    info.variables = {"host": "127.0.0.1"}
+    info.userinput = {}
+    info.returnvars = {}
+    info.options = {}
+    info.actions = {
+        "checkip": "[IF]%host% == 127.0.0.1[THEN]MSGBOX::You are using localhost[ELSE]echo remote"
+    }
+
+    manager = ActionManager()
+
+    def fail_execute(*args, **kwargs):
+        raise AssertionError("executeProcs should not run for nested MSGBOX")
+
+    monkeypatch.setenv("TARPL_HEADLESS", "1")
+    monkeypatch.setattr("builtins.input", lambda prompt: "")
+    monkeypatch.setattr(manager.process_manager, "executeProcs", fail_execute)
+    monkeypatch.setattr(manager.process_manager, "executeProcsDebug", fail_execute)
+
+    manager.doActionsLocal(DummyWindow(), {}, DummyVar(), info)
+
+    output = capsys.readouterr()
+    assert "USER MESSAGE" in output.out
+    assert "You are using localhost" in output.out

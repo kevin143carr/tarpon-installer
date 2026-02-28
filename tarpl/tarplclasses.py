@@ -10,6 +10,7 @@ class TarpLAPIEnum(Enum):
     EXEC_PYFUNC = 7
     IFOPTION = 8
     ALSOCHECKOPTION = 9
+    IFTHENELSE = 10
 
 class TarpLreturn:
     def __init__(self) -> None:
