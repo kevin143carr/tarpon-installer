@@ -17,8 +17,8 @@ python3 -m PyInstaller \
   --workpath build/linux \
   --specpath build/linux \
   --hidden-import PIL._tkinter_finder \
-  --add-data "assets/icons/tarpon_installer_image.png:assets/icons" \
-  --add-data "assets/icons/tarpon_installer.ico:assets/icons" \
+  --add-data "$REPO_ROOT/assets/icons/tarpon_installer_image.png:assets/icons" \
+  --add-data "$REPO_ROOT/assets/icons/tarpon_installer.ico:assets/icons" \
   tarpon_installer.py
 
 echo "Built dist/linux/tarpon_installer"
