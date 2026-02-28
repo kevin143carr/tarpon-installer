@@ -25,6 +25,7 @@ class GuiManager:
         self.bar = None
         self.taskitem = None
         self.section = None
+        self.startinfo = None
         self.themename = "superhero"
         self._tarpL = TarpL()
         self.canvas = None
@@ -44,21 +45,32 @@ class GuiManager:
         optionsWindow.resizable(False, False)
         optionsWindow.focusmodel(model="active")
         optionsWindow.after(100, lambda: optionsWindow.focus_force())
+        optionsWindow.title("Installation Options")
     
         # Main content frame
-        content_frame = ttk.Frame(optionsWindow)
+        content_frame = ttk.Frame(optionsWindow, padding=(18, 16, 18, 12))
         content_frame.pack(side="top", fill="both", expand=True)
+
+        heading = ttk.Label(content_frame, text="Installation Options", font=("Arial", 14, "bold"))
+        heading.pack(anchor="w")
+
+        subtitle = ttk.Label(
+            content_frame,
+            text="Choose any optional actions for this run.",
+            justify="left",
+        )
+        subtitle.pack(anchor="w", pady=(2, 12))
     
         # Scrolling content area
         functionFrame = ttk.Frame(content_frame)
         functionFrame.pack(side="top", fill="both", expand=True)
     
         scrolledFrame = ScrolledFrame(functionFrame, scrollbars="vertical")
-        scrolledFrame.pack(fill=tk.BOTH, expand=True, padx=20, pady=5)
+        scrolledFrame.pack(fill=tk.BOTH, expand=True)
     
         scrolledFrame.bind_arrow_keys(functionFrame)
         scrolledFrame.bind_scroll_wheel(functionFrame)
-        inner_frame = scrolledFrame.display_widget(tk.Frame)
+        inner_frame = scrolledFrame.display_widget(ttk.Frame)
     
         # Build the option list with optional Tarpl behaviors.
         for row, value in enumerate(ini_info.options):
@@ -87,7 +99,7 @@ class GuiManager:
                     )
                 )
             else:
-                lb = ttk.Label(inner_frame, text=ini_info.options[value])
+                lb = ttk.Label(inner_frame, text=ini_info.options[value], justify="left", wraplength=300)
                 cb = ttk.Checkbutton(
                     inner_frame,
                     variable=ini_info.optionvals[value],
@@ -95,12 +107,12 @@ class GuiManager:
                     offvalue='0'
                 )
     
-            lb.grid(row=row, column=1, sticky="w")
-            cb.grid(row=row, column=0, sticky="w")
+            cb.grid(row=row, column=0, sticky="nw", padx=(0, 8), pady=6)
+            lb.grid(row=row, column=1, sticky="w", pady=6)
     
         # Bottom frame for the close button, centered
         bottom_frame = ttk.Frame(optionsWindow)
-        bottom_frame.pack(side="bottom", fill="x", pady=10)
+        bottom_frame.pack(side="bottom", fill="x", pady=(0, 14))
     
         optionbutton = ttk.Button(bottom_frame, text="Close", width=20, command=optionsWindow.destroy)
         optionbutton.pack(anchor="center")
@@ -122,35 +134,70 @@ class GuiManager:
         optionsWindow.geometry(f"{window_width}x{window_height}+{x}+{y}")
         
     def buildLeftFrame(self, window, functiontitle, ini_info: iniInfo, installfunc):
-        # Left side: logo image, install task status, and install button.
+        # Left side: visible branding plus progress and current task status.
         self.taskitem = tk.StringVar()
         
         # Load image (GUI logo)
-        image = Image.open(ini_info.logoimage)  # Replace "image_path.jpg" with the path to your image
+        image = Image.open(ini_info.logoimage)
         image = image.resize((270, 270))
         photo = Itk.PhotoImage(image)
         
-        # Container for image + task status.
-        left_frame = ttk.Frame(window, width=400, height=420)
+        left_frame = ttk.Frame(window, padding=(18, 18, 12, 18))
         left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         
-        # Display image
-        label = ttk.Label(left_frame, image=photo)
-        label.image = photo  # Keep a reference to avoid garbage collection
-        label.pack(padx=10, pady=5)
-        
-        # Status and install action area.
-        control_frame = ttk.Frame(left_frame, relief=tk.RAISED, borderwidth=1)
-        control_frame.pack(fill=tk.BOTH, expand=True, pady=5, padx=5, ipady=10)
-        
-        # Status label updated during install.
-        status_label = ttk.Label(control_frame, wraplength = 350, textvariable=self.taskitem,width=40, anchor="w", justify="left")        
-        status_label.pack(padx=5, pady=5, anchor="w")
-               
-        self.taskitem.set("INSTALL TASK:")        
+        image_frame = ttk.Frame(left_frame)
+        image_frame.pack(fill=tk.X, pady=(0, 14))
 
-        install_button = ttk.Button(control_frame, text=ini_info.buttontext, command=lambda: installfunc(ini_info, install_button, window))
-        install_button.pack(fill=tk.X, pady=5, padx=5, side=tk.BOTTOM, anchor="s")
+        label = ttk.Label(image_frame, image=photo, anchor="center")
+        label.image = photo
+        label.pack(anchor="center")
+
+        spacer = ttk.Frame(left_frame)
+        spacer.pack(fill=tk.BOTH, expand=True)
+        
+        progress_frame = ttk.Labelframe(left_frame, text="Progress", padding=(12, 10, 12, 12))
+        progress_frame.pack(side=tk.BOTTOM, fill=tk.X)
+        progress_frame.columnconfigure(0, weight=1)
+
+        section_row = ttk.Frame(progress_frame)
+        section_row.grid(row=0, column=0, sticky="ew")
+        section_row.columnconfigure(1, weight=1)
+
+        section_heading = ttk.Label(section_row, text="Current Section", font=("Arial", 10, "bold"))
+        section_heading.grid(row=0, column=0, sticky="w")
+
+        section_label = ttk.Label(
+            section_row,
+            textvariable=self.section,
+            wraplength=180,
+            anchor="w",
+            justify="left",
+        )
+        section_label.grid(row=0, column=1, sticky="w", padx=(10, 0))
+
+        self.bar = ttk.Progressbar(progress_frame, orient=tk.HORIZONTAL, length=290, mode="determinate")
+        self.bar.grid(row=1, column=0, sticky="ew", pady=(4, 10))
+
+        task_heading = ttk.Label(progress_frame, text="Current Task", font=("Arial", 10, "bold"))
+        task_heading.grid(row=2, column=0, sticky="w")
+
+        status_label = ttk.Label(
+            progress_frame,
+            wraplength=290,
+            textvariable=self.taskitem,
+            anchor="w",
+            justify="left",
+        )
+        status_label.grid(row=3, column=0, sticky="ew", pady=(2, 0))
+
+        self.taskitem.set("Waiting to begin installation.")
+
+        install_button = ttk.Button(
+            progress_frame,
+            text=ini_info.buttontext,
+            command=lambda: installfunc(ini_info, install_button, window),
+        )
+        install_button.grid(row=4, column=0, sticky="ew", pady=(12, 0))
            
     def on_focus_in(self, event, entry: str)->None:
         # Auto-scroll to keep the focused entry visible.
@@ -160,37 +207,66 @@ class GuiManager:
         self.canvas.yview_moveto(movetoval)
         
     def buildRightFrame(self, window, functiontitle, ini_info: iniInfo, installfunc)->None:
-        # Right side: title, section/progress, options, and user input form.
+        # Right side: title, startup summary, options trigger, and dynamic input form.
         isosx = platform.system() == "Darwin"
         
         self.section = tk.StringVar()
+        self.section.set("Waiting to start.")
         
-        right_frame = ttk.Frame(window, width=400, height=420)
+        right_frame = ttk.Frame(window, padding=(12, 18, 18, 18))
         right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
         
-        title_frame = ttk.Frame(right_frame, relief=tk.RAISED, borderwidth=1)
-        title_frame.pack(padx=5, pady=5, expand=True, side=tk.TOP, fill=tk.BOTH, anchor="n")
-        title_label = ttk.Label(title_frame, text=ini_info.installtitle,width=40, anchor="center", font="Arial 17 bold")
-        title_label.pack(pady=(5, 5))
+        header_frame = ttk.Frame(right_frame)
+        header_frame.pack(fill=tk.X, anchor="n")
 
-        self.section.set("SECTION:")
-        # Section label updated as each install phase runs.
-        section_label = ttk.Label(title_frame, textvariable=self.section, width=300, anchor="w", justify="left")
-        section_label.pack(padx=5, pady=(5, 5))
-        
-        self.bar = ttk.Progressbar(title_frame,orient=tk.HORIZONTAL,length=310)
-        self.bar.pack()        
-        
-        functionTitleLabel = ttk.Label(title_frame,text=functiontitle, anchor="center", font="Arial 16 bold")
-        functionTitleLabel.pack(padx=5, pady=10, anchor="center")
-        
-        options_button = ttk.Button(title_frame, text="Options", width=18, command=lambda: self.optionsDialog(window, ini_info))
-        options_button.pack(fill=tk.X, pady=5, padx=10, side=tk.BOTTOM, anchor="s")
-        
-        scrolledFrame = ScrolledFrame(title_frame,scrollbars = "vertical")
-        scrolledFrame.pack(fill=tk.BOTH, padx=10, expand = "yes", pady=5)
+        title_label = ttk.Label(
+            header_frame,
+            text=ini_info.installtitle,
+            anchor="w",
+            justify="left",
+            font=("Arial", 16, "bold"),
+            wraplength=360,
+        )
+        title_label.pack(anchor="w")
 
-        inner_frame = scrolledFrame.display_widget(tk.Frame)        
+        if ini_info.startinfo:
+            self.startinfo = ttk.Label(
+                header_frame,
+                text=ini_info.startinfo,
+                anchor="w",
+                justify="left",
+                wraplength=360,
+            )
+            self.startinfo.pack(anchor="w", pady=(6, 12))
+
+        controls_frame = ttk.Frame(right_frame)
+        controls_frame.pack(fill=tk.X, pady=(0, 10))
+
+        functionTitleLabel = ttk.Label(
+            controls_frame,
+            text=functiontitle,
+            anchor="w",
+            justify="left",
+            font=("Arial", 12, "bold"),
+            wraplength=260,
+        )
+        functionTitleLabel.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        options_button = ttk.Button(
+            controls_frame,
+            text="Options",
+            width=16,
+            command=lambda: self.optionsDialog(window, ini_info),
+        )
+        options_button.pack(side=tk.RIGHT, padx=(12, 0))
+
+        input_frame = ttk.Labelframe(right_frame, text="Required Inputs", padding=(12, 10, 12, 12))
+        input_frame.pack(fill=tk.BOTH, expand=True)
+
+        scrolledFrame = ScrolledFrame(input_frame, scrollbars = "vertical")
+        scrolledFrame.pack(fill=tk.BOTH, expand = "yes")
+
+        inner_frame = scrolledFrame.display_widget(ttk.Frame)
         scrolledFrame.bind_arrow_keys(inner_frame)
         scrolledFrame.bind_scroll_wheel(inner_frame)
        
@@ -205,13 +281,13 @@ class GuiManager:
         for i in range(len(ini_info.userinput)):
             var = tk.StringVar()
             keyvalue = userinputkeys[i]
-            label = ttk.Label(inner_frame, text=ini_info.userinput[keyvalue], justify="left")
-            label.grid(row=i, column=0, pady=5, padx=5, sticky="w")
+            label = ttk.Label(inner_frame, text=ini_info.userinput[keyvalue], justify="left", wraplength=180)
+            label.grid(row=i, column=0, pady=6, padx=(0, 10), sticky="w")
             if isosx:
                 entry = ttk.Entry(inner_frame, justify="left", textvariable=var)
             else:
                 entry = ttk.Entry(inner_frame, justify="left", textvariable=var, width=entryboxlen)
-            entry.grid(row=i, column=1, pady=5, padx=5, sticky="ew")
+            entry.grid(row=i, column=1, pady=6, sticky="ew")
 
             # Prefill defaults if provided in the INI (prompt || default).
             if keyvalue in getattr(ini_info, "userinput_defaults", {}):
@@ -220,6 +296,8 @@ class GuiManager:
             # Bind the focus in event to the on_focus_in function for each entry box
             entry.bind("<FocusIn>", lambda event, entry="{}".format(i): self.on_focus_in(event, entry))
             ini_info.userinput[keyvalue] = var                      
+
+        inner_frame.columnconfigure(1, weight=1)
         
         self.entry_boxes = len(ini_info.userinput)
 
@@ -259,8 +337,8 @@ class GuiManager:
         
         screen_width = window.winfo_screenwidth()
         screen_height = window.winfo_screenheight()
-        width = 820
-        height = 420
+        width = 920
+        height = 510
         x = int((screen_width/2) - (width/2))
         y = int((screen_height/2) - (height/1.5))
         
