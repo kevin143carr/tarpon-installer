@@ -11,6 +11,22 @@ I originally built it to distribute builds to Raspberry Pi devices and later use
 
 It uses a `config.ini` (name it anything you want) plus a `resources` folder.
 
+## Packaging
+
+For PyInstaller one-file builds, install the runtime and build dependencies:
+
+```bash
+python3 -m pip install -r requirements.txt -r requirements-build.txt
+```
+
+Platform build scripts:
+
+- Windows: `useful_scripts/build_pyinstaller_windows.bat`
+- macOS: `useful_scripts/build_pyinstaller_macos.sh`
+- Linux: `useful_scripts/build_pyinstaller_linux.sh`
+
+Each script performs a clean build and writes a one-file executable into a platform-specific `dist/` subdirectory.
+
 ## INI Configuration
 
 ### `[STARTUP]` (GUI title, logo, and behavior)
