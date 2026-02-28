@@ -173,6 +173,8 @@ class GuiManager:
     def buildLeftFrame(self, window, functiontitle, ini_info: iniInfo, installfunc):
         # Left side: visible branding plus progress and current task status.
         self.taskitem = tk.StringVar()
+        if self.section is None:
+            self.section = tk.StringVar(value="[STARTUP]")
         
         # Load image (GUI logo)
         image = Image.open(ini_info.logoimage)
@@ -246,9 +248,6 @@ class GuiManager:
     def buildRightFrame(self, window, functiontitle, ini_info: iniInfo, installfunc)->None:
         # Right side: title, startup summary, options trigger, and dynamic input form.
         isosx = platform.system() == "Darwin"
-        
-        self.section = tk.StringVar()
-        self.section.set("[STARTUP]")
         
         right_frame = ttk.Frame(window, padding=(12, 18, 18, 18))
         right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
