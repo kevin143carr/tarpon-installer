@@ -72,6 +72,9 @@ class mainClass:
     logger = logging.getLogger("logger")
     final_error_collector = None
 
+    def _set_current_section(self, window, section_name: str) -> None:
+        set_var(window, self.gui_manager.section, "[{}]".format(section_name))
+
     def _resource_path(self, relative_path: str) -> str:
         base_path = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
         return os.path.join(base_path, relative_path)
@@ -162,21 +165,21 @@ class mainClass:
 
             # Local Install
             if ini_info.buildtype == 'LINUX':
-                set_var(window, self.gui_manager.section, "SECTION: INSTALLING RPMs")
+                self._set_current_section(window, "RPM")
                 self.rpm_manager.installLocalRPMs(window, self.gui_manager.bar, self.gui_manager.taskitem, ini_info.resources, ini_info.rpms, ini_info.watchdog, ini_info.process_timeout)
 
-            set_var(window, self.gui_manager.section, "SECTION: COPYING FILES")
+            self._set_current_section(window, "FILES")
             task.copyFromResources(window, self.gui_manager.bar, self.gui_manager.taskitem, ini_info)
 
-            set_var(window, self.gui_manager.section, "SECTION: ACTIONS")
+            self._set_current_section(window, "ACTIONS")
             set_var(window, self.gui_manager.taskitem, "")
             task.doActions(window, self.gui_manager.bar, self.gui_manager.taskitem, ini_info)
 
-            set_var(window, self.gui_manager.section, "SECTION: MODIFYING FILES")
+            self._set_current_section(window, "MODIFY")
             set_var(window, self.gui_manager.taskitem, "")
             task.modifyFiles(window, self.gui_manager.bar, self.gui_manager.taskitem, ini_info)
 
-            set_var(window, self.gui_manager.section, "SECTION: FINAL ACTIONS")
+            self._set_current_section(window, "FINAL")
             set_var(window, self.gui_manager.taskitem, "")
             task.finalActions(window, self.gui_manager.bar, self.gui_manager.taskitem, ini_info)
         except Exception as ex:

@@ -248,7 +248,7 @@ class GuiManager:
         isosx = platform.system() == "Darwin"
         
         self.section = tk.StringVar()
-        self.section.set("Waiting to start.")
+        self.section.set("[STARTUP]")
         
         right_frame = ttk.Frame(window, padding=(12, 18, 18, 18))
         right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
