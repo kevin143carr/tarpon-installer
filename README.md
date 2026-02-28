@@ -11,6 +11,8 @@ I originally built it to distribute builds to Raspberry Pi devices and later use
 
 It uses a `config.ini` (name it anything you want) plus a `resources` folder.
 
+For release history and version-to-version changes, see `CHANGELOG.md`.
+
 ## Packaging
 
 For PyInstaller one-file builds, install the runtime and build dependencies:
