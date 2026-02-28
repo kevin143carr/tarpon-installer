@@ -1,4 +1,5 @@
 import time
+import timeit
 import paramiko
 import subprocess
 from fileutilities import FileUtilities
@@ -7,14 +8,15 @@ import logging
 import threading
 
 class ProcessManager:
-    ssh = paramiko.SSHClient()
-    username = ""
-    password = ""
-    hostname = ""
-    resources = ""
-    file_utilities = FileUtilities()
-    logger = logging.getLogger("logger")
-    lock = threading.Lock()
+    def __init__(self) -> None:
+        self.ssh = paramiko.SSHClient()
+        self.username = ""
+        self.password = ""
+        self.hostname = ""
+        self.resources = ""
+        self.file_utilities = FileUtilities()
+        self.logger = logging.getLogger("logger")
+        self.lock = threading.Lock()
     
     def checkForWatchdogEvent(self,pid, action):
         watchdogfile = open('tarpon_watchdog.log','r')
@@ -28,39 +30,65 @@ class ProcessManager:
                 self.executeProcs(action, True)
                 
         watchdogfile.close()    
+
+    def _log_subprocess_output(self, stdout: str, stderr: str, debug: bool = False) -> None:
+        out_logger = self.logger.debug if debug else self.logger.info
+        err_logger = self.logger.debug if debug else self.logger.error
+
+        for line in str(stdout).splitlines():
+            if line:
+                out_logger(line)
+
+        for line in str(stderr).splitlines():
+            if line:
+                err_logger(line)
     
-    def executeProcsDebug(self, action, watchdog = False):
-        p = subprocess.Popen(action,shell=True, stdout=PIPE, stderr=PIPE, 
-                             start_new_session=True, encoding='utf-8')
-        self.logger.info("PID [{}] COMMAND [{}]".format(p.pid,action))
-        p.wait()
-        
+    def executeProcsDebug(self, action, watchdog = False, timeout = 180):
+        start = timeit.default_timer()
+        self.logger.info("ACTION START COMMAND [{}] TIMEOUT [{}s]".format(action, timeout))
+        p = subprocess.Popen(action, shell=True, stdout=PIPE, stderr=PIPE,
+                             start_new_session=True, text=True)
+        self.logger.info("PID [{}] COMMAND [{}]".format(p.pid, action))
+        try:
+            stdout, stderr = p.communicate(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            p.kill()
+            p.communicate()
+            self.logger.error("ACTION TIMEOUT COMMAND [{}]".format(action))
+            raise Exception("Process timed out: {}".format(action))
+
         time.sleep(1)
 
         if watchdog == True:
             pidval = "PID [{}]".format(p.pid)
             self.checkForWatchdogEvent(pidval, action)
         
-        stdout,stderr = p.communicate(timeout=180)
-        
-        for line in str(stdout).splitlines():
-            self.logger.debug(line)
-                
-        for line in str(stderr).splitlines():
-            self.logger.debug(line)
-            
+        self._log_subprocess_output(stdout, stderr, debug=True)
+        elapsed = timeit.default_timer() - start
+        self.logger.info("ACTION END COMMAND [{}] RC [{}] ELAPSED [{:.2f}s]".format(action, p.returncode, elapsed))
         return p.returncode            
             
-    def executeProcs(self, action, watchdog = False):
-        p = subprocess.Popen(action,shell=True, stdout=None, stderr=None, 
-                             start_new_session=False, encoding=None)
-        self.logger.info("PID [{}] COMMAND [{}]".format(p.pid,action))
-        p.wait()
-        
+    def executeProcs(self, action, watchdog = False, timeout = 180):
+        start = timeit.default_timer()
+        self.logger.info("ACTION START COMMAND [{}] TIMEOUT [{}s]".format(action, timeout))
+        p = subprocess.Popen(action, shell=True, stdout=PIPE, stderr=PIPE,
+                             start_new_session=False, text=True)
+        self.logger.info("PID [{}] COMMAND [{}]".format(p.pid, action))
+        try:
+            stdout, stderr = p.communicate(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            p.kill()
+            p.communicate()
+            self.logger.error("ACTION TIMEOUT COMMAND [{}]".format(action))
+            raise Exception("Process timed out: {}".format(action))
+
         time.sleep(1)
 
         if watchdog == True:
             pidval = "PID [{}]".format(p.pid)
             self.checkForWatchdogEvent(pidval, action)
-            
+
+        self._log_subprocess_output(stdout, stderr, debug=False)
+        elapsed = timeit.default_timer() - start
+        self.logger.info("ACTION END COMMAND [{}] RC [{}] ELAPSED [{:.2f}s]".format(action, p.returncode, elapsed))
         return p.returncode

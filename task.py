@@ -1,35 +1,50 @@
 #!/usr/bin/env python3
 import os
 import sys
-import paramiko
 import shutil
+import tarfile
+import threading
+import logging
+from pathlib import Path
+from shutil import copyfile
+from typing import Iterable, Optional
+
+import paramiko
 import tkinter as tk
-try:
-    from ttkbootstrap import ttk
-except ImportError:
+if sys.version_info[:3] < (3, 9):
+    try:
+        from ttkbootstrap import ttk
+    except ImportError:
+        import ttkbootstrap as ttk
+else:
     import ttkbootstrap as ttk
 from zipfile import ZipFile
-from tarfile import TarFile
-from shutil import copyfile
-from pathlib import Path
+
 from fileutilities import FileUtilities
 from iniinfo import iniInfo
 from managers.actionmanager import ActionManager
 from stringutilities import StringUtilities
-import logging
-import threading
+from ui_thread import set_bar_value, set_var, update_idletasks
 
 class Task:
-    ssh = paramiko.SSHClient()
-    username = ""
-    password = ""
-    hostname = ""
-    resources = ""
-    file_utilities = FileUtilities()
-    action_manager =  ActionManager()
-    string_utilities =  StringUtilities()
-    logger = logging.getLogger("logger")
-    lock = threading.Lock()
+    def __init__(self, ini_info: iniInfo):
+        self.ssh = paramiko.SSHClient()
+        self.username = ini_info.username
+        self.password = ini_info.password
+        self.hostname = ini_info.hostname
+        self.resources = ini_info.resources
+        self.file_utilities = FileUtilities()
+        self.action_manager = ActionManager()
+        self.string_utilities = StringUtilities()
+        self.logger = logging.getLogger("logger")
+        self.lock = threading.Lock()
+
+    def _set_progress(self, window, bar: ttk.Progressbar, count: int, total: int) -> None:
+        if total <= 0:
+            set_bar_value(window, bar, 0)
+            return
+        set_bar_value(window, bar, (count / total) * 100)
+        update_idletasks(window)
 
     def loginSSH(self) -> None:
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -37,42 +52,41 @@ class Task:
 
     def copyFromResourcesLocal(self, window, bar: ttk.Progressbar, taskitem: tk.StringVar, ini_info: iniInfo) -> None:
         count = 0
+        resources_path = Path(ini_info.resources)
+        if not resources_path.is_absolute():
+            resources_path = Path.cwd() / resources_path
         for key in ini_info.files:
             count += 1;
-            bar['value'] = (count/len(ini_info.files.keys()))*100
-            window.update_idletasks()
+            self._set_progress(window, bar, count, len(ini_info.files.keys()))
             firstfile = 0
-            my_file = Path("{}/{}/{}".format(os.getcwd(),ini_info.resources,key))
-
-            if ini_info.buildtype != 'LINUX':
-                # check for user input
-                userinput = self.string_utilities.checkForUserVariable(ini_info.files[key], ini_info)
-                if(userinput != None):
-                    ini_info.files[key] = userinput
+            my_file = resources_path / key
+            destination = self.string_utilities.checkForUserVariable(ini_info.files[key], ini_info)
+            if destination is None:
+                destination = ini_info.files[key]
 
             if my_file.is_file():
-                taskstr = 'copying and extracting file {} to {}'.format(key, ini_info.files[key])
+                taskstr = 'copying and extracting file {} to {}'.format(key, destination)
                 self.logger.info(taskstr)
-                taskitem.set(taskstr)
+                set_var(window, taskitem, taskstr)
                 try:
-                    if '.' in ini_info.files[key]: # contains a file name
-                        dirname = os.path.dirname(os.path.abspath(ini_info.files[key])) # just get the path
+                    if '.' in destination: # contains a file name
+                        dirname = os.path.dirname(os.path.abspath(destination)) # just get the path
                         os.makedirs(dirname, exist_ok = True)
                     else:
-                        os.makedirs(ini_info.files[key], exist_ok = True)
+                        os.makedirs(destination, exist_ok = True)
                 except OSError:
-                    self.logger.warning("Directory {} can not be created".format(ini_info.files[key]))
+                    self.logger.warning("Directory {} can not be created".format(destination))
 
                 dirtest = key.split('/')
-                src = "{}/{}".format(ini_info.resources, key)
-                if '.' in ini_info.files[key]: # contains a file name, so do not append a filename from 'key'
-                    dst = "{}".format(ini_info.files[key])
+                src = str(resources_path / key)
+                if '.' in destination: # contains a file name, so do not append a filename from 'key'
+                    dst = "{}".format(destination)
                 else:
                     if (len(dirtest) > 1):
                         keyname = dirtest[1]
-                        dst = "{}/{}".format(ini_info.files[key],keyname)
+                        dst = "{}/{}".format(destination,keyname)
                     else:
-                        dst = "{}/{}".format(ini_info.files[key],key)
+                        dst = "{}/{}".format(destination,key)
 
                 copyfile(src,dst)
                 
@@ -115,7 +129,7 @@ class Task:
                                         filename += "/"
                                         filename += words[i+1]
     
-                            os.makedirs(ini_info.files[key] +"/" + filename, exist_ok = True)
+                            os.makedirs(destination +"/" + filename, exist_ok = True)
                             continue
         
                         # copy file (taken from zipfile's extract)
@@ -140,15 +154,15 @@ class Task:
                         else:
                             source = tf.getmember(file)
                             if(source.isdir()):
-                                os.makedirs(ini_info.files[key] +"/" + file, exist_ok = True)
+                                os.makedirs(destination +"/" + file, exist_ok = True)
                                 continue
                             else:
                                 source = tf.extractfile(source)
                                 if(hasdirectory == True):
                                     getfoldername = os.path.dirname(filename)
-                                    os.makedirs(ini_info.files[key] +"/" + getfoldername, exist_ok = True)
+                                    os.makedirs(destination +"/" + getfoldername, exist_ok = True)
                             
-                        target = open(os.path.join(ini_info.files[key], filename), "wb")                        
+                        target = open(os.path.join(destination, filename), "wb")
     
                         with source, target:
                             shutil.copyfileobj(source, target)
@@ -156,32 +170,38 @@ class Task:
             else:
                 self.logger.error("Error copying file {}/{}, it does not exist".format(ini_info.resources,key))
 
-    def copyFromResourcesSSH(self, resources, files) -> None:
+    def copyFromResourcesSSH(self, resources, files, ini_info: iniInfo) -> None:
         ftp = self.ssh.open_sftp()
+        resources_path = Path(resources)
+        if not resources_path.is_absolute():
+            resources_path = Path.cwd() / resources_path
         for key in files:
-            my_file = Path("{}/{}".format(resources,key))
+            destination = self.string_utilities.checkForUserVariable(files[key], ini_info)
+            if destination is None:
+                destination = files[key]
+            my_file = resources_path / key
             if my_file.is_file():
-                self.logger.info('copying and extracting file {} to {}'.format(key, files[key]))
-                self.ssh.exec_command('mkdir -p {}'.format(files[key]))
+                self.logger.info('copying and extracting file {} to {}'.format(key, destination))
+                self.ssh.exec_command('mkdir -p {}'.format(destination))
                 dirtest = key.split('/')
-                src = "{}{}".format(resources, key)
-                if '.' in files[key]: # contains a file name, so do not append a filename from 'key'
-                    dst = "{}".format(files[key])
+                src = str(resources_path / key)
+                if '.' in destination: # contains a file name, so do not append a filename from 'key'
+                    dst = "{}".format(destination)
                 else:
                     if (len(dirtest) > 1):
                         keyname = dirtest[1]
-                        dst = "{}/{}".format(files[key],keyname)
+                        dst = "{}/{}".format(destination,keyname)
                     else:
-                        dst = "{}/{}".format(files[key],key)
+                        dst = "{}/{}".format(destination,key)
 
-                if(os.path.exists("{}/{}".format(os.getcwd(), src)) == False):
-                    self.logger.error("Error could not find this file: {}/{}".format(os.getcwd(), src))
+                if(os.path.exists(src) == False):
+                    self.logger.error("Error could not find this file: {}".format(src))
                     continue
 
                 ftp.put(src , dst)
 
                 if 'zip' in key:
-                    stdin, stdout, stderr = self.ssh.exec_command('unzip -o {}/{} -d {}'.format(files[key],key,files[key]))
+                    stdin, stdout, stderr = self.ssh.exec_command('unzip -o {}/{} -d {}'.format(destination,key,destination))
                     for line in iter(stdout.readline,""):
                         self.logger.info (line, end="")
             else:
@@ -190,13 +210,15 @@ class Task:
 
     def copyFromResources(self, window, bar: ttk.Progressbar, taskitem, ini_info: iniInfo) -> None:
         if(ini_info.installtype == 'REMOTE' and ini_info.buildtype == 'LINUX'):
-            self.copyFromResourcesSSH(ini_info.resources, ini_info.files)
+            self.copyFromResourcesSSH(ini_info.resources, ini_info.files, ini_info)
         elif ini_info.installtype == 'LOCAL':
             self.copyFromResourcesLocal(window, bar, taskitem, ini_info)                                                                   
             
     def doActions(self, window, bar: ttk.Progressbar, taskitem: tk.StringVar, ini_info: iniInfo, actiontype: str = "action") -> None:
         if(ini_info.installtype == 'REMOTE' and ini_info.buildtype == 'LINUX'):
-            ActionManager.doActionsSSH(ini_info.actions)
+            self.action_manager.ssh = self.ssh
+            self.action_manager.hostname = self.hostname
+            self.action_manager.doActionsSSH(ini_info.actions)
         elif ini_info.installtype == 'LOCAL':
             try:                
                 if(actiontype == "action"):
@@ -211,9 +233,8 @@ class Task:
         files = ini_info.modify
         for file in files:
             try:              
-                count += 1;
-                bar['value'] = (count/len(files.keys()))*100
-                window.update_idletasks()
+                count += 1
+                self._set_progress(window, bar, count, len(files.keys()))
 
                 ischange = True if("{CHANGE}" in files[file]) else False
                 if(ischange):
@@ -230,18 +251,20 @@ class Task:
 
                 taskstr = 'Modifying File {} with {}'.format(file, modifywith)
                 self.logger.info(taskstr)
-                taskitem.set(taskstr)
+                set_var(window, taskitem, taskstr)
 
                 if my_file.is_file():
                     modcontent = modifywith.split("||")
-                    # check for user input
-                    userinput = self.string_utilities.checkForUserVariable(modcontent[1], ini_info)                      
                     if ischange:
+                        # CHANGE entries are "old||new"; only the replacement side gets token expansion.
+                        userinput = self.string_utilities.checkForUserVariable(modcontent[1], ini_info)
                         self.file_utilities.modifyFileContents(file, modcontent[0], userinput)
                     else:
-                        self.file_utilities.addFileContents(file, modifywith)
+                        addcontent = self.string_utilities.checkForUserVariable(modifywith, ini_info)
+                        self.file_utilities.addFileContents(file, addcontent)
                 else: # Create File Condition
-                    self.file_utilities.createFileAddContents(file,modifywith.split("||"))
+                    addcontent = self.string_utilities.checkForUserVariable(modifywith, ini_info)
+                    self.file_utilities.createFileAddContents(file, addcontent.split("||"))
                     
             except Exception as ex:
                 self.logger.error(ex)
@@ -252,7 +275,9 @@ class Task:
         for file in files:
             result = files[file].split("||")
             file = file.split("-",1)
-            stdin, stdout, stderr = self.ssh.exec_command('sed -i \"s/{}/{}/g\" {}'.format(result[0],result[1],file[1]))
+            stdin, stdout, stderr = self.ssh.exec_command(
+                'sed -i \"s/{}/{}/g\" {}'.format(result[0], result[1], file[1])
+            )
             for line in iter(stderr.readline,""):
                 self.logger.info (line, end="")
 
@@ -265,7 +290,4 @@ class Task:
     def finalActions(self, window, bar, taskitem, ini_info: iniInfo) -> None:
         self.doActions( window, bar, taskitem, ini_info, "final")
 
-    def __init__(self, ini_info: iniInfo):
-        self.username = ini_info.username
-        self.password = ini_info.password
-        self.resources = ini_info.resources
+ 

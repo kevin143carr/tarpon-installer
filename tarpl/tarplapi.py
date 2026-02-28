@@ -1,6 +1,8 @@
 
 import os
+import sys
 from iniinfo import iniInfo
+from stringutilities import StringUtilities
 from tkinter import messagebox as msgbox
 from tarpl.poplistbox import PopListbox
 from tarpl.tarplclasses import TarpLreturn
@@ -12,6 +14,8 @@ class TarpL:
     pop_listbox = PopListbox()    
     
     def CheckForTarpL(self, inputstr):
+        if "[IF]" in inputstr and "[THEN]" in inputstr and "[ELSE]" in inputstr:
+            return True
         res = any(ele in inputstr for ele in self.API)
         if res == True:
             return True
@@ -19,6 +23,8 @@ class TarpL:
             return False
         
     def getTarpL(self, actionstr):
+        if "[IF]" in actionstr and "[THEN]" in actionstr and "[ELSE]" in actionstr:
+            return "IFTHENELSE"
         tarpl = [word for word in self.API if word in actionstr]
         
         if len(tarpl) > 0:            
@@ -41,8 +47,42 @@ class TarpL:
         elif tarpltype == 'IFOPTION':
             return self.IFOPTION(actionstr, ini_info)
         elif tarpltype == 'ALSOCHECKOPTION':
-            return self.ALSOCHECKOPTION(ini_info, optionone, optiontwo)                   
+            return self.ALSOCHECKOPTION(ini_info, optionone, optiontwo)
+        elif tarpltype == 'IFTHENELSE':
+            return self.IFTHENELSE(actionstr, ini_info)
     
+    def _is_headless(self) -> bool:
+        return os.environ.get("TARPL_HEADLESS", "").strip().lower() in {"1", "true", "yes", "on"}
+
+    def _print_headless_prompt_block(self, title: str, message: str) -> None:
+        border = "=" * 72
+        print()
+        print(border)
+        print(title)
+        print("-" * 72)
+        print(message)
+        print(border)
+
+    def _prompt_headless_poplist_selection(self, title: str, selectlist) -> str:
+        lines = [title]
+        for index, item in enumerate(selectlist, start=1):
+            lines.append(f"{index}. {item}")
+        self._print_headless_prompt_block("USER SELECTION REQUIRED", "\n".join(lines))
+
+        while True:
+            try:
+                answer = input("Enter selection number (blank to cancel): ").strip()
+            except EOFError:
+                answer = ""
+
+            if answer == "":
+                return ""
+            if answer.isdigit():
+                selection_index = int(answer)
+                if 1 <= selection_index <= len(selectlist):
+                    return selectlist[selection_index - 1]
+            print("Please enter a valid selection number.", file=sys.stderr)
+
     def POPLIST (self, instring, window):
         tarpLrtn = TarpLreturn()
         rtnval = None
@@ -50,6 +90,33 @@ class TarpL:
             splitstr = instring.split('::');
             inputype = self.getTarpL(splitstr[2])
             titletext = splitstr[1]
+            if self._is_headless():
+                if inputype == 'INPUTLIST':
+                    selectlist = splitstr[3].split(',')
+                elif inputype == 'INPUTFILE':
+                    fp = open(splitstr[3], "r")
+                    fromfile = fp.readline()
+                    fp.close()
+                    selectlist = fromfile.split(',')
+                else:
+                    selectlist = []
+
+                selectlist = [item.strip() for item in selectlist if item.strip()]
+                if selectlist:
+                    rtnval = self._prompt_headless_poplist_selection(titletext, selectlist)
+                    if rtnval != "":
+                        tarpLrtn.rtnstate = True
+                        tarpLrtn.rtnvalue = rtnval
+                        tarpLrtn.rtnvar = splitstr[4]
+                        tarpLrtn.tarpltype = TarpLAPIEnum.POPLIST
+                    else:
+                        tarpLrtn.rtnstate = False
+                        tarpLrtn.tarpltype = TarpLAPIEnum.POPLIST
+                else:
+                    tarpLrtn.rtnstate = False
+                    tarpLrtn.tarpltype = TarpLAPIEnum.POPLIST
+                return tarpLrtn
+
             if inputype == 'INPUTLIST':
                 selectlist = splitstr[3].split(',')
                 rtnval = self.pop_listbox.showPopListbox(selectlist, window, titletext)
@@ -76,12 +143,70 @@ class TarpL:
         except Exception as ex:
             print("Error in yes no {}".format(ex))
         return tarpLrtn
+
+    def _parse_if_then_else(self, instring: str):
+        if not instring.startswith("[IF]"):
+            raise ValueError("Invalid [IF][THEN][ELSE] syntax")
+
+        then_start = instring.find("[THEN]")
+        else_start = instring.find("[ELSE]")
+        if then_start == -1 or else_start == -1 or then_start > else_start:
+            raise ValueError("Invalid [IF][THEN][ELSE] syntax")
+
+        condition = instring[len("[IF]"):then_start].strip()
+        then_action = instring[then_start + len("[THEN]"):else_start].strip()
+        else_action = instring[else_start + len("[ELSE]"):].strip()
+        return condition, then_action, else_action
+
+    def _evaluate_if_condition(self, condition: str) -> bool:
+        for operator in ("==", "!=", " contains "):
+            if operator not in condition:
+                continue
+
+            if operator.strip() == "contains":
+                left, right = condition.split(operator, 1)
+                return right.strip() in left.strip()
+
+            left, right = condition.split(operator, 1)
+            if operator == "==":
+                return left.strip() == right.strip()
+            return left.strip() != right.strip()
+
+        raise ValueError("Unsupported [IF] condition: {}".format(condition))
+
+    def IFTHENELSE(self, instring: str, ini_info: iniInfo):
+        tarpLrtn = TarpLreturn()
+        condition, then_action, else_action = self._parse_if_then_else(instring)
+        condition = StringUtilities().checkForUserVariable(condition, ini_info)
+
+        tarpLrtn.rtnstate = True
+        tarpLrtn.rtnvalue = then_action if self._evaluate_if_condition(condition) else else_action
+        tarpLrtn.tarpltype = TarpLAPIEnum.IFTHENELSE
+        return tarpLrtn
     
     
     def YESNO (self, instring, window):
         tarpLrtn = TarpLreturn()        
         try:
             splitstr = instring.split('::');
+            if self._is_headless():
+                prompt = splitstr[1].strip()
+                self._print_headless_prompt_block("USER CONFIRMATION REQUIRED", prompt)
+                while True:
+                    try:
+                        answer = input("Enter choice [y/N]: ").strip().lower()
+                    except EOFError:
+                        answer = ""
+                    if answer in {"y", "yes"}:
+                        tarpLrtn.rtnstate = True
+                        break
+                    if answer in {"", "n", "no"}:
+                        tarpLrtn.rtnstate = False
+                        break
+                    print("Please answer yes or no.", file=sys.stderr)
+                tarpLrtn.rtnvalue = splitstr[2]
+                tarpLrtn.tarpltype = TarpLAPIEnum.YESNO
+                return tarpLrtn
             tarpLrtn.rtnstate = msgbox.askyesno("User Question", splitstr[1], parent = window);
             tarpLrtn.rtnvalue = splitstr[2]
             tarpLrtn.tarpltype = TarpLAPIEnum.YESNO
@@ -94,6 +219,16 @@ class TarpL:
         tarpLrtn = TarpLreturn()         
         try:
             splitstr = instring.split('::');
+            if self._is_headless():
+                message = splitstr[1].strip()
+                self._print_headless_prompt_block("USER MESSAGE", message)
+                try:
+                    input("Press Enter to continue...")
+                except EOFError:
+                    pass
+                tarpLrtn.rtnstate = False
+                tarpLrtn.tarpltype = TarpLAPIEnum.MSGBOX
+                return tarpLrtn
             answer = msgbox.showinfo("Information", splitstr[1], parent = window);
             tarpLrtn.rtnstate = False
             tarpLrtn.tarpltype = TarpLAPIEnum.MSGBOX

@@ -1,0 +1,30 @@
+@echo off
+setlocal
+
+cd /d "%~dp0.."
+set "REPO_ROOT=%CD%"
+set "PYTHON_CMD=python"
+
+if exist build\windows rmdir /s /q build\windows
+if exist dist\windows rmdir /s /q dist\windows
+
+%PYTHON_CMD% --version >nul 2>&1
+if errorlevel 1 set "PYTHON_CMD=python3"
+
+%PYTHON_CMD% -m PyInstaller ^
+  --noconfirm ^
+  --clean ^
+  --onefile ^
+  --name tarpon_installer ^
+  --distpath dist\windows ^
+  --workpath build\windows ^
+  --specpath build\windows ^
+  --hidden-import PIL._tkinter_finder ^
+  --add-data "%REPO_ROOT%\assets\icons\tarpon_installer_image.png;assets/icons" ^
+  --add-data "%REPO_ROOT%\assets\icons\tarpon_installer.ico;assets/icons" ^
+  --icon "%REPO_ROOT%\assets\icons\tarpon_installer.ico" ^
+  tarpon_installer.py
+
+if errorlevel 1 exit /b %errorlevel%
+
+echo Built dist\windows\tarpon_installer.exe

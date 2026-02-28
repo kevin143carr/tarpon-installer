@@ -10,9 +10,11 @@ class TarpLAPIEnum(Enum):
     EXEC_PYFUNC = 7
     IFOPTION = 8
     ALSOCHECKOPTION = 9
+    IFTHENELSE = 10
 
 class TarpLreturn:
-    rtnstate = bool()
-    rtnvalue = str()
-    rtnvar = str()
-    tarpltype = TarpLAPIEnum
+    def __init__(self) -> None:
+        self.rtnstate = False
+        self.rtnvalue = ""
+        self.rtnvar = ""
+        self.tarpltype = TarpLAPIEnum

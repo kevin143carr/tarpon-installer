@@ -5,7 +5,10 @@ a = Analysis(
     ['tarpon_installer.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[
+        ('assets/icons/tarpon_installer_image.png', 'assets/icons'),
+        ('assets/icons/tarpon_installer.ico', 'assets/icons'),
+    ],
     hiddenimports=['PIL._tkinter_finder'],
     hookspath=[],
     hooksconfig={},
@@ -35,4 +38,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon='assets/icons/tarpon_installer.ico',
 )
