@@ -255,14 +255,16 @@ class Task:
 
                 if my_file.is_file():
                     modcontent = modifywith.split("||")
-                    # check for user input
-                    userinput = self.string_utilities.checkForUserVariable(modcontent[1], ini_info)                      
                     if ischange:
+                        # CHANGE entries are "old||new"; only the replacement side gets token expansion.
+                        userinput = self.string_utilities.checkForUserVariable(modcontent[1], ini_info)
                         self.file_utilities.modifyFileContents(file, modcontent[0], userinput)
                     else:
-                        self.file_utilities.addFileContents(file, modifywith)
+                        addcontent = self.string_utilities.checkForUserVariable(modifywith, ini_info)
+                        self.file_utilities.addFileContents(file, addcontent)
                 else: # Create File Condition
-                    self.file_utilities.createFileAddContents(file,modifywith.split("||"))
+                    addcontent = self.string_utilities.checkForUserVariable(modifywith, ini_info)
+                    self.file_utilities.createFileAddContents(file, addcontent.split("||"))
                     
             except Exception as ex:
                 self.logger.error(ex)

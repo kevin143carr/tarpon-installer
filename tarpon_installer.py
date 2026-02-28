@@ -187,28 +187,28 @@ def build_parser() -> argparse.ArgumentParser:
         version="%(prog)s {}".format(VERSION),
     )
     parser.add_argument(
-        "--headless",
-        action="store_true",
-        help="Run without GUI and execute the .ini directly.",
-    )
-    parser.add_argument(
         "--userinput",
         action="append",
         default=[],
         metavar="KEY=VALUE",
-        help="Set a USERINPUT value when running headless. May be used multiple times.",
+        help="Set a USERINPUT value when [STARTUP] usegui = False. May be used multiple times.",
     )
     parser.add_argument(
         "--option",
         action="append",
         default=[],
         metavar="OPTION",
-        help="Enable an option when running headless. May be used multiple times.",
+        help="Enable an option when [STARTUP] usegui = False. May be used multiple times.",
     )
     parser.add_argument(
         "--strict-tokens",
         action="store_true",
-        help="Fail headless runs if unresolved %%tokens%% remain.",
+        help="Fail non-GUI runs if unresolved %%tokens%% remain.",
+    )
+    parser.add_argument(
+        "--liveviewlog",
+        action="store_true",
+        help="When [STARTUP] usegui = False, also stream log output to the terminal.",
     )
     return parser
 
@@ -217,13 +217,21 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
     return build_parser().parse_args(argv)
 
 
-def setup_logging(configfile: str, debuglevel: str) -> None:
+def setup_logging(configfile: str, debuglevel: str, liveviewlog: bool = False) -> None:
     level = logging.DEBUG if debuglevel == "DEBUG" else logging.INFO
-    logging.basicConfig(
-        filename="{}.log".format(os.path.splitext(configfile)[0]),
-        filemode="w",
-        level=level,
-    )
+    logfile = "{}.log".format(os.path.splitext(configfile)[0])
+    logger = logging.getLogger()
+    logger.handlers.clear()
+    logger.setLevel(level)
+
+    file_handler = logging.FileHandler(logfile, mode="w")
+    file_handler.setLevel(level)
+    logger.addHandler(file_handler)
+
+    if liveviewlog:
+        stream_handler = logging.StreamHandler(sys.stdout)
+        stream_handler.setLevel(level)
+        logger.addHandler(stream_handler)
 
 
 def is_admin() -> bool:
@@ -288,6 +296,27 @@ def setup_headless_inputs(
     enabled_options: List[str],
     logger: logging.Logger,
 ) -> None:
+    enabled_option_set = set(enabled_options)
+    changed = True
+    while changed:
+        changed = False
+        for key, value in ini_info.options.items():
+            if key not in enabled_option_set:
+                continue
+            if not isinstance(value, str) or "ALSOCHECKOPTION::" not in value:
+                continue
+
+            parts = value.split("::", 2)
+            if len(parts) < 3:
+                logger.warning("Invalid ALSOCHECKOPTION definition for option: %s", key)
+                continue
+
+            dependent_keys = [option.strip() for option in parts[1].split(",") if option.strip()]
+            for dependent_key in dependent_keys:
+                if dependent_key not in enabled_option_set:
+                    enabled_option_set.add(dependent_key)
+                    changed = True
+
     for key in ini_info.userinput:
         default_value = ""
         if hasattr(ini_info, "userinput_defaults"):
@@ -299,9 +328,9 @@ def setup_headless_inputs(
             logger.warning("Headless USERINPUT override provided but key not found: %s", key)
 
     for key in ini_info.options:
-        ini_info.optionvals[key] = HeadlessVar("1" if key in enabled_options else "0")
+        ini_info.optionvals[key] = HeadlessVar("1" if key in enabled_option_set else "0")
 
-    for key in enabled_options:
+    for key in enabled_option_set:
         if key not in ini_info.options:
             logger.warning("Headless option enabled but key not found: %s", key)
 
@@ -369,6 +398,13 @@ def run_headless(ini_info: iniInfo, logger: logging.Logger) -> None:
     bar = DummyBar()
     taskitem = HeadlessVar()
 
+    if ini_info.installtitle:
+        logger.info("INSTALL TITLE: %s", ini_info.installtitle)
+    if ini_info.startinfo:
+        logger.info("STARTUP INFO: %s", ini_info.startinfo)
+    if ini_info.buttontext:
+        logger.info("ACTION PROMPT: %s", ini_info.buttontext)
+
     task = Task(ini_info)
     if ini_info.installtype == "REMOTE":
         task.loginSSH()
@@ -404,15 +440,14 @@ def main(argv: List[str]) -> int:
         print("ERROR: ><###> Cannot Find Configuration File - '{}'.".format(args.configfile))
         return 2
 
-    setup_logging(args.configfile, args.debuglevel)
-    logger = logging.getLogger("logger")
-
     ini_info = iniInfo()
     ini_info.readConfigFile(args.configfile)
+    setup_logging(args.configfile, args.debuglevel, liveviewlog=(ini_info.usegui is False and args.liveviewlog))
+    logger = logging.getLogger("logger")
 
     ensure_admin(ini_info, logger)
 
-    if args.headless:
+    if ini_info.usegui is False:
         os.environ["TARPL_HEADLESS"] = "1"
         try:
             userinput_overrides = parse_userinput_overrides(args.userinput)
@@ -429,6 +464,10 @@ def main(argv: List[str]) -> int:
                 return 2
         run_headless(ini_info, logger)
     else:
+        if args.userinput or args.option or args.strict_tokens or args.liveviewlog:
+            logger.warning(
+                "Ignoring --userinput/--option/--strict-tokens/--liveviewlog because [STARTUP] usegui is True"
+            )
         app = mainClass()
         app.main(ini_info)
     return 0

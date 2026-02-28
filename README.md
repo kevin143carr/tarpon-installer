@@ -29,12 +29,28 @@ watchdog = True
 adminrights = True
 ```
 
+Minimal non-GUI example:
+
+```
+usegui = False
+installtitle = MY NON-GUI INSTALL
+startupinfo = Runs the installer without opening windows
+buttontext = Run Install
+watchdog = False
+adminrights = False
+```
+
 Notes:
 
-- `usegui` uses the GUI when `True`, console when `False`.
+- `usegui` controls execution mode. Set `True` for the GUI or `False` for non-GUI execution.
+- Non-GUI mode is configured in the INI, not by a separate `--headless` flag.
+- When `usegui = False`, visual fields such as `logoimg`, `iconpng`, `iconico`, and `themename` are optional.
 - `iconpng` and `iconico` are optional window/app icons. Paths are resolved relative to the current working directory unless absolute.
 - `watchdog` enables the watchdog app to kill stalled processes.
 - `adminrights` forces the application to run as a privileged user.
+
+When `usegui = False`, you can still pass `--userinput KEY=VALUE`, `--option OPTION`, and `--strict-tokens` on the command line to control the non-GUI run.
+Add `--liveviewlog` if you want the non-GUI run to stream log output to the terminal while still writing the normal `.log` file.
 
 ### `[USERINFO]` (remote credentials)
 
@@ -49,12 +65,12 @@ password =
 
 ### `[SERVERCONFIG]` (remote host)
 
-Used for the remote IP address and for substitutions in other sections. `%host%` can be used as a variable. If blank, the field is hidden in the GUI.
+Used for the remote hostname or IP address and for substitutions in other sections. `%host%` can be used as a variable. If blank, the field is hidden in the GUI.
 
 Example:
 
 ```
-host = DISPLAY
+host = app-server-01.example.com
 ```
 
 ### `[BUILD]` (platform, install type, and resources)

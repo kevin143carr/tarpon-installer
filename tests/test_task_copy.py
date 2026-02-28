@@ -89,3 +89,25 @@ def test_copy_from_resources_local_expands_tokens_for_linux(tmp_path: Path) -> N
     dest_file = tmp_path / "out" / "acme" / "qa" / "file.txt"
     assert dest_file.exists()
     assert dest_file.read_text(encoding="utf-8") == "hello"
+
+
+def test_modify_files_local_add_expands_returnvars_for_existing_file(tmp_path: Path) -> None:
+    target_file = tmp_path / "generated.conf"
+    target_file.write_text("existing=true\n", encoding="utf-8")
+
+    info = iniInfo()
+    info.installtype = "LOCAL"
+    info.buildtype = "LINUX"
+    info.returnvars = {"selected_role": "Admin"}
+    info.modify = {
+        "1": f"{{FILE}}{target_file}{{ADD}}role=%selected_role%"
+    }
+
+    task = Task(info)
+    bar = {}
+    taskitem = DummyVar()
+    window = DummyWindow()
+
+    task.modifyFilesLocal(window, bar, taskitem, info)
+
+    assert target_file.read_text(encoding="utf-8") == "existing=true\nrole=Admin\n"

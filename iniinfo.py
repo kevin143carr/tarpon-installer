@@ -21,6 +21,7 @@ class iniInfo:
         self.buttontext = ""
         self.watchdog = False
         self.adminrights = False
+        self.usegui = True
         self.files = {}
         self.repo = {}
         self.rpms = {}
@@ -68,15 +69,27 @@ class iniInfo:
         try:
             config_object.read(configfile)
             startup = config_object["STARTUP"]
-            self.startinfo = startup['startupinfo']
-            self.installtitle = startup['installtitle']
-            self.logoimage = startup['logoimg']
+            self.usegui = config_object.getboolean("STARTUP", "usegui")
+            self.startinfo = startup.get('startupinfo', "")
+            self.installtitle = startup.get('installtitle', "Tarpon Installer")
+            self.logoimage = startup.get('logoimg', "")
             self.iconpng = startup.get("iconpng", "")
             self.iconico = startup.get("iconico", "")
-            self.buttontext = startup['buttontext']
+            self.buttontext = startup.get('buttontext', "Install")
             self.watchdog = config_object.getboolean("STARTUP", "watchdog")
             self.adminrights = config_object.getboolean("STARTUP", "adminrights")
-            self.themename = startup["themename"]
+            self.themename = startup.get("themename", "superhero")
+            if self.usegui:
+                if not self.startinfo:
+                    raise KeyError("'startupinfo' option")
+                if not self.installtitle:
+                    raise KeyError("'installtitle' option")
+                if not self.logoimage:
+                    raise KeyError("'logoimg' option")
+                if not self.buttontext:
+                    raise KeyError("'buttontext' option")
+                if not self.themename:
+                    raise KeyError("'themename' option")
         except Exception as ex:
             logger.error(ex)
             raise SystemExit("Missing keyword {} in the [STARTUP] section".format(ex))

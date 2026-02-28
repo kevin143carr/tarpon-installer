@@ -1,18 +1,19 @@
 from pathlib import Path
 
+import pytest
+
 from iniinfo import iniInfo
 
 
-def test_read_config_file_parses_booleans_and_host(tmp_path: Path) -> None:
+def test_read_config_file_parses_headless_startup_with_minimal_fields(tmp_path: Path) -> None:
     config_text = """
 [STARTUP]
+usegui = False
 startupinfo = info
 installtitle = title
-logoimg = logo.png
 buttontext = Install
 watchdog = True
 adminrights = False
-themename = superhero
 
 [USERINFO]
 username = user
@@ -53,7 +54,56 @@ foo.txt = /tmp/foo.txt
 
     assert info.watchdog is True
     assert info.adminrights is False
+    assert info.usegui is False
     assert info.hostname == "1.2.3.4"
     assert info.buildtype == "LINUX"
     assert info.installtype == "LOCAL"
     assert info.files.get("foo.txt") == "/tmp/foo.txt"
+    assert info.logoimage == ""
+    assert info.themename == "superhero"
+
+
+def test_read_config_file_requires_logoimg_for_gui_mode(tmp_path: Path) -> None:
+    config_text = """
+[STARTUP]
+usegui = True
+startupinfo = info
+installtitle = title
+buttontext = Install
+watchdog = True
+adminrights = False
+themename = superhero
+
+[USERINFO]
+username = user
+password = pass
+
+[BUILD]
+buildtype = LINUX
+installtype = LOCAL
+resources = resources
+
+[FILES]
+
+[REPO]
+
+[RPM]
+
+[ACTIONS]
+
+[MODIFY]
+
+[FINAL]
+
+[OPTIONS]
+
+[USERINPUT]
+
+[VARIABLES]
+"""
+    config_path = tmp_path / "config.ini"
+    config_path.write_text(config_text.strip(), encoding="utf-8")
+
+    info = iniInfo()
+    with pytest.raises(SystemExit):
+        info.readConfigFile(str(config_path))
