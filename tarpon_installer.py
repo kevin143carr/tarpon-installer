@@ -1,6 +1,7 @@
 import argparse
 import sys
 import ctypes
+from datetime import datetime
 from elevate import elevate
 from managers.rpmmanager import RpmManager
 from managers.guimanager import GuiManager
@@ -247,9 +248,15 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
     return build_parser().parse_args(argv)
 
 
+def build_logfile_path(configfile: str) -> str:
+    config_base = os.path.splitext(configfile)[0]
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    return "{}_{}.log".format(config_base, timestamp)
+
+
 def setup_logging(configfile: str, debuglevel: str, liveviewlog: bool = False) -> None:
     level = logging.DEBUG if debuglevel == "DEBUG" else logging.INFO
-    logfile = "{}.log".format(os.path.splitext(configfile)[0])
+    logfile = build_logfile_path(configfile)
     logger = logging.getLogger()
     logger.handlers.clear()
     logger.setLevel(level)

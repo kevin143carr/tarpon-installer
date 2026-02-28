@@ -5,6 +5,7 @@ from iniinfo import iniInfo
 from tarpon_installer import (
     FinalErrorCollector,
     HeadlessVar,
+    build_logfile_path,
     build_headless_summary_lines,
     prompt_for_headless_userinput,
     setup_logging,
@@ -139,15 +140,32 @@ def test_setup_logging_with_liveviewlog_adds_stream_handler(tmp_path: Path) -> N
     original_handlers = list(root_logger.handlers)
     try:
         setup_logging(str(config_path), "INFO", liveviewlog=True)
-        handler_types = {type(handler).__name__ for handler in logging.getLogger().handlers}
+        handlers = list(logging.getLogger().handlers)
+        handler_types = {type(handler).__name__ for handler in handlers}
         assert "FileHandler" in handler_types
         assert "StreamHandler" in handler_types
+        file_handler = next(handler for handler in handlers if type(handler).__name__ == "FileHandler")
+        logfile_path = Path(file_handler.baseFilename)
+        assert logfile_path.parent == tmp_path
+        assert logfile_path.name.startswith("headless_")
+        assert logfile_path.suffix == ".log"
     finally:
         for handler in list(logging.getLogger().handlers):
             handler.close()
         logging.getLogger().handlers.clear()
         for handler in original_handlers:
             logging.getLogger().addHandler(handler)
+
+
+def test_build_logfile_path_appends_datetime_stamp(tmp_path: Path) -> None:
+    config_path = tmp_path / "config.ini"
+
+    logfile = Path(build_logfile_path(str(config_path)))
+
+    assert logfile.parent == tmp_path
+    assert logfile.suffix == ".log"
+    assert logfile.name.startswith("config_")
+    assert len(logfile.stem.split("_")) == 3
 
 
 def test_build_headless_summary_lines_includes_active_options_and_prompts() -> None:
