@@ -3,11 +3,15 @@ setlocal
 
 cd /d "%~dp0.."
 set "REPO_ROOT=%CD%"
+set "PYTHON_CMD=python"
 
 if exist build\windows rmdir /s /q build\windows
 if exist dist\windows rmdir /s /q dist\windows
 
-py -m PyInstaller ^
+%PYTHON_CMD% --version >nul 2>&1
+if errorlevel 1 set "PYTHON_CMD=python3"
+
+%PYTHON_CMD% -m PyInstaller ^
   --noconfirm ^
   --clean ^
   --onefile ^

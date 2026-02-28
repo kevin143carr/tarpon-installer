@@ -8,7 +8,12 @@ cd "$REPO_ROOT"
 
 rm -rf build/linux dist/linux
 
-python3 -m PyInstaller \
+PYTHON_CMD=python
+if ! command -v "$PYTHON_CMD" >/dev/null 2>&1; then
+  PYTHON_CMD=python3
+fi
+
+"$PYTHON_CMD" -m PyInstaller \
   --noconfirm \
   --clean \
   --onefile \
