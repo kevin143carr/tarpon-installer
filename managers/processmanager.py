@@ -6,6 +6,7 @@ from fileutilities import FileUtilities
 from subprocess import PIPE
 import logging
 import threading
+from typing import Optional
 
 class ProcessManager:
     def __init__(self) -> None:
@@ -18,7 +19,7 @@ class ProcessManager:
         self.logger = logging.getLogger("logger")
         self.lock = threading.Lock()
     
-    def checkForWatchdogEvent(self,pid, action):
+    def checkForWatchdogEvent(self, pid, action, timeout: Optional[int] = 180):
         watchdogfile = open('tarpon_watchdog.log','r')
         lines = watchdogfile.readlines()
         
@@ -27,7 +28,7 @@ class ProcessManager:
                 print("watchdog event occured - re-issueing command {}".format(action))
                 self.logger.error("watchdog event occured - re-issueing command in Action {}".format(action))
                 watchdogfile.close()
-                self.executeProcs(action, True)
+                self.executeProcs(action, True, timeout)
                 
         watchdogfile.close()    
 
@@ -43,14 +44,18 @@ class ProcessManager:
             if line:
                 err_logger(line)
     
-    def executeProcsDebug(self, action, watchdog = False, timeout = 180):
+    def executeProcsDebug(self, action, watchdog = False, timeout: Optional[int] = 180):
         start = timeit.default_timer()
-        self.logger.info("ACTION START COMMAND [{}] TIMEOUT [{}s]".format(action, timeout))
+        timeout_value = "disabled" if timeout is None else "{}s".format(timeout)
+        self.logger.info("ACTION START COMMAND [{}] TIMEOUT [{}]".format(action, timeout_value))
         p = subprocess.Popen(action, shell=True, stdout=PIPE, stderr=PIPE,
                              start_new_session=True, text=True)
         self.logger.info("PID [{}] COMMAND [{}]".format(p.pid, action))
         try:
-            stdout, stderr = p.communicate(timeout=timeout)
+            if timeout is None:
+                stdout, stderr = p.communicate()
+            else:
+                stdout, stderr = p.communicate(timeout=timeout)
         except subprocess.TimeoutExpired:
             p.kill()
             p.communicate()
@@ -61,21 +66,25 @@ class ProcessManager:
 
         if watchdog == True:
             pidval = "PID [{}]".format(p.pid)
-            self.checkForWatchdogEvent(pidval, action)
+            self.checkForWatchdogEvent(pidval, action, timeout)
         
         self._log_subprocess_output(stdout, stderr, debug=True)
         elapsed = timeit.default_timer() - start
         self.logger.info("ACTION END COMMAND [{}] RC [{}] ELAPSED [{:.2f}s]".format(action, p.returncode, elapsed))
         return p.returncode            
             
-    def executeProcs(self, action, watchdog = False, timeout = 180):
+    def executeProcs(self, action, watchdog = False, timeout: Optional[int] = 180):
         start = timeit.default_timer()
-        self.logger.info("ACTION START COMMAND [{}] TIMEOUT [{}s]".format(action, timeout))
+        timeout_value = "disabled" if timeout is None else "{}s".format(timeout)
+        self.logger.info("ACTION START COMMAND [{}] TIMEOUT [{}]".format(action, timeout_value))
         p = subprocess.Popen(action, shell=True, stdout=PIPE, stderr=PIPE,
                              start_new_session=False, text=True)
         self.logger.info("PID [{}] COMMAND [{}]".format(p.pid, action))
         try:
-            stdout, stderr = p.communicate(timeout=timeout)
+            if timeout is None:
+                stdout, stderr = p.communicate()
+            else:
+                stdout, stderr = p.communicate(timeout=timeout)
         except subprocess.TimeoutExpired:
             p.kill()
             p.communicate()
@@ -86,7 +95,7 @@ class ProcessManager:
 
         if watchdog == True:
             pidval = "PID [{}]".format(p.pid)
-            self.checkForWatchdogEvent(pidval, action)
+            self.checkForWatchdogEvent(pidval, action, timeout)
 
         self._log_subprocess_output(stdout, stderr, debug=False)
         elapsed = timeit.default_timer() - start

@@ -106,9 +106,9 @@ class ActionManager:
     
                     if(finalstr != None):
                         if self.logger.level == logging.DEBUG:
-                            self.process_manager.executeProcsDebug(finalstr, ini_info.watchdog)
+                            self.process_manager.executeProcsDebug(finalstr, ini_info.watchdog, ini_info.process_timeout)
                         else:
-                            result = self.process_manager.executeProcs(finalstr, ini_info.watchdog)
+                            result = self.process_manager.executeProcs(finalstr, ini_info.watchdog, ini_info.process_timeout)
                             if tarpLrtn.tarpltype == TarpLAPIEnum.IFGOTO:
                                 if result == 0:
                                     enablegoto = True

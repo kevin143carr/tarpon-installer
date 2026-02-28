@@ -3,6 +3,7 @@ import subprocess
 from fileutilities import FileUtilities
 from managers.processmanager import ProcessManager
 import logging
+from typing import Optional
 from ui_thread import set_bar_value, set_var
 
 class RpmManager:
@@ -19,7 +20,7 @@ class RpmManager:
                 self.logger.info (line, end="")
             time.sleep(5)
             
-    def installLocalRPMs(self, window, bar, taskitem, resources, rpms, watchdog):
+    def installLocalRPMs(self, window, bar, taskitem, resources, rpms, watchdog, timeout: Optional[int] = 180):
         p = None
         count = 0
         for key in rpms:
@@ -40,7 +41,7 @@ class RpmManager:
                 self.logger.info(taskstr)
                 set_var(window, taskitem, taskstr)
                 
-                self.process_manager.executeProcs(execstr, watchdog)
+                self.process_manager.executeProcs(execstr, watchdog, timeout)
                     
             except Exception as ex:
                 self.logger.error("{} : file {}".format(ex,rpms[key]))    

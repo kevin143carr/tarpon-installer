@@ -44,6 +44,7 @@ installtitle = MY INSTALLER NAME GOES HERE
 startupinfo = information about the installer like: "This will install MY APP on this machine"
 buttontext = Install
 watchdog = True
+process_timeout = 180
 adminrights = True
 displayfinalerrors = False
 ```
@@ -56,6 +57,7 @@ installtitle = MY NON-GUI INSTALL
 startupinfo = Runs the installer without opening windows
 buttontext = Run Install
 watchdog = False
+process_timeout = 180
 adminrights = False
 ```
 
@@ -66,6 +68,7 @@ Notes:
 - When `usegui = False`, visual fields such as `logoimg`, `iconpng`, `iconico`, and `themename` are optional.
 - `iconpng` and `iconico` are optional window/app icons. Paths are resolved relative to the current working directory unless absolute.
 - `watchdog` enables the watchdog app to kill stalled processes.
+- `process_timeout` controls how long local RPM installs and local actions may run before Tarpon kills the process. The default is `180` seconds. Set it to `0` to disable the timeout for long-running installers such as PostgreSQL.
 - `adminrights` forces the application to run as a privileged user.
 - `displayfinalerrors` shows a final scrollable GUI popup with up to the first 3 logged errors from the run. If omitted, it defaults to `False`.
 

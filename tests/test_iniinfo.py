@@ -13,6 +13,7 @@ startupinfo = info
 installtitle = title
 buttontext = Install
 watchdog = True
+process_timeout = 600
 adminrights = False
 
 [USERINFO]
@@ -53,6 +54,7 @@ foo.txt = /tmp/foo.txt
     info.readConfigFile(str(config_path))
 
     assert info.watchdog is True
+    assert info.process_timeout == 600
     assert info.adminrights is False
     assert info.usegui is False
     assert info.hostname == "1.2.3.4"
@@ -157,3 +159,50 @@ resources = resources
     info.readConfigFile(str(config_path))
 
     assert info.displayfinalerrors is True
+
+
+def test_read_config_file_allows_disabling_process_timeout(tmp_path: Path) -> None:
+    config_text = """
+[STARTUP]
+usegui = False
+startupinfo = info
+installtitle = title
+buttontext = Install
+watchdog = False
+process_timeout = 0
+adminrights = False
+
+[USERINFO]
+username = user
+password = pass
+
+[BUILD]
+buildtype = LINUX
+installtype = LOCAL
+resources = resources
+
+[FILES]
+
+[REPO]
+
+[RPM]
+
+[ACTIONS]
+
+[MODIFY]
+
+[FINAL]
+
+[OPTIONS]
+
+[USERINPUT]
+
+[VARIABLES]
+"""
+    config_path = tmp_path / "config.ini"
+    config_path.write_text(config_text.strip(), encoding="utf-8")
+
+    info = iniInfo()
+    info.readConfigFile(str(config_path))
+
+    assert info.process_timeout is None

@@ -1,6 +1,6 @@
 from configparser import ConfigParser
 import logging
-from typing import Dict, Mapping
+from typing import Dict, Mapping, Optional
 
 logger = None
 
@@ -20,6 +20,7 @@ class iniInfo:
         self.iconico = ""
         self.buttontext = ""
         self.watchdog = False
+        self.process_timeout: Optional[int] = 180
         self.adminrights = False
         self.usegui = True
         self.displayfinalerrors = False
@@ -60,6 +61,19 @@ class iniInfo:
             return config[name]
         return {}
 
+    def _parse_process_timeout(self, raw_value: str) -> Optional[int]:
+        value = raw_value.strip()
+        if value == "":
+            return 180
+
+        if value.lower() in {"0", "none", "off", "false", "disabled", "unlimited", "infinite"}:
+            return None
+
+        timeout = int(value)
+        if timeout < 0:
+            raise ValueError("'process_timeout' must be 0 or a positive integer")
+        return timeout
+
     def readConfigFile(self, configfile: str) -> None:
         logger = logging.getLogger("logger")
         config_object = ConfigParser(interpolation=None)
@@ -78,6 +92,7 @@ class iniInfo:
             self.iconico = startup.get("iconico", "")
             self.buttontext = startup.get('buttontext', "Install")
             self.watchdog = config_object.getboolean("STARTUP", "watchdog")
+            self.process_timeout = self._parse_process_timeout(startup.get("process_timeout", "180"))
             self.adminrights = config_object.getboolean("STARTUP", "adminrights")
             self.themename = startup.get("themename", "superhero")
             self.displayfinalerrors = startup.get("displayfinalerrors", "").strip().lower() in {"1", "true", "yes", "on"}

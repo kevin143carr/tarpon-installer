@@ -162,7 +162,7 @@ class mainClass:
             # Local Install
             if ini_info.buildtype == 'LINUX':
                 set_var(window, self.gui_manager.section, "SECTION: INSTALLING RPMs")
-                self.rpm_manager.installLocalRPMs(window, self.gui_manager.bar, self.gui_manager.taskitem, ini_info.resources, ini_info.rpms, ini_info.watchdog)
+                self.rpm_manager.installLocalRPMs(window, self.gui_manager.bar, self.gui_manager.taskitem, ini_info.resources, ini_info.rpms, ini_info.watchdog, ini_info.process_timeout)
 
             set_var(window, self.gui_manager.section, "SECTION: COPYING FILES")
             task.copyFromResources(window, self.gui_manager.bar, self.gui_manager.taskitem, ini_info)
@@ -555,7 +555,7 @@ def run_headless(ini_info: iniInfo, logger: logging.Logger) -> None:
     if ini_info.buildtype == "LINUX":
         logger.info("SECTION: INSTALLING RPMs")
         RpmManager().installLocalRPMs(
-            window, bar, taskitem, ini_info.resources, ini_info.rpms, ini_info.watchdog
+            window, bar, taskitem, ini_info.resources, ini_info.rpms, ini_info.watchdog, ini_info.process_timeout
         )
 
     logger.info("SECTION: COPYING FILES")
