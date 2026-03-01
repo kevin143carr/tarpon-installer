@@ -41,20 +41,27 @@ Platform build scripts:
 
 Each script writes a versioned release zip into `dist/nuitka/`.
 
-GitHub Releases are built from tags that match the app version in `tarpon_installer_metadata.py`.
-Example:
+GitHub Actions release artifacts are currently built for:
+
+- Ubuntu latest `x86_64`
+- RHEL 8-compatible `x86_64` via UBI 8 Python 3.11 container
+- RHEL 9-compatible `x86_64` via UBI 9 Python 3.11 container
+- Windows `x86_64`
+
+Recommended GitHub workflow:
+
+1. Run the manual `build-artifacts` workflow against the branch or commit you want to validate.
+2. Verify the Ubuntu, RHEL 8, RHEL 9, and Windows artifacts succeed.
+3. Run the manual `release` workflow with the same ref and the matching version tag.
+
+The `release` workflow verifies that the requested tag matches the app version in `tarpon_installer_metadata.py`, builds the release zips, and only then creates the GitHub release tag and release entry.
+
+Example manual release input:
 
 ```bash
-git tag v5.0.1
-git push origin v5.0.1
+git_ref=main
+tag_name=v5.0.1
 ```
-
-The release workflow will:
-
-- verify the tag matches the application version
-- run tests
-- build release zips for Linux, Windows, macOS Intel, and macOS Apple Silicon
-- publish the generated `.zip` files to the GitHub Release
 
 ### PyInstaller Builds
 
