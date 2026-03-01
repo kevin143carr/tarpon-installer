@@ -78,6 +78,7 @@ def build_binary(output_dir: Path) -> Path:
         "--output-filename={}".format(binary_name()),
         "--output-dir={}".format(output_dir),
         "--remove-output",
+        "--enable-plugin=tk-inter",
         "--include-module=PIL._tkinter_finder",
         "--include-package-data=ttkbootstrap",
         "--include-data-dir={}=assets".format(REPO_ROOT / "assets"),

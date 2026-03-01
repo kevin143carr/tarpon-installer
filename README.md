@@ -45,8 +45,8 @@ GitHub Releases are built from tags that match the app version in `tarpon_instal
 Example:
 
 ```bash
-git tag v5.0.0
-git push origin v5.0.0
+git tag v5.0.1
+git push origin v5.0.1
 ```
 
 The release workflow will:

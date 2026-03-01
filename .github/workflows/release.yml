@@ -53,9 +53,9 @@ jobs:
             platform_id: linux-x86_64
           - runner: windows-latest
             platform_id: windows-x86_64
-          - runner: macos-13
+          - runner: macos-15-intel
             platform_id: macos-x86_64
-          - runner: macos-14
+          - runner: macos-15
             platform_id: macos-arm64
     steps:
       - name: Checkout

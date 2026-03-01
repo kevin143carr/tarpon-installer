@@ -1,5 +1,12 @@
 # Changelog
 
+## 5.0.1
+
+### Fixed
+
+- GitHub Actions macOS release runners updated to currently supported hosted runner labels.
+- Nuitka release builds now explicitly enable the Tkinter plugin for macOS packaging.
+
 ## 5.0.0
 
 Release scope: changes from `main` to `codex_revamp`.
