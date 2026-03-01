@@ -303,3 +303,101 @@ resources = resources
     info.readConfigFile(str(config_path))
 
     assert info.process_timeout is None
+
+
+def test_read_config_file_defaults_usediagnostics_to_false(tmp_path: Path) -> None:
+    config_text = """
+[STARTUP]
+usegui = False
+startupinfo = info
+installtitle = title
+buttontext = Install
+watchdog = False
+adminrights = False
+
+[USERINFO]
+username = user
+password = pass
+
+[BUILD]
+buildtype = LINUX
+installtype = LOCAL
+resources = resources
+
+[FILES]
+
+[REPO]
+
+[RPM]
+
+[ACTIONS]
+
+[MODIFY]
+
+[FINAL]
+
+[OPTIONS]
+
+[USERINPUT]
+
+[VARIABLES]
+"""
+    config_path = tmp_path / "config.ini"
+    config_path.write_text(config_text.strip(), encoding="utf-8")
+
+    info = iniInfo()
+    info.readConfigFile(str(config_path))
+
+    assert info.usediagnostics is False
+    assert info.diagnostics == {}
+
+
+def test_read_config_file_parses_usediagnostics_and_diagnostics_section(tmp_path: Path) -> None:
+    config_text = """
+[STARTUP]
+usegui = False
+startupinfo = info
+installtitle = title
+buttontext = Install
+watchdog = False
+adminrights = False
+usediagnostics = True
+
+[USERINFO]
+username = user
+password = pass
+
+[BUILD]
+buildtype = LINUX
+installtype = LOCAL
+resources = resources
+
+[FILES]
+
+[REPO]
+
+[RPM]
+
+[ACTIONS]
+
+[MODIFY]
+
+[FINAL]
+
+[DIAGNOSTICS]
+checkservice = DIAG::Checking service::echo ok
+
+[OPTIONS]
+
+[USERINPUT]
+
+[VARIABLES]
+"""
+    config_path = tmp_path / "config.ini"
+    config_path.write_text(config_text.strip(), encoding="utf-8")
+
+    info = iniInfo()
+    info.readConfigFile(str(config_path))
+
+    assert info.usediagnostics is True
+    assert info.diagnostics == {"checkservice": "DIAG::Checking service::echo ok"}

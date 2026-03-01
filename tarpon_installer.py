@@ -178,6 +178,17 @@ class mainClass:
             self._set_current_section(window, "FINAL")
             set_var(window, self.gui_manager.taskitem, "")
             task.finalActions(window, self.gui_manager.bar, self.gui_manager.taskitem, ini_info)
+            if ini_info.usediagnostics:
+                self._set_current_section(window, "DIAGNOSTICS")
+                set_var(window, self.gui_manager.taskitem, "")
+                diagnostics = task.runDiagnostics(window, self.gui_manager.bar, self.gui_manager.taskitem, ini_info)
+                if diagnostics:
+                    call_on_ui_thread(
+                        self.window,
+                        self.gui_manager.showDiagnosticsDialog,
+                        self.window,
+                        diagnostics,
+                    )
         except Exception as ex:
             self.logger.error(ex)
         finally:
@@ -581,6 +592,18 @@ def run_headless(ini_info: iniInfo, logger: logging.Logger) -> None:
 
     logger.info("SECTION: FINAL ACTIONS")
     task.finalActions(window, bar, taskitem, ini_info)
+
+    if ini_info.usediagnostics:
+        logger.info("SECTION: DIAGNOSTICS")
+        diagnostics = task.runDiagnostics(window, bar, taskitem, ini_info)
+        if diagnostics:
+            print()
+            print("=" * 72)
+            print("DIAGNOSTICS RESULTS")
+            print("-" * 72)
+            for result in diagnostics:
+                print("{} [{}]".format(result["label"], result["status"]))
+            print("=" * 72)
 
 
 def main(argv: List[str]) -> int:

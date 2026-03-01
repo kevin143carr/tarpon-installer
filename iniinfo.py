@@ -25,12 +25,14 @@ class iniInfo:
         self.usegui = True
         self.displayfinalerrors = False
         self.continuewitherrors = False
+        self.usediagnostics = False
         self.files = {}
         self.repo = {}
         self.rpms = {}
         self.actions = {}
         self.modify = {}
         self.finalactions = {}
+        self.diagnostics = {}
         self.options = {}
         self.optionvals = {}
         self.userinput = {}
@@ -98,6 +100,7 @@ class iniInfo:
             self.themename = startup.get("themename", "superhero")
             self.displayfinalerrors = startup.get("displayfinalerrors", "").strip().lower() in {"1", "true", "yes", "on"}
             self.continuewitherrors = startup.get("continuewitherrors", "").strip().lower() in {"1", "true", "yes", "on"}
+            self.usediagnostics = startup.get("usediagnostics", "").strip().lower() in {"1", "true", "yes", "on"}
             if self.usegui:
                 if not self.startinfo:
                     raise KeyError("'startupinfo' option")
@@ -127,6 +130,7 @@ class iniInfo:
             self.actions = config_object._sections['ACTIONS']
             self.modify = config_object._sections['MODIFY']
             self.finalactions = config_object._sections['FINAL']
+            self.diagnostics = config_object._sections['DIAGNOSTICS'] if config_object.has_section('DIAGNOSTICS') else {}
             self.options = config_object._sections['OPTIONS']
             raw_userinput = config_object._sections['USERINPUT']
             self.userinput = {}

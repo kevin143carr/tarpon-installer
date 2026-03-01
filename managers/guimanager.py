@@ -169,6 +169,53 @@ class GuiManager:
         error_window.update_idletasks()
         error_window.minsize(error_window.winfo_width(), error_window.winfo_height())
         error_window.wait_window()
+
+    def showDiagnosticsDialog(self, parent: tk.Tk, diagnostics) -> None:
+        diagnostic_window = tk.Toplevel(parent)
+        diagnostic_window.title("Diagnostics")
+        diagnostic_window.resizable(True, True)
+        diagnostic_window.transient(parent)
+        diagnostic_window.grab_set()
+
+        content_frame = ttk.Frame(diagnostic_window, padding=(18, 16, 18, 12))
+        content_frame.pack(fill=tk.BOTH, expand=True)
+
+        heading = ttk.Label(content_frame, text="Diagnostics", font=("Arial", 14, "bold"))
+        heading.pack(anchor="w")
+
+        subtitle = ttk.Label(
+            content_frame,
+            text="Post-install diagnostics results.",
+            justify="left",
+            wraplength=520,
+        )
+        subtitle.pack(anchor="w", pady=(2, 10))
+
+        results_frame = ttk.Frame(content_frame)
+        results_frame.pack(fill=tk.BOTH, expand=True)
+        results_frame.columnconfigure(1, weight=1)
+
+        for row, result in enumerate(diagnostics):
+            color = "#2e7d32" if result["status"] == "PASS" else "#c62828"
+            icon_canvas = tk.Canvas(results_frame, width=16, height=16, highlightthickness=0)
+            icon_canvas.grid(row=row, column=0, sticky="nw", padx=(0, 10), pady=4)
+            icon_canvas.create_oval(2, 2, 14, 14, fill=color, outline=color)
+
+            label = ttk.Label(results_frame, text=result["label"], justify="left", wraplength=360)
+            label.grid(row=row, column=1, sticky="w", pady=4)
+
+            status_label = ttk.Label(results_frame, text="[{}]".format(result["status"]), foreground=color)
+            status_label.grid(row=row, column=2, sticky="e", padx=(12, 0), pady=4)
+
+        button_frame = ttk.Frame(content_frame)
+        button_frame.pack(fill=tk.X, pady=(12, 0))
+
+        close_button = ttk.Button(button_frame, text="Close", width=18, command=diagnostic_window.destroy)
+        close_button.pack(anchor="e")
+
+        diagnostic_window.update_idletasks()
+        diagnostic_window.minsize(diagnostic_window.winfo_width(), diagnostic_window.winfo_height())
+        diagnostic_window.wait_window()
         
     def buildLeftFrame(self, window, functiontitle, ini_info: iniInfo, installfunc):
         # Left side: visible branding plus progress and current task status.
