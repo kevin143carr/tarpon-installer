@@ -63,9 +63,11 @@ jobs:
         include:
           - runner: ubuntu-latest
             platform_id: linux-x86_64
+            backend: nuitka
             build_mode: onefile
           - runner: windows-latest
             platform_id: windows-x86_64
+            backend: nuitka
             build_mode: onefile
     steps:
       - name: Checkout
@@ -87,7 +89,7 @@ jobs:
         run: python -m pip install --upgrade pip && python -m pip install -r requirements.txt -r requirements-build.txt
 
       - name: Build release zip
-        run: python useful_scripts/build_nuitka_release.py --platform-id ${{ matrix.platform_id }} --build-mode ${{ matrix.build_mode }}
+        run: python useful_scripts/build_nuitka_release.py --platform-id ${{ matrix.platform_id }} --backend ${{ matrix.backend }} --build-mode ${{ matrix.build_mode }}
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
@@ -105,10 +107,12 @@ jobs:
         include:
           - container_image: registry.access.redhat.com/ubi8/python-311:latest
             platform_id: rhel8-x86_64
-            build_mode: standalone
+            backend: pyinstaller
+            build_mode: onefile
           - container_image: registry.access.redhat.com/ubi9/python-311:latest
             platform_id: rhel9-x86_64
-            build_mode: standalone
+            backend: pyinstaller
+            build_mode: onefile
     container:
       image: ${{ matrix.container_image }}
       options: --user 0:0
@@ -125,7 +129,7 @@ jobs:
         run: python -m pip install --upgrade pip && python -m pip install -r requirements.txt -r requirements-build.txt
 
       - name: Build release zip
-        run: python useful_scripts/build_nuitka_release.py --platform-id ${{ matrix.platform_id }} --build-mode ${{ matrix.build_mode }}
+        run: python useful_scripts/build_nuitka_release.py --platform-id ${{ matrix.platform_id }} --backend ${{ matrix.backend }} --build-mode ${{ matrix.build_mode }}
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4

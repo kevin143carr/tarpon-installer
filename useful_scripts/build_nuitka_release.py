@@ -67,7 +67,7 @@ def run_command(command: list[str]) -> None:
     subprocess.run(command, cwd=REPO_ROOT, check=True)
 
 
-def build_binary(output_dir: Path, build_mode: str) -> Path:
+def build_nuitka_binary(output_dir: Path, build_mode: str) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
     command = [
         detect_python(),
@@ -95,6 +95,50 @@ def build_binary(output_dir: Path, build_mode: str) -> Path:
     if build_mode == "standalone":
         return output_dir / "{}.dist".format(binary_name())
     return output_dir / binary_name()
+
+
+def pyinstaller_data_separator() -> str:
+    return ";" if os.name == "nt" else ":"
+
+
+def build_pyinstaller_binary(output_dir: Path) -> Path:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    data_sep = pyinstaller_data_separator()
+    command = [
+        detect_python(),
+        "-m",
+        "PyInstaller",
+        "--noconfirm",
+        "--clean",
+        "--onefile",
+        "--name",
+        binary_name(),
+        "--distpath",
+        str(output_dir),
+        "--workpath",
+        str(output_dir / "build"),
+        "--specpath",
+        str(output_dir / "spec"),
+        "--hidden-import",
+        "PIL._tkinter_finder",
+        "--add-data",
+        "{}{}assets/icons".format(ICON_PNG, data_sep),
+        "--add-data",
+        "{}{}assets/icons".format(ICON_ICO, data_sep),
+    ]
+
+    if os.name == "nt":
+        command.extend(["--icon", str(ICON_ICO)])
+
+    command.append(str(ENTRYPOINT))
+    run_command(command)
+    return output_dir / binary_name()
+
+
+def build_binary(output_dir: Path, backend: str, build_mode: str) -> Path:
+    if backend == "pyinstaller":
+        return build_pyinstaller_binary(output_dir)
+    return build_nuitka_binary(output_dir, build_mode)
 
 
 def copy_tree(src: Path, dst: Path) -> None:
@@ -145,7 +189,7 @@ def assemble_release(binary_path: Path, version: str, platform_id: str) -> Path:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Build a Nuitka onefile release zip for tarpon-installer."
+        description="Build a packaged release zip for tarpon-installer."
     )
     parser.add_argument(
         "--platform-id",
@@ -158,6 +202,12 @@ def main() -> int:
         default="onefile",
         help="Nuitka build mode for the packaged application.",
     )
+    parser.add_argument(
+        "--backend",
+        choices=["nuitka", "pyinstaller"],
+        default="nuitka",
+        help="Packaging backend to use for the application binary.",
+    )
     args = parser.parse_args()
 
     version = read_version()
@@ -166,7 +216,7 @@ def main() -> int:
     if build_root.exists():
         shutil.rmtree(build_root)
 
-    binary_path = build_binary(build_root, args.build_mode)
+    binary_path = build_binary(build_root, args.backend, args.build_mode)
     archive_path = assemble_release(binary_path, version, args.platform_id)
 
     print(str(archive_path))
