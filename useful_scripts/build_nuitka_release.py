@@ -67,14 +67,14 @@ def run_command(command: list[str]) -> None:
     subprocess.run(command, cwd=REPO_ROOT, check=True)
 
 
-def build_binary(output_dir: Path) -> Path:
+def build_binary(output_dir: Path, build_mode: str) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
     command = [
         detect_python(),
         "-m",
         "nuitka",
         "--assume-yes-for-downloads",
-        "--mode=onefile",
+        "--mode={}".format(build_mode),
         "--output-filename={}".format(binary_name()),
         "--output-dir={}".format(output_dir),
         "--remove-output",
@@ -92,6 +92,8 @@ def build_binary(output_dir: Path) -> Path:
 
     command.append(str(ENTRYPOINT))
     run_command(command)
+    if build_mode == "standalone":
+        return output_dir / "{}.dist".format(binary_name())
     return output_dir / binary_name()
 
 
@@ -109,7 +111,10 @@ def assemble_release(binary_path: Path, version: str, platform_id: str) -> Path:
         shutil.rmtree(release_dir)
     release_dir.mkdir(parents=True)
 
-    shutil.copy2(binary_path, release_dir / binary_path.name)
+    if binary_path.is_dir():
+        copy_tree(binary_path, release_dir / binary_path.name)
+    else:
+        shutil.copy2(binary_path, release_dir / binary_path.name)
 
     for relative_dir in INCLUDED_RELEASE_DIRS:
         copy_tree(REPO_ROOT / relative_dir, release_dir / relative_dir)
@@ -147,6 +152,12 @@ def main() -> int:
         default=detect_platform(),
         help="Artifact platform suffix, e.g. windows-x86_64 or macos-arm64.",
     )
+    parser.add_argument(
+        "--build-mode",
+        choices=["onefile", "standalone"],
+        default="onefile",
+        help="Nuitka build mode for the packaged application.",
+    )
     args = parser.parse_args()
 
     version = read_version()
@@ -155,7 +166,7 @@ def main() -> int:
     if build_root.exists():
         shutil.rmtree(build_root)
 
-    binary_path = build_binary(build_root)
+    binary_path = build_binary(build_root, args.build_mode)
     archive_path = assemble_release(binary_path, version, args.platform_id)
 
     print(str(archive_path))

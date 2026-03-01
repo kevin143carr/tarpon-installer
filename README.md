@@ -25,9 +25,9 @@ python3 -m pip install -r requirements.txt -r requirements-build.txt
 
 Nuitka is the primary release path. Each Nuitka build creates:
 
-- a onefile executable
+- a packaged executable payload
 - a release zip that contains:
-  - the onefile executable
+  - the built executable payload
   - `assets/`
   - `example-ini-files/`
   - `sample-python-scripts/`
@@ -43,10 +43,10 @@ Each script writes a versioned release zip into `dist/nuitka/`.
 
 GitHub Actions release artifacts are currently built for:
 
-- Ubuntu latest `x86_64`
-- RHEL 8-compatible `x86_64` via UBI 8 Python 3.11 container
-- RHEL 9-compatible `x86_64` via UBI 9 Python 3.11 container
-- Windows `x86_64`
+- Ubuntu latest `x86_64` using Nuitka `onefile`
+- RHEL 8-compatible `x86_64` via UBI 8 Python 3.11 container using Nuitka `standalone`
+- RHEL 9-compatible `x86_64` via UBI 9 Python 3.11 container using Nuitka `standalone`
+- Windows `x86_64` using Nuitka `onefile`
 
 Recommended GitHub workflow:
 
