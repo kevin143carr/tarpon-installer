@@ -17,6 +17,7 @@ class PopListbox:
     
     def showPopListbox(self, items, parent, titletext):        
         root = tk.Toplevel(parent)
+        root.withdraw()
         hasselected = tk.BooleanVar()
         
         hasselected.set(False)
@@ -33,7 +34,7 @@ class PopListbox:
     
         x_position = parent_x + (parent_width // 2) - (400 // 2)
         y_position = parent_y + (parent_height // 2) - (300 // 2)
-        root.geometry(f"400x300+{x_position}+{y_position}")        
+        root.geometry(f"400x300+{x_position}+{y_position}")
         
         frame = tk.Frame(root)
         frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
@@ -53,6 +54,9 @@ class PopListbox:
         )        
         #get_selection_button.pack(fill=tk.BOTH)
         get_selection_button.pack(pady=5, padx=10, fill=tk.X)
+
+        root.deiconify()
+        root.lift(parent)
         
         time.sleep(1)
         root.wait_variable(hasselected)

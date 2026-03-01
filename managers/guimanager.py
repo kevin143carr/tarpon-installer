@@ -36,8 +36,8 @@ class GuiManager:
         parent.update_idletasks()
         child.update_idletasks()
 
-        window_width = child.winfo_width()
-        window_height = child.winfo_height()
+        window_width = max(child.winfo_width(), child.winfo_reqwidth())
+        window_height = max(child.winfo_height(), child.winfo_reqheight())
         screen_width = child.winfo_screenwidth()
         screen_height = child.winfo_screenheight()
 
@@ -47,6 +47,11 @@ class GuiManager:
                        screen_height - window_height))
 
         child.geometry(f"{window_width}x{window_height}+{x}+{y}")
+
+    def _show_centered_over_parent(self, parent: tk.Misc, child: tk.Misc) -> None:
+        self._center_over_parent(parent, child)
+        child.deiconify()
+        child.lift(parent)
     
     def on_checkbox_toggle(self, changed_key, otheroption, ini_info):
         print("{}, {}".format(changed_key, otheroption))
@@ -59,9 +64,10 @@ class GuiManager:
     def optionsDialog(self, parent: tk.Tk, ini_info: iniInfo) -> None:
         # Pop up the options chooser and center it over the parent window.
         optionsWindow = tk.Toplevel(parent)
+        optionsWindow.withdraw()
+        optionsWindow.transient(parent)
         optionsWindow.resizable(False, False)
         optionsWindow.focusmodel(model="active")
-        optionsWindow.after(100, lambda: optionsWindow.focus_force())
         optionsWindow.title("Installation Options")
     
         # Main content frame
@@ -134,14 +140,15 @@ class GuiManager:
         optionbutton = ttk.Button(bottom_frame, text="Close", width=20, command=optionsWindow.destroy)
         optionbutton.pack(anchor="center")
     
-        self._center_over_parent(parent, optionsWindow)
+        self._show_centered_over_parent(parent, optionsWindow)
+        optionsWindow.after_idle(optionsWindow.focus_force)
 
     def showFinalErrorsDialog(self, parent: tk.Tk, errors) -> None:
         error_window = tk.Toplevel(parent)
+        error_window.withdraw()
         error_window.title("Installation Errors")
         error_window.resizable(True, True)
         error_window.transient(parent)
-        error_window.grab_set()
 
         content_frame = ttk.Frame(error_window, padding=(18, 16, 18, 12))
         content_frame.pack(fill=tk.BOTH, expand=True)
@@ -168,16 +175,17 @@ class GuiManager:
         close_button = ttk.Button(button_frame, text="Close", width=18, command=error_window.destroy)
         close_button.pack(anchor="e")
 
-        self._center_over_parent(parent, error_window)
+        self._show_centered_over_parent(parent, error_window)
         error_window.minsize(error_window.winfo_width(), error_window.winfo_height())
+        error_window.grab_set()
         error_window.wait_window()
 
     def showDiagnosticsDialog(self, parent: tk.Tk, diagnostics) -> None:
         diagnostic_window = tk.Toplevel(parent)
+        diagnostic_window.withdraw()
         diagnostic_window.title("Diagnostics")
         diagnostic_window.resizable(True, True)
         diagnostic_window.transient(parent)
-        diagnostic_window.grab_set()
 
         content_frame = ttk.Frame(diagnostic_window, padding=(18, 16, 18, 12))
         content_frame.pack(fill=tk.BOTH, expand=True)
@@ -215,8 +223,9 @@ class GuiManager:
         close_button = ttk.Button(button_frame, text="Close", width=18, command=diagnostic_window.destroy)
         close_button.pack(anchor="e")
 
-        self._center_over_parent(parent, diagnostic_window)
+        self._show_centered_over_parent(parent, diagnostic_window)
         diagnostic_window.minsize(diagnostic_window.winfo_width(), diagnostic_window.winfo_height())
+        diagnostic_window.grab_set()
         diagnostic_window.wait_window()
         
     def buildLeftFrame(self, window, functiontitle, ini_info: iniInfo, installfunc):
