@@ -24,6 +24,7 @@ class iniInfo:
         self.adminrights = False
         self.usegui = True
         self.displayfinalerrors = False
+        self.continuewitherrors = False
         self.files = {}
         self.repo = {}
         self.rpms = {}
@@ -96,6 +97,7 @@ class iniInfo:
             self.adminrights = config_object.getboolean("STARTUP", "adminrights")
             self.themename = startup.get("themename", "superhero")
             self.displayfinalerrors = startup.get("displayfinalerrors", "").strip().lower() in {"1", "true", "yes", "on"}
+            self.continuewitherrors = startup.get("continuewitherrors", "").strip().lower() in {"1", "true", "yes", "on"}
             if self.usegui:
                 if not self.startinfo:
                     raise KeyError("'startupinfo' option")
