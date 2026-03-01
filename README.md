@@ -56,6 +56,8 @@ Recommended GitHub workflow:
 
 The `release` workflow verifies that the requested tag matches the app version in `tarpon_installer_metadata.py`, builds the release zips, and only then creates the GitHub release tag and release entry.
 
+If the tag ends in a Python-style prerelease suffix such as `a1`, `b1`, or `rc1`, the workflow publishes the GitHub release as a pre-release automatically.
+
 Example manual release input:
 
 ```bash
