@@ -43,6 +43,11 @@ class ProcessManager:
         for line in str(stderr).splitlines():
             if line:
                 err_logger(line)
+
+    def _log_failed_stdout_as_errors(self, stdout: str) -> None:
+        for line in str(stdout).splitlines():
+            if line:
+                self.logger.error(line)
     
     def executeProcsDebug(self, action, watchdog = False, timeout: Optional[int] = 180):
         start = timeit.default_timer()
@@ -69,6 +74,9 @@ class ProcessManager:
             self.checkForWatchdogEvent(pidval, action, timeout)
         
         self._log_subprocess_output(stdout, stderr, debug=True)
+        if p.returncode != 0:
+            self.logger.error("ACTION FAILED COMMAND [{}] RC [{}]".format(action, p.returncode))
+            self._log_failed_stdout_as_errors(stdout)
         elapsed = timeit.default_timer() - start
         self.logger.info("ACTION END COMMAND [{}] RC [{}] ELAPSED [{:.2f}s]".format(action, p.returncode, elapsed))
         return p.returncode            
@@ -98,6 +106,9 @@ class ProcessManager:
             self.checkForWatchdogEvent(pidval, action, timeout)
 
         self._log_subprocess_output(stdout, stderr, debug=False)
+        if p.returncode != 0:
+            self.logger.error("ACTION FAILED COMMAND [{}] RC [{}]".format(action, p.returncode))
+            self._log_failed_stdout_as_errors(stdout)
         elapsed = timeit.default_timer() - start
         self.logger.info("ACTION END COMMAND [{}] RC [{}] ELAPSED [{:.2f}s]".format(action, p.returncode, elapsed))
         return p.returncode
