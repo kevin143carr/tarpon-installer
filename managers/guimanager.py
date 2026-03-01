@@ -31,6 +31,22 @@ class GuiManager:
         self._tarpL = TarpL()
         self.canvas = None
         self.entry_boxes = 0
+
+    def _center_over_parent(self, parent: tk.Misc, child: tk.Misc) -> None:
+        parent.update_idletasks()
+        child.update_idletasks()
+
+        window_width = child.winfo_width()
+        window_height = child.winfo_height()
+        screen_width = child.winfo_screenwidth()
+        screen_height = child.winfo_screenheight()
+
+        x = max(0, min(parent.winfo_x() + parent.winfo_width() // 2 - window_width // 2,
+                       screen_width - window_width))
+        y = max(0, min(parent.winfo_y() + parent.winfo_height() // 2 - window_height // 2,
+                       screen_height - window_height))
+
+        child.geometry(f"{window_width}x{window_height}+{x}+{y}")
     
     def on_checkbox_toggle(self, changed_key, otheroption, ini_info):
         print("{}, {}".format(changed_key, otheroption))
@@ -118,21 +134,7 @@ class GuiManager:
         optionbutton = ttk.Button(bottom_frame, text="Close", width=20, command=optionsWindow.destroy)
         optionbutton.pack(anchor="center")
     
-        # Allow the window to size itself based on content
-        optionsWindow.update_idletasks()
-    
-        # Center the window on screen
-        window_width = optionsWindow.winfo_width()
-        window_height = optionsWindow.winfo_height()
-        screen_width = optionsWindow.winfo_screenwidth()
-        screen_height = optionsWindow.winfo_screenheight()
-    
-        x = max(0, min(parent.winfo_x() + parent.winfo_width() // 2 - window_width // 2,
-                       screen_width - window_width))
-        y = max(0, min(parent.winfo_y() + parent.winfo_height() // 2 - window_height // 2,
-                       screen_height - window_height))
-    
-        optionsWindow.geometry(f"{window_width}x{window_height}+{x}+{y}")
+        self._center_over_parent(parent, optionsWindow)
 
     def showFinalErrorsDialog(self, parent: tk.Tk, errors) -> None:
         error_window = tk.Toplevel(parent)
@@ -166,7 +168,7 @@ class GuiManager:
         close_button = ttk.Button(button_frame, text="Close", width=18, command=error_window.destroy)
         close_button.pack(anchor="e")
 
-        error_window.update_idletasks()
+        self._center_over_parent(parent, error_window)
         error_window.minsize(error_window.winfo_width(), error_window.winfo_height())
         error_window.wait_window()
 
@@ -213,7 +215,7 @@ class GuiManager:
         close_button = ttk.Button(button_frame, text="Close", width=18, command=diagnostic_window.destroy)
         close_button.pack(anchor="e")
 
-        diagnostic_window.update_idletasks()
+        self._center_over_parent(parent, diagnostic_window)
         diagnostic_window.minsize(diagnostic_window.winfo_width(), diagnostic_window.winfo_height())
         diagnostic_window.wait_window()
         

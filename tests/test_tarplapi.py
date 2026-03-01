@@ -195,3 +195,42 @@ def test_action_manager_executes_nested_tarpl_branch_without_shelling(monkeypatc
     output = capsys.readouterr()
     assert "USER MESSAGE" in output.out
     assert "You are using localhost" in output.out
+
+
+def test_exec_pyfunc_passes_window_keyword_when_supported(tmp_path, monkeypatch, capsys) -> None:
+    script = tmp_path / "callback.py"
+    script.write_text(
+        "def capture(arg1, window=None):\n"
+        "    print(f'{arg1}|{window is not None}')\n",
+        encoding="utf-8",
+    )
+
+    tarpl = TarpL()
+    window = object()
+    monkeypatch.chdir(tmp_path)
+
+    result = tarpl.EXEC_PYFUNC("EXEC_PYFUNC::callback.py::capture::hello", window)
+    output = capsys.readouterr()
+
+    assert result.tarpltype == TarpLAPIEnum.EXEC_PYFUNC
+    assert result.rtnstate is False
+    assert "hello|True" in output.out
+
+
+def test_exec_pyfunc_keeps_legacy_signature_without_window(tmp_path, monkeypatch, capsys) -> None:
+    script = tmp_path / "legacy.py"
+    script.write_text(
+        "called = []\n"
+        "def capture(arg1, arg2):\n"
+        "    called.extend([arg1, arg2])\n"
+        "    print('|'.join(called))\n",
+        encoding="utf-8",
+    )
+
+    tarpl = TarpL()
+    monkeypatch.chdir(tmp_path)
+
+    tarpl.EXEC_PYFUNC("EXEC_PYFUNC::legacy.py::capture::hello,world", object())
+
+    output = capsys.readouterr()
+    assert "hello|world" in output.out

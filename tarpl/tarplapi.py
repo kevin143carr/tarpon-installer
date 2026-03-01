@@ -1,6 +1,7 @@
 
 import os
 import sys
+import inspect
 from iniinfo import iniInfo
 from stringutilities import StringUtilities
 from tkinter import messagebox as msgbox
@@ -43,7 +44,7 @@ class TarpL:
         elif tarpltype == 'POPLIST':
             return self.POPLIST(actionstr, window)
         elif tarpltype == 'EXEC_PYFUNC':
-            return self.EXEC_PYFUNC(actionstr)
+            return self.EXEC_PYFUNC(actionstr, window)
         elif tarpltype == 'IFOPTION':
             return self.IFOPTION(actionstr, ini_info)
         elif tarpltype == 'ALSOCHECKOPTION':
@@ -248,7 +249,7 @@ class TarpL:
                 continue
         return val      
         
-    def EXEC_PYFUNC (self, instring):
+    def EXEC_PYFUNC (self, instring, window=None):
         tarpLrtn = TarpLreturn()
         splitstr = instring.split('::');
         script_filename =  splitstr[1]
@@ -280,8 +281,21 @@ class TarpL:
             if not callable(func):
                 print(f"Error: '{function_name}' is not callable or not found.")
                 return tarpLrtn
-    
-            func(*args)
+
+            signature = inspect.signature(func)
+            supports_kwargs = any(
+                parameter.kind == inspect.Parameter.VAR_KEYWORD
+                for parameter in signature.parameters.values()
+            )
+            if window is not None and (
+                supports_kwargs or "window" in signature.parameters or "parent" in signature.parameters
+            ):
+                if "parent" in signature.parameters and "window" not in signature.parameters:
+                    func(*args, parent=window)
+                else:
+                    func(*args, window=window)
+            else:
+                func(*args)
     
         except Exception as e:
             print(f"Error while executing function: {e}")
