@@ -15,6 +15,11 @@ install_if_available() {
   return 1
 }
 
+try_install_optional() {
+  pkg_name=$1
+  install_if_available "$pkg_name" || true
+}
+
 "$PKG_MANAGER" install -y \
   findutils \
   gcc \
@@ -25,8 +30,8 @@ install_if_available() {
   which \
   zip
 
-install_if_available patchelf
-install_if_available tk-devel
+try_install_optional patchelf
+try_install_optional tk-devel
 
 if ! python -c "import tkinter" >/dev/null 2>&1; then
   for tkinter_pkg in python3.11-tkinter python3-tkinter; do
