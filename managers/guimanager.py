@@ -432,6 +432,12 @@ class GuiManager:
         window.geometry(geometrystr)
         window.title(ini_info.installtitle)
         window.resizable(False,False)
-        window.focusmodel(model="passive")
+        if platform.system() == "Darwin":
+            window.focusmodel(model="active")
+            window.after(0, window.deiconify)
+            window.after(0, window.lift)
+            window.after(0, window.focus_force)
+        else:
+            window.focusmodel(model="passive")
         self.buildLeftFrame(window, functiontitle, ini_info, installfunc)
         self.buildRightFrame(window, functiontitle, ini_info, installfunc)
