@@ -46,7 +46,7 @@ jobs:
             build_mode: onefile
           - runner: windows-latest
             platform_id: windows-x86_64
-            backend: nuitka
+            backend: pyinstaller
             build_mode: onefile
     steps:
       - name: Checkout

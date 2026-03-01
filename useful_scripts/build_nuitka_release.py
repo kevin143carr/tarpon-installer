@@ -63,8 +63,60 @@ def binary_name() -> str:
     return "tarpon_installer.exe" if os.name == "nt" else "tarpon_installer"
 
 
+def binary_stem() -> str:
+    return "tarpon_installer"
+
+
 def run_command(command: list[str]) -> None:
     subprocess.run(command, cwd=REPO_ROOT, check=True)
+
+
+def windows_version_tuple(version: str) -> tuple[int, int, int, int]:
+    parts = [int(part) for part in version.split(".")]
+    while len(parts) < 4:
+        parts.append(0)
+    return tuple(parts[:4])
+
+
+def create_pyinstaller_version_file(output_dir: Path, version: str) -> Path:
+    version_file = output_dir / "pyinstaller_version_info.txt"
+    version_tuple = windows_version_tuple(version)
+    version_commas = ", ".join(str(part) for part in version_tuple)
+    version_dots = ".".join(str(part) for part in version_tuple)
+    version_file.write_text(
+        """VSVersionInfo(
+  ffi=FixedFileInfo(
+    filevers=({version_commas}),
+    prodvers=({version_commas}),
+    mask=0x3f,
+    flags=0x0,
+    OS=0x40004,
+    fileType=0x1,
+    subtype=0x0,
+    date=(0, 0)
+  ),
+  kids=[
+    StringFileInfo([
+      StringTable(
+        '040904B0',
+        [
+          StringStruct('CompanyName', 'Tarpon Installer'),
+          StringStruct('FileDescription', 'Tarpon Installer'),
+          StringStruct('FileVersion', '{version_dots}'),
+          StringStruct('InternalName', 'tarpon_installer'),
+          StringStruct('OriginalFilename', 'tarpon_installer.exe'),
+          StringStruct('ProductName', 'Tarpon Installer'),
+          StringStruct('ProductVersion', '{version_dots}')
+        ]
+      )
+    ]),
+    VarFileInfo([VarStruct('Translation', [1033, 1200])])
+  ]
+)
+""".format(version_commas=version_commas, version_dots=version_dots),
+        encoding="utf-8",
+    )
+    return version_file
 
 
 def build_nuitka_binary(output_dir: Path, build_mode: str) -> Path:
@@ -101,7 +153,7 @@ def pyinstaller_data_separator() -> str:
     return ";" if os.name == "nt" else ":"
 
 
-def build_pyinstaller_binary(output_dir: Path) -> Path:
+def build_pyinstaller_binary(output_dir: Path, version: str) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
     data_sep = pyinstaller_data_separator()
     command = [
@@ -112,7 +164,7 @@ def build_pyinstaller_binary(output_dir: Path) -> Path:
         "--clean",
         "--onefile",
         "--name",
-        binary_name(),
+        binary_stem(),
         "--distpath",
         str(output_dir),
         "--workpath",
@@ -128,6 +180,8 @@ def build_pyinstaller_binary(output_dir: Path) -> Path:
     ]
 
     if os.name == "nt":
+        version_file = create_pyinstaller_version_file(output_dir, version)
+        command.extend(["--version-file", str(version_file)])
         command.extend(["--icon", str(ICON_ICO)])
 
     command.append(str(ENTRYPOINT))
@@ -135,9 +189,9 @@ def build_pyinstaller_binary(output_dir: Path) -> Path:
     return output_dir / binary_name()
 
 
-def build_binary(output_dir: Path, backend: str, build_mode: str) -> Path:
+def build_binary(output_dir: Path, backend: str, build_mode: str, version: str) -> Path:
     if backend == "pyinstaller":
-        return build_pyinstaller_binary(output_dir)
+        return build_pyinstaller_binary(output_dir, version)
     return build_nuitka_binary(output_dir, build_mode)
 
 
@@ -216,7 +270,7 @@ def main() -> int:
     if build_root.exists():
         shutil.rmtree(build_root)
 
-    binary_path = build_binary(build_root, args.backend, args.build_mode)
+    binary_path = build_binary(build_root, args.backend, args.build_mode, version)
     archive_path = assemble_release(binary_path, version, args.platform_id)
 
     print(str(archive_path))
