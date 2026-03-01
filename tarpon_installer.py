@@ -18,9 +18,9 @@ import logging
 from typing import List
 from stringutilities import StringUtilities
 from tarpl.tarplapi import TarpL
+from tarpon_installer_metadata import VERSION, resource_path
 from ui_thread import call_on_ui_thread, set_var, quit_window
 
-VERSION = "5.0.0"
 DEFAULT_CONFIGFILE = "config.ini"
 DEFAULT_ICON_PNG = "assets/icons/tarpon_installer_image.png"
 DEFAULT_ICON_ICO = "assets/icons/tarpon_installer.ico"
@@ -75,10 +75,6 @@ class mainClass:
     def _set_current_section(self, window, section_name: str) -> None:
         set_var(window, self.gui_manager.section, "[{}]".format(section_name))
 
-    def _resource_path(self, relative_path: str) -> str:
-        base_path = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
-        return os.path.join(base_path, relative_path)
-
     def _set_app_icon(self, ini_info: iniInfo) -> None:
         """Set a custom window/app icon when icon assets are available."""
         if self.window is None:
@@ -86,13 +82,13 @@ class mainClass:
 
         icon_png = ini_info.iconpng
         if not icon_png:
-            icon_png = self._resource_path(DEFAULT_ICON_PNG)
+            icon_png = resource_path(DEFAULT_ICON_PNG)
         elif not os.path.isabs(icon_png):
             icon_png = os.path.join(os.getcwd(), icon_png)
 
         icon_ico = ini_info.iconico
         if not icon_ico:
-            icon_ico = self._resource_path(DEFAULT_ICON_ICO)
+            icon_ico = resource_path(DEFAULT_ICON_ICO)
         elif not os.path.isabs(icon_ico):
             icon_ico = os.path.join(os.getcwd(), icon_ico)
 

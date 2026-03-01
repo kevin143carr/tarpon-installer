@@ -15,11 +15,50 @@ For release history and version-to-version changes, see `CHANGELOG.md`.
 
 ## Packaging
 
-For PyInstaller one-file builds, install the runtime and build dependencies:
+For local packaging builds, install the runtime and build dependencies:
 
 ```bash
 python3 -m pip install -r requirements.txt -r requirements-build.txt
 ```
+
+### Nuitka Release Builds
+
+Nuitka is the primary release path. Each Nuitka build creates:
+
+- a onefile executable
+- a release zip that contains:
+  - the onefile executable
+  - `assets/`
+  - `example-ini-files/`
+  - `sample-python-scripts/`
+  - the non-build helper scripts from `useful_scripts/`
+
+Platform build scripts:
+
+- Linux: `useful_scripts/build_nuitka_linux.sh`
+- macOS: `useful_scripts/build_nuitka_macos.sh`
+- Windows: `useful_scripts/build_nuitka_windows.bat`
+
+Each script writes a versioned release zip into `dist/nuitka/`.
+
+GitHub Releases are built from tags that match the app version in `tarpon_installer_metadata.py`.
+Example:
+
+```bash
+git tag v5.0.0
+git push origin v5.0.0
+```
+
+The release workflow will:
+
+- verify the tag matches the application version
+- run tests
+- build release zips for Linux, Windows, macOS Intel, and macOS Apple Silicon
+- publish the generated `.zip` files to the GitHub Release
+
+### PyInstaller Builds
+
+PyInstaller remains available as a fallback local build path.
 
 Platform build scripts:
 

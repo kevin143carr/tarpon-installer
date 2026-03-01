@@ -6,6 +6,8 @@ __pycache__/
 *.pyc
 *.log
 .pytest_cache/
+/build/
+/dist/
 /build/tarpon_installer
 /resources
 /win_local_config_3_2_7.ini
