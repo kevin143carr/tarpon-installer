@@ -1,5 +1,15 @@
 # Changelog
 
+## 5.0.2
+
+### Fixed
+
+- Windows release artifacts now use PyInstaller and include Windows file version metadata.
+- RHEL 8 and RHEL 9 release artifacts now use PyInstaller builds in GitHub Actions.
+- Linux release workflows were stabilized around a validate-first, manual-release flow.
+- Added `[STARTUP] continuewitherrors` so installs can continue after per-step errors when enabled.
+- Failed local action logging now records nonzero return codes and promotes failed stdout lines to errors.
+
 ## 5.0.1
 
 ### Fixed

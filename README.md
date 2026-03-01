@@ -60,7 +60,7 @@ Example manual release input:
 
 ```bash
 git_ref=main
-tag_name=v5.0.1
+tag_name=v5.0.2
 ```
 
 ### PyInstaller Builds
