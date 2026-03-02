@@ -140,46 +140,22 @@ layoutClass: gap-10
 - final checks and diagnostics
 
 ---
-layout: two-cols
-layoutClass: gap-10
----
-
-# Input experience
-
-```ini
-[USERINPUT]
-operator_name = Enter operator name || kevin
-customer_name = Enter customer shortname || acme
-environment = Enter environment (dev, qa, prod) || qa
-port_value = Enter service port || 8080
-```
-
-::right::
-
-# Developer takeaway
-
-- prompts can be pre-seeded with sensible defaults
-- operators move faster with fewer typing mistakes
-- the same installer can be reused for multiple customers or sites
-- defaults still allow overrides when a deployment differs
-- this works in GUI and non-GUI runs
-
 ---
 
 # What it orchestrates
 
-<div class="grid grid-cols-4 gap-4 mt-8 text-sm">
+<div class="grid grid-cols-4 gap-3 mt-6 text-sm">
   <div class="pipeline-step">FILES</div>
   <div class="pipeline-step">ACTIONS</div>
   <div class="pipeline-step">MODIFY</div>
   <div class="pipeline-step">FINAL</div>
 </div>
 
-<div class="grid grid-cols-1 gap-4 mt-4 text-sm">
+<div class="grid grid-cols-1 gap-3 mt-3 text-sm">
   <div class="pipeline-step">DIAGNOSTICS</div>
 </div>
 
-<div class="grid grid-cols-2 gap-4 mt-8">
+<div class="grid grid-cols-2 gap-3 mt-6 text-sm leading-6">
   <div class="feature-card">
     <div class="eyebrow">Files</div>
     Copy resources, create missing directories, and unzip build payloads to target locations.
@@ -207,29 +183,6 @@ layout: two-cols
 layoutClass: gap-10
 ---
 
-# File modification is built in
-
-```ini
-[MODIFY]
-1 = {FILE}%stagedir%/generated.conf{ADD}customer=%customer_name%||env=%environment%
-2 = {FILE}%stagedir%/config.txt{CHANGE}line2=beta||line2=%selected_file_value%
-3 = {FILE}%stagedir%/config.txt{ADD}role=%selected_role%
-```
-
-::right::
-
-# Why this matters
-
-- deployed files can be tailored at install time
-- site-specific values do not require rebuilding the product
-- follow-up scripts and manual edits are reduced
-- customer, environment, ports, and role values can be stamped directly into config files
-
----
-layout: two-cols
-layoutClass: gap-10
----
-
 # Reliability and visibility
 
 - `watchdog` support for stalled local processes
@@ -251,6 +204,54 @@ layoutClass: gap-10
 <div class="mt-6 rounded-2xl bg-white/70 px-5 py-4 text-sm shadow">
 Diagnostics are not just logging. The installer can run a dedicated `[DIAGNOSTICS]` section after the main install to verify expected files or directories and report the results back to the operator.
 </div>
+
+---
+layout: two-cols
+layoutClass: gap-10
+---
+
+# Input experience
+
+```ini
+[USERINPUT]
+operator_name = Enter operator name || kevin
+customer_name = Enter customer shortname || acme
+environment = Enter environment (dev, qa, prod) || qa
+port_value = Enter service port || 8080
+```
+
+::right::
+
+# Developer takeaway
+
+- prompts can be pre-seeded with sensible defaults
+- operators move faster with fewer typing mistakes
+- the same installer can be reused for multiple customers or sites
+- defaults still allow overrides when a deployment differs
+- this works in GUI and non-GUI runs
+
+---
+layout: two-cols
+layoutClass: gap-10
+---
+
+# File modification is built in
+
+```ini
+[MODIFY]
+1 = {FILE}%stagedir%/generated.conf{ADD}customer=%customer_name%||env=%environment%
+2 = {FILE}%stagedir%/config.txt{CHANGE}line2=beta||line2=%selected_file_value%
+3 = {FILE}%stagedir%/config.txt{ADD}role=%selected_role%
+```
+
+::right::
+
+# Why this matters
+
+- deployed files can be tailored at install time
+- site-specific values do not require rebuilding the product
+- follow-up scripts and manual edits are reduced
+- customer, environment, ports, and role values can be stamped directly into config files
 
 ---
 layout: two-cols
