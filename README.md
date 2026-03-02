@@ -46,7 +46,7 @@ GitHub Actions release artifacts are currently built for:
 - Ubuntu latest `x86_64` using Nuitka `onefile`
 - RHEL 8-compatible `x86_64` via UBI 8 Python 3.11 container using PyInstaller `onefile`
 - RHEL 9-compatible `x86_64` via UBI 9 Python 3.11 container using PyInstaller `onefile`
-- Windows `x86_64` using Nuitka `onefile`
+- Windows `x86_64` using PyInstaller `onefile`
 
 Recommended GitHub workflow:
 
