@@ -8,6 +8,10 @@ To run it locally:
 - `npm run dev`
 - open <http://localhost:3030>
 
+If you want Slidev to open the browser automatically:
+
+- `npm run dev:open`
+
 To build static output:
 
 - `npm run build`

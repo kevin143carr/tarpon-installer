@@ -331,12 +331,12 @@ The key idea is simple: installation performs the work, diagnostics prove the re
 
 ---
 layout: two-cols
-layoutClass: gap-10 items-center
+layoutClass: gap-8 items-center startup-slide
 ---
 
 # Startup experience
 
-<img class="shot-panel" src="/screenshots/startup-window.png" alt="Tarpon Installer startup window with default user input values" />
+<img class="shot-panel shot-panel-startup" src="/screenshots/startup-window.png" alt="Tarpon Installer startup window with default user input values" />
 
 ::right::
 
@@ -1146,6 +1146,15 @@ h1 {
   border-radius: 1rem;
   box-shadow: 0 18px 36px rgba(16, 38, 58, 0.18);
   border: 1px solid rgba(16, 38, 58, 0.12);
+}
+
+.shot-panel-startup {
+  max-width: 980px;
+  max-height: 78vh;
+}
+
+.startup-slide {
+  grid-template-columns: 1.2fr 0.8fr;
 }
 
 .shot-panel-narrow {
