@@ -681,6 +681,10 @@ layoutClass: gap-10
 TarpL turns Tarpon Installer from a static installer into a guided workflow engine while still keeping most of the behavior in configuration.
 
 ---
+src: ./pages/extensive-gui-sample.md
+---
+
+---
 
 # Release readiness
 
@@ -1034,7 +1038,7 @@ class: text-center
 ### Overview first, technical appendix second
 
 <div class="mt-8 text-sm opacity-70">
-Deck source: `documents/Tarpon Installer/slides.md`
+Deck source: `documents/presentation/slides.md`
 </div>
 
 <style>
@@ -1103,6 +1107,21 @@ h1 {
   max-width: 320px;
   margin: 0 auto;
   display: block;
+}
+
+.ini-sample-slide {
+  padding: 1rem 1.4rem 2rem 1.4rem !important;
+}
+
+.ini-sample-slide h1 {
+  margin-bottom: 0.15rem;
+  font-size: 1.6rem;
+}
+
+.ini-sample-label {
+  margin-bottom: 0.45rem;
+  font-size: 0.72rem;
+  opacity: 0.72;
 }
 
 .shot-lg {
