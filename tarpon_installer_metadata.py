@@ -3,7 +3,7 @@ import sys
 
 
 APP_NAME = "tarpon_installer"
-VERSION = "5.0.3b2"
+VERSION = "5.0.3b3"
 
 
 def runtime_base_path() -> str:
