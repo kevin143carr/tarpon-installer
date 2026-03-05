@@ -198,7 +198,7 @@ class mainClass:
                 #self.rpm_manager.installRPMsRemote(ini_info.resources, ini_info.rpms)
 
             # Local Install
-            if ini_info.buildtype == 'LINUX':
+            if ini_info.buildtype == 'LINUX' and ini_info.installtype == 'LOCAL':
                 self._set_current_section(window, "RPM")
                 self.rpm_manager.installLocalRPMs(window, self.gui_manager.bar, self.gui_manager.taskitem, ini_info.resources, ini_info.rpms, ini_info.watchdog, ini_info.process_timeout)
 
@@ -759,7 +759,7 @@ def run_headless(ini_info: iniInfo, logger: logging.Logger) -> None:
     if ini_info.installtype == "REMOTE":
         task.loginSSH()
 
-    if ini_info.buildtype == "LINUX":
+    if ini_info.buildtype == "LINUX" and ini_info.installtype == "LOCAL":
         logger.info("SECTION: INSTALLING RPMs")
         RpmManager().installLocalRPMs(
             window, bar, taskitem, ini_info.resources, ini_info.rpms, ini_info.watchdog, ini_info.process_timeout

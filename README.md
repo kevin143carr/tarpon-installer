@@ -127,6 +127,7 @@ Notes:
 - `adminrights` forces the application to run as a privileged user.
 - `displayfinalerrors` shows a final scrollable GUI popup with up to the first 3 logged errors from the run. If omitted, it defaults to `False`.
 - `usediagnostics` enables the optional `[DIAGNOSTICS]` section after `[FINAL]`. If omitted, it defaults to `False`.
+- Diagnostics are currently local-only. Remote installs skip `[DIAGNOSTICS]` and log a warning.
 
 When `usegui = False`, you can still pass `--userinput KEY=VALUE`, `--option OPTION`, and `--strict-tokens` on the command line to control the non-GUI run.
 Add `--liveviewlog` if you want the non-GUI run to stream log output to the terminal while still writing the normal `.log` file.
@@ -166,6 +167,16 @@ buildtype = WINDOWS
 installtype = LOCAL
 resources = resources\
 ```
+
+Remote Windows GUI to Linux example:
+
+```
+buildtype = LINUX
+installtype = REMOTE
+resources = .
+```
+
+See `example-ini-files/extensive_functionality_test_windows_gui_remote_linux.ini` for a full remote profile.
 
 ### `[USERINPUT]` (prompted inputs)
 

@@ -5,6 +5,7 @@ import shutil
 import tarfile
 import threading
 import logging
+import shlex
 from pathlib import Path
 from shutil import copyfile
 from typing import Iterable, Optional
@@ -228,7 +229,8 @@ class Task:
         if(ini_info.installtype == 'REMOTE' and ini_info.buildtype == 'LINUX'):
             self.action_manager.ssh = self.ssh
             self.action_manager.hostname = self.hostname
-            self.action_manager.doActionsSSH(ini_info.actions)
+            actions = ini_info.finalactions if actiontype == "final" else ini_info.actions
+            self.action_manager.doActionsSSH(window, bar, taskitem, actions, ini_info)
         elif ini_info.installtype == 'LOCAL':
             try:                
                 if(actiontype == "action"):
@@ -281,19 +283,70 @@ class Task:
                 continue
 
 
-    def modifyFilesSSH(self, files) -> None:
-        for file in files:
-            result = files[file].split("||")
-            file = file.split("-",1)
-            stdin, stdout, stderr = self.ssh.exec_command(
-                'sed -i \"s/{}/{}/g\" {}'.format(result[0], result[1], file[1])
-            )
-            for line in iter(stderr.readline,""):
-                self.logger.info (line, end="")
+    def modifyFilesSSH(self, files, ini_info: iniInfo) -> None:
+        for key, raw_instruction in files.items():
+            try:
+                instruction = self.string_utilities.checkForUserVariable(raw_instruction, ini_info)
+                if instruction is None:
+                    instruction = raw_instruction
+                if not instruction.startswith("{FILE}"):
+                    self.logger.error("Invalid remote MODIFY entry '%s': missing {FILE} prefix", key)
+                    continue
+
+                if "{CHANGE}" in instruction:
+                    file_part, payload = instruction.split("{CHANGE}", 1)
+                    is_change = True
+                elif "{ADD}" in instruction:
+                    file_part, payload = instruction.split("{ADD}", 1)
+                    is_change = False
+                else:
+                    self.logger.error("Invalid remote MODIFY entry '%s': missing {CHANGE} or {ADD}", key)
+                    continue
+
+                remote_file = file_part[len("{FILE}") :].strip()
+                remote_file = self.string_utilities.checkForUserVariable(remote_file, ini_info) or remote_file
+                if not remote_file:
+                    self.logger.error("Invalid remote MODIFY entry '%s': empty target path", key)
+                    continue
+
+                remote_dir = os.path.dirname(remote_file)
+                if remote_dir:
+                    self.ssh.exec_command("mkdir -p {}".format(shlex.quote(remote_dir)))
+
+                if is_change:
+                    parts = payload.split("||", 1)
+                    if len(parts) < 2:
+                        self.logger.error("Invalid remote CHANGE entry '%s': expected old||new", key)
+                        continue
+                    old_value, new_value = parts[0], parts[1]
+                    command = (
+                        "if [ -f {file} ]; then sed -i 's|{old}|{new}|g' {file}; "
+                        "else printf '%s\\n' {new_q} > {file}; fi"
+                    ).format(
+                        file=shlex.quote(remote_file),
+                        old=old_value.replace("|", "\\|").replace("'", "'\"'\"'"),
+                        new=new_value.replace("|", "\\|").replace("'", "'\"'\"'"),
+                        new_q=shlex.quote(new_value),
+                    )
+                else:
+                    lines = payload.split("||")
+                    line_payload = " ".join(shlex.quote(line) for line in lines if line != "")
+                    if line_payload == "":
+                        continue
+                    command = "printf '%s\\n' {} >> {}".format(line_payload, shlex.quote(remote_file))
+
+                stdin, stdout, stderr = self.ssh.exec_command(command)
+                for line in iter(stdout.readline, ""):
+                    self.logger.info(line, end="")
+                for line in iter(stderr.readline, ""):
+                    self.logger.info(line, end="")
+            except Exception as ex:
+                self._handle_step_error(ini_info, "Error modifying remote file {}".format(key), ex)
+                continue
 
     def modifyFiles(self, window, bar, taskitem, ini_info: iniInfo) -> None:
         if(ini_info.installtype == 'REMOTE' and ini_info.buildtype == 'LINUX'):
-            self.modifyFilesSSH(ini_info.modify)
+            self.modifyFilesSSH(ini_info.modify, ini_info)
         else:
             self.modifyFilesLocal(window, bar, taskitem, ini_info)
 

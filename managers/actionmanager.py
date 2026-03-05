@@ -90,14 +90,36 @@ class ActionManager:
                 self.logger.error("Error in diagnostic action %s: %s", key, ex)
         return results
     
-    def doActionsSSH(self, actions) -> None:
-        for action in actions:
-            if '%host%' in actions[action]:
-                actions[action] = actions[action].replace("%host%",self.hostname)
-            self.logger.info('Executing Action {} with {}'.format(action, actions[action]))
-            stdin, stdout, stderr = self.ssh.exec_command('{}'.format(actions[action]))
-            for line in iter(stdout.readline,""):
-                self.logger.info (line, end="")        
+    def doActionsSSH(self, window, bar, taskitem, actions, ini_info: iniInfo) -> None:
+        total = len(actions.keys())
+        count = 0
+        for action_key, action_value in actions.items():
+            try:
+                count += 1
+                set_bar_value(window, bar, (count / total) * 100 if total else 0)
+
+                exec_option = "1"
+                if action_key in ini_info.options:
+                    exec_option = ini_info.optionvals[action_key].get()
+                if exec_option == "0":
+                    continue
+
+                finalstr, skip_action, _ = self._resolve_action_command(action_value, ini_info, window)
+                if skip_action or finalstr is None:
+                    continue
+                if "%host%" in finalstr:
+                    finalstr = finalstr.replace("%host%", self.hostname)
+
+                set_var(window, taskitem, "Executing {} with {}".format(action_key, finalstr))
+                self.logger.info("Executing Action %s with %s", action_key, finalstr)
+                stdin, stdout, stderr = self.ssh.exec_command("{}".format(finalstr))
+                for line in iter(stdout.readline, ""):
+                    self.logger.info(line, end="")
+                for line in iter(stderr.readline, ""):
+                    self.logger.error(line, end="")
+            except Exception as ex:
+                self.logger.error("Error in remote action %s: %s", action_key, ex)
+                continue
 
 
     def doActionsLocal(self, window, bar, taskitem, ini_info: iniInfo, final=False) -> None:
