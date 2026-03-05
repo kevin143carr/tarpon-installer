@@ -13,7 +13,7 @@ from tkinter import font
 from tkscrolledframe import ScrolledFrame
 from PIL import Image as Image, ImageTk as Itk
 import logging
-from iniinfo import iniInfo
+from iniinfo import iniInfo, parse_option_definition, resolve_enabled_options
 from tarpl.tarplapi import TarpL
 from tarpl.tarplapi import TarpLreturn
 from tarpl.tarplclasses import TarpLAPIEnum
@@ -94,22 +94,28 @@ class GuiManager:
         scrolledFrame.bind_arrow_keys(functionFrame)
         scrolledFrame.bind_scroll_wheel(functionFrame)
         inner_frame = scrolledFrame.display_widget(ttk.Frame)
-    
+
+        enabled_option_set = resolve_enabled_options(
+            ini_info.options,
+            {
+                key
+                for key, value in ini_info.optionvals.items()
+                if value.get() != '0'
+            },
+        )
+
         # Build the option list with optional Tarpl behaviors.
         for row, value in enumerate(ini_info.options):
+            initial_value = '1' if value in enabled_option_set else '0'
             if value not in ini_info.optionvals:
-                ini_info.optionvals[value] = tk.StringVar(value='0')
-    
-            isTarpL = self._tarpL.CheckForTarpL(ini_info.options[value])
-            if isTarpL and 'ALSOCHECKOPTION' in ini_info.options[value]:
-                optionparams = ini_info.options[value].split('::')
-                label_text = optionparams[2]
-                other_option_key = optionparams[1]
-                                
-                if other_option_key not in ini_info.optionvals:
-                    ini_info.optionvals[other_option_key] = tk.StringVar(value='0')
-    
-                lb = ttk.Label(inner_frame, text=label_text)
+                ini_info.optionvals[value] = tk.StringVar(value=initial_value)
+            elif ini_info.optionvals[value].get() != initial_value:
+                ini_info.optionvals[value].set(initial_value)
+
+            definition = parse_option_definition(ini_info.options[value])
+            if definition.also_check:
+                other_option_key = ",".join(definition.also_check)
+                lb = ttk.Label(inner_frame, text=definition.label, justify="left", wraplength=300)
                 cb = ttk.Checkbutton(
                     inner_frame,
                     variable=ini_info.optionvals[value],
@@ -122,7 +128,7 @@ class GuiManager:
                     )
                 )
             else:
-                lb = ttk.Label(inner_frame, text=ini_info.options[value], justify="left", wraplength=300)
+                lb = ttk.Label(inner_frame, text=definition.label, justify="left", wraplength=300)
                 cb = ttk.Checkbutton(
                     inner_frame,
                     variable=ini_info.optionvals[value],

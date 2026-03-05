@@ -5,7 +5,7 @@ from datetime import datetime
 from elevate import elevate
 from managers.rpmmanager import RpmManager
 from managers.guimanager import GuiManager
-from iniinfo import iniInfo
+from iniinfo import iniInfo, resolve_enabled_options
 from task import Task
 import os.path
 from os import path
@@ -372,26 +372,7 @@ def setup_headless_inputs(
     enabled_options: List[str],
     logger: logging.Logger,
 ) -> None:
-    enabled_option_set = set(enabled_options)
-    changed = True
-    while changed:
-        changed = False
-        for key, value in ini_info.options.items():
-            if key not in enabled_option_set:
-                continue
-            if not isinstance(value, str) or "ALSOCHECKOPTION::" not in value:
-                continue
-
-            parts = value.split("::", 2)
-            if len(parts) < 3:
-                logger.warning("Invalid ALSOCHECKOPTION definition for option: %s", key)
-                continue
-
-            dependent_keys = [option.strip() for option in parts[1].split(",") if option.strip()]
-            for dependent_key in dependent_keys:
-                if dependent_key not in enabled_option_set:
-                    enabled_option_set.add(dependent_key)
-                    changed = True
+    enabled_option_set = resolve_enabled_options(ini_info.options, set(enabled_options))
 
     for key in ini_info.userinput:
         default_value = ""

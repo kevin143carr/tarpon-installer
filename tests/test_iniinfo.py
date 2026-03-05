@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from iniinfo import iniInfo
+from iniinfo import iniInfo, parse_option_definition, resolve_enabled_options
 
 
 def test_read_config_file_parses_headless_startup_with_minimal_fields(tmp_path: Path) -> None:
@@ -256,6 +256,32 @@ resources = resources
     info.readConfigFile(str(config_path))
 
     assert info.continuewitherrors is True
+
+
+def test_parse_option_definition_supports_defaultchecked_and_alsocheckoption() -> None:
+    definition = parse_option_definition(
+        "DEFAULTCHECKED::ALSOCHECKOPTION::option_show_summary,option_exec_python::Prepare workspace"
+    )
+
+    assert definition.default_checked is True
+    assert definition.also_check == ["option_show_summary", "option_exec_python"]
+    assert definition.label == "Prepare workspace"
+
+
+def test_resolve_enabled_options_includes_defaultchecked_dependencies() -> None:
+    enabled = resolve_enabled_options(
+        {
+            "option_prepare_workspace": "DEFAULTCHECKED::ALSOCHECKOPTION::option_show_summary,option_exec_python::Prepare workspace",
+            "option_show_summary": "Show completion summary",
+            "option_exec_python": "Execute Python callback popup",
+        }
+    )
+
+    assert enabled == {
+        "option_prepare_workspace",
+        "option_show_summary",
+        "option_exec_python",
+    }
 
 
 def test_read_config_file_allows_disabling_process_timeout(tmp_path: Path) -> None:

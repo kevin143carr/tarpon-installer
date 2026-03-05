@@ -1,8 +1,68 @@
 from configparser import ConfigParser
+from dataclasses import dataclass, field
 import logging
-from typing import Dict, Mapping, Optional
+from typing import Dict, Mapping, Optional, Set
 
 logger = None
+
+
+@dataclass
+class OptionDefinition:
+    label: str
+    default_checked: bool = False
+    also_check: list[str] = field(default_factory=list)
+
+
+def parse_option_definition(raw_value: str) -> OptionDefinition:
+    if not isinstance(raw_value, str):
+        return OptionDefinition(label=str(raw_value))
+
+    parts = raw_value.split("::")
+    cursor = 0
+    default_checked = False
+    also_check = []
+
+    while cursor < len(parts):
+        token = parts[cursor].strip()
+        if token == "DEFAULTCHECKED":
+            default_checked = True
+            cursor += 1
+            continue
+        if token == "ALSOCHECKOPTION" and cursor + 1 < len(parts):
+            also_check = [option.strip() for option in parts[cursor + 1].split(",") if option.strip()]
+            cursor += 2
+            continue
+        break
+
+    label = "::".join(parts[cursor:]).strip()
+    if label == "":
+        label = raw_value.strip()
+
+    return OptionDefinition(
+        label=label,
+        default_checked=default_checked,
+        also_check=also_check,
+    )
+
+
+def resolve_enabled_options(options: Mapping[str, str], enabled_options: Optional[Set[str]] = None) -> Set[str]:
+    enabled_option_set = set(enabled_options or set())
+
+    for key, value in options.items():
+        if parse_option_definition(value).default_checked:
+            enabled_option_set.add(key)
+
+    changed = True
+    while changed:
+        changed = False
+        for key in list(enabled_option_set):
+            definition = parse_option_definition(options.get(key, ""))
+            for dependent_key in definition.also_check:
+                if dependent_key not in enabled_option_set:
+                    enabled_option_set.add(dependent_key)
+                    changed = True
+
+    return enabled_option_set
 
 
 class iniInfo:

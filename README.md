@@ -470,6 +470,33 @@ optionmakeadirectory = ALSOCHECKOPTION::optionpopupmessagelater::Create a direct
 optionpopupmessagelater = Popup a message to you later
 ```
 
+### `DEFAULTCHECKED`
+
+Marks an option as selected by default when the options dialog opens, and in
+headless mode it enables the option even when `--option` is not passed.
+
+Syntax:
+
+```
+DEFAULTCHECKED::description
+```
+
+Examples:
+
+```
+optionshowdiagnostics = DEFAULTCHECKED::Show diagnostics after install
+```
+
+`DEFAULTCHECKED` can be combined with `ALSOCHECKOPTION` in either order. When
+combined, the default-checked option also enables the dependent options.
+
+Examples:
+
+```
+optionprepareworkspace = DEFAULTCHECKED::ALSOCHECKOPTION::optionshowsummary,optionexecpython::Prepare workspace
+optionprepareworkspace_alt = ALSOCHECKOPTION::optionshowsummary,optionexecpython::DEFAULTCHECKED::Prepare workspace
+```
+
 ### `EXEC_PYFUNC`
 
 Runs a function from a Python file, even if Python is not installed. Only string parameters are supported.

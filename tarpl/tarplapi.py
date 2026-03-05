@@ -8,30 +8,31 @@ from tkinter import messagebox as msgbox
 from tarpl.poplistbox import PopListbox
 from tarpl.tarplclasses import TarpLreturn
 from tarpl.tarplclasses import TarpLAPIEnum
+from ui_thread import call_on_ui_thread
 
 #Tarpon Installer Language
 class TarpL:
     API = ['YESNO', 'MSGBOX', 'IFGOTO', 'POPLIST', 'INPUTLIST', 'INPUTFILE','EXEC_PYFUNC', 'IFOPTION', 'ALSOCHECKOPTION']
     pop_listbox = PopListbox()    
+
+    def _get_directive(self, inputstr):
+        if not isinstance(inputstr, str):
+            return ""
+
+        stripped = inputstr.strip()
+        if stripped.startswith("[IF]") and "[THEN]" in stripped and "[ELSE]" in stripped:
+            return "IFTHENELSE"
+
+        directive = stripped.split("::", 1)[0].strip()
+        if directive in self.API:
+            return directive
+        return ""
     
     def CheckForTarpL(self, inputstr):
-        if "[IF]" in inputstr and "[THEN]" in inputstr and "[ELSE]" in inputstr:
-            return True
-        res = any(ele in inputstr for ele in self.API)
-        if res == True:
-            return True
-        else:
-            return False
+        return self._get_directive(inputstr) != ""
         
     def getTarpL(self, actionstr):
-        if "[IF]" in actionstr and "[THEN]" in actionstr and "[ELSE]" in actionstr:
-            return "IFTHENELSE"
-        tarpl = [word for word in self.API if word in actionstr]
-        
-        if len(tarpl) > 0:            
-            return tarpl[0]
-        else:
-            return ""
+        return self._get_directive(actionstr)
         
     def ExecuteTarpL(self, actionstr, ini_info: iniInfo, window = None, optionone: str = 'none', optiontwo: str = 'none'):
         tarpltype = self.getTarpL(actionstr)
@@ -291,14 +292,14 @@ class TarpL:
                 supports_kwargs or "window" in signature.parameters or "parent" in signature.parameters
             ):
                 if "parent" in signature.parameters and "window" not in signature.parameters:
-                    func(*args, parent=window)
+                    call_on_ui_thread(window, lambda: func(*args, parent=window))
                 else:
-                    func(*args, window=window)
+                    call_on_ui_thread(window, lambda: func(*args, window=window))
             else:
                 func(*args)
     
         except Exception as e:
-            print(f"Error while executing function: {e}")
+            print(f"Error while executing function: {e!r}")
             
         return tarpLrtn
     
