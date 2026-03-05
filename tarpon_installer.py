@@ -1,6 +1,8 @@
 import argparse
 import sys
 import ctypes
+from configparser import ConfigParser
+from dataclasses import dataclass
 from datetime import datetime
 from elevate import elevate
 from managers.rpmmanager import RpmManager
@@ -11,11 +13,12 @@ import os.path
 from os import path
 import os
 import platform
+from pathlib import Path
 import tkinter as tk
 import ttkbootstrap as ttk
 import threading
 import logging
-from typing import List
+from typing import List, Optional
 from stringutilities import StringUtilities
 from tarpl.tarplapi import TarpL
 from tarpon_installer_metadata import VERSION, resource_path
@@ -24,6 +27,41 @@ from ui_thread import call_on_ui_thread, set_var, quit_window
 DEFAULT_CONFIGFILE = "config.ini"
 DEFAULT_ICON_PNG = "assets/icons/tarpon_installer_image.png"
 DEFAULT_ICON_ICO = "assets/icons/tarpon_installer.ico"
+DISCOVERY_SKIP_DIRS = {
+    ".git",
+    ".venv",
+    "__pycache__",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+}
+REQUIRED_TARPON_SECTIONS = (
+    "STARTUP",
+    "USERINFO",
+    "BUILD",
+    "FILES",
+    "REPO",
+    "RPM",
+    "ACTIONS",
+    "MODIFY",
+    "FINAL",
+    "OPTIONS",
+    "USERINPUT",
+    "VARIABLES",
+)
+REQUIRED_TARPON_KEYS = {
+    "STARTUP": {"usegui", "watchdog", "adminrights"},
+    "BUILD": {"buildtype", "installtype", "resources"},
+    "USERINFO": {"username", "password"},
+}
+
+
+@dataclass(frozen=True)
+class InstallerCandidate:
+    config_path: str
+    title: str
+    description: str
 
 
 def print_banner(file=None) -> None:
@@ -251,11 +289,176 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="When [STARTUP] usegui = False, also stream log output to the terminal.",
     )
+    parser.add_argument(
+        "--selectinstall",
+        action="store_true",
+        help="Discover Tarpon installer .ini files and show a selection popup before running.",
+    )
+    parser.add_argument(
+        "--selectinstalldir",
+        default="",
+        metavar="DIR",
+        help="Directory to scan for Tarpon installer .ini files when using --selectinstall.",
+    )
     return parser
 
 
 def parse_args(argv: List[str]) -> argparse.Namespace:
     return build_parser().parse_args(argv)
+
+
+def _is_tarpon_installer_config(config: ConfigParser) -> bool:
+    for section in REQUIRED_TARPON_SECTIONS:
+        if not config.has_section(section):
+            return False
+    for section, keys in REQUIRED_TARPON_KEYS.items():
+        section_obj = config[section]
+        for key in keys:
+            if key not in section_obj:
+                return False
+    return True
+
+
+def discover_tarpon_installer_configs(search_root: str) -> List[InstallerCandidate]:
+    root = Path(search_root).resolve()
+    if not root.exists():
+        return []
+
+    matches: List[InstallerCandidate] = []
+    for ini_path in sorted(root.rglob("*.ini")):
+        if any(part in DISCOVERY_SKIP_DIRS for part in ini_path.parts):
+            continue
+
+        config = ConfigParser(interpolation=None)
+        config.optionxform = str
+        try:
+            config.read(ini_path, encoding="utf-8")
+        except Exception:
+            continue
+
+        if not _is_tarpon_installer_config(config):
+            continue
+
+        startup = config["STARTUP"]
+        title = startup.get("installtitle", "").strip() or ini_path.stem
+        description = startup.get("startupinfo", "").strip()
+        matches.append(
+            InstallerCandidate(
+                config_path=str(ini_path),
+                title=title,
+                description=description,
+            )
+        )
+
+    return sorted(matches, key=lambda item: (item.title.lower(), item.config_path.lower()))
+
+
+def select_tarpon_installer_config(candidates: List[InstallerCandidate]) -> Optional[str]:
+    if not candidates:
+        return None
+
+    selected = {"index": None}
+    root = tk.Tk()
+    root.withdraw()
+    root.title("Select Tarpon Installer Profile")
+    root.geometry("920x520")
+
+    container = tk.Frame(root, padx=12, pady=12)
+    container.pack(fill=tk.BOTH, expand=True)
+
+    heading = tk.Label(
+        container,
+        text="Choose a Tarpon Installer profile before starting",
+        anchor="w",
+        justify="left",
+        font=("Arial", 12, "bold"),
+    )
+    heading.pack(fill=tk.X, pady=(0, 8))
+
+    list_frame = tk.Frame(container)
+    list_frame.pack(fill=tk.BOTH, expand=True)
+
+    scrollbar = tk.Scrollbar(list_frame, orient=tk.VERTICAL)
+    listbox = tk.Listbox(
+        list_frame,
+        yscrollcommand=scrollbar.set,
+        exportselection=False,
+        activestyle="none",
+    )
+    scrollbar.config(command=listbox.yview)
+    scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+    listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+    details_var = tk.StringVar()
+    details = tk.Label(
+        container,
+        textvariable=details_var,
+        anchor="w",
+        justify="left",
+        wraplength=880,
+    )
+    details.pack(fill=tk.X, pady=(10, 8))
+
+    for candidate in candidates:
+        summary = candidate.title
+        if candidate.description:
+            summary = "{} - {}".format(candidate.title, candidate.description)
+        listbox.insert(tk.END, summary)
+
+    def update_details(*_args) -> None:
+        selection = listbox.curselection()
+        if not selection:
+            details_var.set("")
+            return
+        candidate = candidates[selection[0]]
+        details_var.set("Path: {}\nDescription: {}".format(candidate.config_path, candidate.description or "(none)"))
+
+    def select_current() -> None:
+        selection = listbox.curselection()
+        if not selection:
+            return
+        selected["index"] = selection[0]
+        root.destroy()
+
+    def cancel_selection() -> None:
+        root.destroy()
+
+    def center_window() -> None:
+        root.update_idletasks()
+        width = root.winfo_width()
+        height = root.winfo_height()
+        screen_width = root.winfo_screenwidth()
+        screen_height = root.winfo_screenheight()
+        pos_x = max(0, (screen_width - width) // 2)
+        pos_y = max(0, (screen_height - height) // 2)
+        root.geometry("{}x{}+{}+{}".format(width, height, pos_x, pos_y))
+
+    button_frame = tk.Frame(container)
+    button_frame.pack(fill=tk.X)
+    cancel_button = tk.Button(button_frame, text="Cancel", width=14, command=cancel_selection)
+    cancel_button.pack(side=tk.RIGHT, padx=(8, 0))
+    select_button = tk.Button(button_frame, text="Use Selected Install", width=20, command=select_current)
+    select_button.pack(side=tk.RIGHT)
+
+    listbox.bind("<<ListboxSelect>>", update_details)
+    listbox.bind("<Double-Button-1>", lambda _event: select_current())
+    root.protocol("WM_DELETE_WINDOW", cancel_selection)
+
+    if candidates:
+        listbox.selection_set(0)
+        listbox.activate(0)
+        update_details()
+
+    center_window()
+    root.deiconify()
+    root.lift()
+    root.after_idle(root.focus_force)
+    root.mainloop()
+
+    index = selected["index"]
+    if index is None:
+        return None
+    return candidates[index].config_path
 
 
 def build_logfile_path(configfile: str) -> str:
@@ -594,6 +797,27 @@ def main(argv: List[str]) -> int:
         build_parser().print_help()
         return 0
     args = parse_args(filtered_args)
+
+    if args.selectinstall:
+        if not args.selectinstalldir:
+            print("ERROR: --selectinstall requires --selectinstalldir DIR.")
+            return 2
+        candidates = discover_tarpon_installer_configs(args.selectinstalldir)
+        if not candidates:
+            print("ERROR: No Tarpon installer profiles found under '{}'.".format(args.selectinstalldir))
+            return 2
+        try:
+            selected = select_tarpon_installer_config(candidates)
+        except Exception as ex:
+            print("ERROR: Could not open installer selection window: {}".format(ex))
+            return 2
+        if selected is None:
+            print("No installer selected. Exiting.")
+            return 0
+        args.configfile = selected
+    elif args.selectinstalldir:
+        print("ERROR: --selectinstalldir can only be used with --selectinstall.")
+        return 2
 
     if path.exists(args.configfile) is False:
         print("ERROR: ><###> Cannot Find Configuration File - '{}'.".format(args.configfile))
