@@ -154,6 +154,20 @@ jobs:
         id: release_commit
         run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
+      - name: Determine release type
+        id: release_type
+        env:
+          TAG_NAME: ${{ inputs.tag_name }}
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import os
+          import re
+
+          tag_name = os.environ["TAG_NAME"]
+          is_prerelease = bool(re.search(r"(a|b|rc)\d+$", tag_name, re.IGNORECASE))
+          print(f"is_prerelease={'true' if is_prerelease else 'false'}")
+          PY
+
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
@@ -165,7 +179,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          prerelease_flag=""
+          if [ "${{ steps.release_type.outputs.is_prerelease }}" = "true" ]; then
+            prerelease_flag="--prerelease"
+          fi
+
           gh release create "${{ inputs.tag_name }}" release-artifacts/*.zip \
             --target "${{ steps.release_commit.outputs.sha }}" \
             --generate-notes \
-            --title "${{ inputs.tag_name }}"
+            --title "${{ inputs.tag_name }}" \
+            ${prerelease_flag}

@@ -35,6 +35,27 @@ def test_setup_headless_inputs_applies_alsocheckoption_dependencies() -> None:
     assert info.optionvals["option_exec_python"].get() == "1"
 
 
+def test_setup_headless_inputs_applies_defaultchecked_and_alsocheckoption_dependencies() -> None:
+    info = iniInfo()
+    info.options = {
+        "option_prepare_workspace": "DEFAULTCHECKED::ALSOCHECKOPTION::option_show_summary,option_exec_python::Prepare workspace",
+        "option_show_summary": "Show completion summary",
+        "option_exec_python": "Execute Python callback popup",
+    }
+    info.userinput = {}
+
+    setup_headless_inputs(
+        info,
+        userinput_overrides={},
+        enabled_options=[],
+        logger=logging.getLogger("test"),
+    )
+
+    assert info.optionvals["option_prepare_workspace"].get() == "1"
+    assert info.optionvals["option_show_summary"].get() == "1"
+    assert info.optionvals["option_exec_python"].get() == "1"
+
+
 def test_setup_headless_inputs_prompts_when_userinput_has_no_default(monkeypatch, capsys) -> None:
     prompts = []
     info = iniInfo()

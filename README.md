@@ -56,6 +56,8 @@ Recommended GitHub workflow:
 
 The `release` workflow verifies that the requested tag matches the app version in `tarpon_installer_metadata.py`, builds the release zips, and only then creates the GitHub release tag and release entry.
 
+If the tag ends in a Python-style prerelease suffix such as `a1`, `b1`, or `rc1`, the workflow publishes the GitHub release as a pre-release automatically.
+
 Example manual release input:
 
 ```bash
@@ -93,6 +95,7 @@ watchdog = True
 process_timeout = 180
 adminrights = True
 displayfinalerrors = False
+usediagnostics = False
 ```
 
 Minimal non-GUI example:
@@ -105,6 +108,7 @@ buttontext = Run Install
 watchdog = False
 process_timeout = 180
 adminrights = False
+usediagnostics = False
 ```
 
 Notes:
@@ -117,6 +121,7 @@ Notes:
 - `process_timeout` controls how long local RPM installs and local actions may run before Tarpon kills the process. The default is `180` seconds. Set it to `0` to disable the timeout for long-running installers such as PostgreSQL.
 - `adminrights` forces the application to run as a privileged user.
 - `displayfinalerrors` shows a final scrollable GUI popup with up to the first 3 logged errors from the run. If omitted, it defaults to `False`.
+- `usediagnostics` enables the optional `[DIAGNOSTICS]` section after `[FINAL]`. If omitted, it defaults to `False`.
 
 When `usegui = False`, you can still pass `--userinput KEY=VALUE`, `--option OPTION`, and `--strict-tokens` on the command line to control the non-GUI run.
 Add `--liveviewlog` if you want the non-GUI run to stream log output to the terminal while still writing the normal `.log` file.
@@ -286,6 +291,34 @@ Examples:
 
 Same format as `[ACTIONS]`, but executed last.
 
+### `[DIAGNOSTICS]` (post-final checks and follow-up commands)
+
+This section runs after `[FINAL]` when `[STARTUP] usediagnostics = True`.
+
+It supports two kinds of entries:
+
+- diagnostic result entries using `DIAG::display text::command`
+- normal action-style commands such as `echo`, `timeout`, or TarpL entries like `YESNO::...::...`
+
+`DIAG::...` entries execute the command and report:
+
+- `[PASS]` when the command returns `0`
+- `[FAILED]` when the command returns a nonzero exit code
+
+In GUI mode, diagnostics results are shown in a popup with green and red status indicators.
+In headless mode, the same results are printed to the terminal/log after the run.
+
+Example:
+
+```
+[DIAGNOSTICS]
+checkactivemqserver = DIAG::Checking ActiveMQ::sc query ActiveMQ
+rebootmachine = echo "********* FINISHED  *********"
+starttimer = timeout /t 10
+shutitdown = YESNO::"Do you wish to restart now?"::shutdown /r
+rebootmachine1 = echo "********* BYE *********"
+```
+
 Examples:
 
 ```
@@ -435,6 +468,33 @@ Examples:
 ```
 optionmakeadirectory = ALSOCHECKOPTION::optionpopupmessagelater::Create a directory in your home folder
 optionpopupmessagelater = Popup a message to you later
+```
+
+### `DEFAULTCHECKED`
+
+Marks an option as selected by default when the options dialog opens, and in
+headless mode it enables the option even when `--option` is not passed.
+
+Syntax:
+
+```
+DEFAULTCHECKED::description
+```
+
+Examples:
+
+```
+optionshowdiagnostics = DEFAULTCHECKED::Show diagnostics after install
+```
+
+`DEFAULTCHECKED` can be combined with `ALSOCHECKOPTION` in either order. When
+combined, the default-checked option also enables the dependent options.
+
+Examples:
+
+```
+optionprepareworkspace = DEFAULTCHECKED::ALSOCHECKOPTION::optionshowsummary,optionexecpython::Prepare workspace
+optionprepareworkspace_alt = ALSOCHECKOPTION::optionshowsummary,optionexecpython::DEFAULTCHECKED::Prepare workspace
 ```
 
 ### `EXEC_PYFUNC`

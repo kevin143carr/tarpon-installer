@@ -5,7 +5,7 @@ from datetime import datetime
 from elevate import elevate
 from managers.rpmmanager import RpmManager
 from managers.guimanager import GuiManager
-from iniinfo import iniInfo
+from iniinfo import iniInfo, resolve_enabled_options
 from task import Task
 import os.path
 from os import path
@@ -178,6 +178,17 @@ class mainClass:
             self._set_current_section(window, "FINAL")
             set_var(window, self.gui_manager.taskitem, "")
             task.finalActions(window, self.gui_manager.bar, self.gui_manager.taskitem, ini_info)
+            if ini_info.usediagnostics:
+                self._set_current_section(window, "DIAGNOSTICS")
+                set_var(window, self.gui_manager.taskitem, "")
+                diagnostics = task.runDiagnostics(window, self.gui_manager.bar, self.gui_manager.taskitem, ini_info)
+                if diagnostics:
+                    call_on_ui_thread(
+                        self.window,
+                        self.gui_manager.showDiagnosticsDialog,
+                        self.window,
+                        diagnostics,
+                    )
         except Exception as ex:
             self.logger.error(ex)
         finally:
@@ -361,26 +372,7 @@ def setup_headless_inputs(
     enabled_options: List[str],
     logger: logging.Logger,
 ) -> None:
-    enabled_option_set = set(enabled_options)
-    changed = True
-    while changed:
-        changed = False
-        for key, value in ini_info.options.items():
-            if key not in enabled_option_set:
-                continue
-            if not isinstance(value, str) or "ALSOCHECKOPTION::" not in value:
-                continue
-
-            parts = value.split("::", 2)
-            if len(parts) < 3:
-                logger.warning("Invalid ALSOCHECKOPTION definition for option: %s", key)
-                continue
-
-            dependent_keys = [option.strip() for option in parts[1].split(",") if option.strip()]
-            for dependent_key in dependent_keys:
-                if dependent_key not in enabled_option_set:
-                    enabled_option_set.add(dependent_key)
-                    changed = True
+    enabled_option_set = resolve_enabled_options(ini_info.options, set(enabled_options))
 
     for key in ini_info.userinput:
         default_value = ""
@@ -581,6 +573,18 @@ def run_headless(ini_info: iniInfo, logger: logging.Logger) -> None:
 
     logger.info("SECTION: FINAL ACTIONS")
     task.finalActions(window, bar, taskitem, ini_info)
+
+    if ini_info.usediagnostics:
+        logger.info("SECTION: DIAGNOSTICS")
+        diagnostics = task.runDiagnostics(window, bar, taskitem, ini_info)
+        if diagnostics:
+            print()
+            print("=" * 72)
+            print("DIAGNOSTICS RESULTS")
+            print("-" * 72)
+            for result in diagnostics:
+                print("{} [{}]".format(result["label"], result["status"]))
+            print("=" * 72)
 
 
 def main(argv: List[str]) -> int:

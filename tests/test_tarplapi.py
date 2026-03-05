@@ -195,3 +195,115 @@ def test_action_manager_executes_nested_tarpl_branch_without_shelling(monkeypatc
     output = capsys.readouterr()
     assert "USER MESSAGE" in output.out
     assert "You are using localhost" in output.out
+
+
+def test_tarpl_detection_does_not_match_keywords_inside_shell_commands() -> None:
+    tarpl = TarpL()
+
+    assert tarpl.CheckForTarpL("echo User accepted YESNO prompt") is False
+    assert tarpl.getTarpL("echo User accepted YESNO prompt") == ""
+
+
+def test_action_manager_yesno_command_can_return_shell_text_containing_yesno(monkeypatch) -> None:
+    info = iniInfo()
+    info.variables = {}
+    info.userinput = {}
+    info.returnvars = {}
+
+    manager = ActionManager()
+
+    monkeypatch.setattr(
+        manager._tarpL,
+        "YESNO",
+        lambda action, window: type(
+            "Result",
+            (),
+            {
+                "rtnstate": True,
+                "rtnvalue": "echo User accepted YESNO prompt",
+                "rtnvar": "",
+                "tarpltype": TarpLAPIEnum.YESNO,
+            },
+        )(),
+    )
+
+    finalstr, skip_action, tarpLrtn = manager._resolve_action_command(
+        "YESNO::Proceed with install?::echo User accepted YESNO prompt",
+        info,
+        None,
+    )
+
+    assert skip_action is False
+    assert finalstr == "echo User accepted YESNO prompt"
+    assert tarpLrtn.tarpltype == TarpLAPIEnum.YESNO
+
+
+def test_exec_pyfunc_passes_window_keyword_when_supported(tmp_path, monkeypatch, capsys) -> None:
+    script = tmp_path / "callback.py"
+    script.write_text(
+        "def capture(arg1, window=None):\n"
+        "    print(f'{arg1}|{window is not None}')\n",
+        encoding="utf-8",
+    )
+
+    tarpl = TarpL()
+    window = object()
+    monkeypatch.chdir(tmp_path)
+
+    result = tarpl.EXEC_PYFUNC("EXEC_PYFUNC::callback.py::capture::hello", window)
+    output = capsys.readouterr()
+
+    assert result.tarpltype == TarpLAPIEnum.EXEC_PYFUNC
+    assert result.rtnstate is False
+    assert "hello|True" in output.out
+
+
+def test_exec_pyfunc_dispatches_window_callbacks_via_ui_thread(tmp_path, monkeypatch) -> None:
+    script = tmp_path / "callback.py"
+    script.write_text(
+        "def capture(arg1, window=None):\n"
+        "    window.calls.append((arg1, window is not None))\n",
+        encoding="utf-8",
+    )
+
+    tarpl = TarpL()
+
+    class DummyWindow:
+        def __init__(self) -> None:
+            self.calls = []
+
+    window = DummyWindow()
+    dispatch = {}
+
+    def fake_call_on_ui_thread(ui_window, func, *args, **kwargs):
+        dispatch["window"] = ui_window
+        dispatch["kwargs"] = kwargs
+        func(*args, **kwargs)
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr("tarpl.tarplapi.call_on_ui_thread", fake_call_on_ui_thread)
+
+    tarpl.EXEC_PYFUNC("EXEC_PYFUNC::callback.py::capture::hello", window)
+
+    assert dispatch["window"] is window
+    assert dispatch["kwargs"] == {}
+    assert window.calls == [("hello", True)]
+
+
+def test_exec_pyfunc_keeps_legacy_signature_without_window(tmp_path, monkeypatch, capsys) -> None:
+    script = tmp_path / "legacy.py"
+    script.write_text(
+        "called = []\n"
+        "def capture(arg1, arg2):\n"
+        "    called.extend([arg1, arg2])\n"
+        "    print('|'.join(called))\n",
+        encoding="utf-8",
+    )
+
+    tarpl = TarpL()
+    monkeypatch.chdir(tmp_path)
+
+    tarpl.EXEC_PYFUNC("EXEC_PYFUNC::legacy.py::capture::hello,world", object())
+
+    output = capsys.readouterr()
+    assert "hello|world" in output.out

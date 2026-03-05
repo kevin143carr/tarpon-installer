@@ -9,7 +9,7 @@ def _is_main_thread() -> bool:
     return threading.current_thread() is threading.main_thread()
 
 
-def call_on_ui_thread(window, func, *args, wait: bool = True) -> None:
+def call_on_ui_thread(window, func, *args, wait: bool = True, **kwargs) -> None:
     """Execute func on Tk's UI thread when possible, otherwise run directly."""
     if _has_after(window) and not _is_main_thread():
         done = threading.Event()
@@ -17,7 +17,7 @@ def call_on_ui_thread(window, func, *args, wait: bool = True) -> None:
 
         def _runner() -> None:
             try:
-                func(*args)
+                func(*args, **kwargs)
             except Exception as ex:  # pragma: no cover - defensive path
                 error["exc"] = ex
             finally:
@@ -30,7 +30,7 @@ def call_on_ui_thread(window, func, *args, wait: bool = True) -> None:
                 raise error["exc"]
         return
 
-    func(*args)
+    func(*args, **kwargs)
 
 
 def set_var(window, var, value) -> None:

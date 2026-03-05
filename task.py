@@ -300,4 +300,12 @@ class Task:
     def finalActions(self, window, bar, taskitem, ini_info: iniInfo) -> None:
         self.doActions( window, bar, taskitem, ini_info, "final")
 
+    def runDiagnostics(self, window, bar, taskitem, ini_info: iniInfo):
+        if not getattr(ini_info, "usediagnostics", False):
+            return []
+        if ini_info.installtype == 'REMOTE' and ini_info.buildtype == 'LINUX':
+            self.logger.warning("Diagnostics are not implemented for remote installs")
+            return []
+        return self.action_manager.runDiagnosticsLocal(window, bar, taskitem, ini_info)
+
  

@@ -13,7 +13,7 @@ from tkinter import font
 from tkscrolledframe import ScrolledFrame
 from PIL import Image as Image, ImageTk as Itk
 import logging
-from iniinfo import iniInfo
+from iniinfo import iniInfo, parse_option_definition, resolve_enabled_options
 from tarpl.tarplapi import TarpL
 from tarpl.tarplapi import TarpLreturn
 from tarpl.tarplclasses import TarpLAPIEnum
@@ -31,6 +31,27 @@ class GuiManager:
         self._tarpL = TarpL()
         self.canvas = None
         self.entry_boxes = 0
+
+    def _center_over_parent(self, parent: tk.Misc, child: tk.Misc) -> None:
+        parent.update_idletasks()
+        child.update_idletasks()
+
+        window_width = max(child.winfo_width(), child.winfo_reqwidth())
+        window_height = max(child.winfo_height(), child.winfo_reqheight())
+        screen_width = child.winfo_screenwidth()
+        screen_height = child.winfo_screenheight()
+
+        x = max(0, min(parent.winfo_x() + parent.winfo_width() // 2 - window_width // 2,
+                       screen_width - window_width))
+        y = max(0, min(parent.winfo_y() + parent.winfo_height() // 2 - window_height // 2,
+                       screen_height - window_height))
+
+        child.geometry(f"{window_width}x{window_height}+{x}+{y}")
+
+    def _show_centered_over_parent(self, parent: tk.Misc, child: tk.Misc) -> None:
+        self._center_over_parent(parent, child)
+        child.deiconify()
+        child.lift(parent)
     
     def on_checkbox_toggle(self, changed_key, otheroption, ini_info):
         print("{}, {}".format(changed_key, otheroption))
@@ -43,9 +64,10 @@ class GuiManager:
     def optionsDialog(self, parent: tk.Tk, ini_info: iniInfo) -> None:
         # Pop up the options chooser and center it over the parent window.
         optionsWindow = tk.Toplevel(parent)
+        optionsWindow.withdraw()
+        optionsWindow.transient(parent)
         optionsWindow.resizable(False, False)
         optionsWindow.focusmodel(model="active")
-        optionsWindow.after(100, lambda: optionsWindow.focus_force())
         optionsWindow.title("Installation Options")
     
         # Main content frame
@@ -72,22 +94,28 @@ class GuiManager:
         scrolledFrame.bind_arrow_keys(functionFrame)
         scrolledFrame.bind_scroll_wheel(functionFrame)
         inner_frame = scrolledFrame.display_widget(ttk.Frame)
-    
+
+        enabled_option_set = resolve_enabled_options(
+            ini_info.options,
+            {
+                key
+                for key, value in ini_info.optionvals.items()
+                if value.get() != '0'
+            },
+        )
+
         # Build the option list with optional Tarpl behaviors.
         for row, value in enumerate(ini_info.options):
+            initial_value = '1' if value in enabled_option_set else '0'
             if value not in ini_info.optionvals:
-                ini_info.optionvals[value] = tk.StringVar(value='0')
-    
-            isTarpL = self._tarpL.CheckForTarpL(ini_info.options[value])
-            if isTarpL and 'ALSOCHECKOPTION' in ini_info.options[value]:
-                optionparams = ini_info.options[value].split('::')
-                label_text = optionparams[2]
-                other_option_key = optionparams[1]
-                                
-                if other_option_key not in ini_info.optionvals:
-                    ini_info.optionvals[other_option_key] = tk.StringVar(value='0')
-    
-                lb = ttk.Label(inner_frame, text=label_text)
+                ini_info.optionvals[value] = tk.StringVar(value=initial_value)
+            elif ini_info.optionvals[value].get() != initial_value:
+                ini_info.optionvals[value].set(initial_value)
+
+            definition = parse_option_definition(ini_info.options[value])
+            if definition.also_check:
+                other_option_key = ",".join(definition.also_check)
+                lb = ttk.Label(inner_frame, text=definition.label, justify="left", wraplength=300)
                 cb = ttk.Checkbutton(
                     inner_frame,
                     variable=ini_info.optionvals[value],
@@ -100,7 +128,7 @@ class GuiManager:
                     )
                 )
             else:
-                lb = ttk.Label(inner_frame, text=ini_info.options[value], justify="left", wraplength=300)
+                lb = ttk.Label(inner_frame, text=definition.label, justify="left", wraplength=300)
                 cb = ttk.Checkbutton(
                     inner_frame,
                     variable=ini_info.optionvals[value],
@@ -118,28 +146,15 @@ class GuiManager:
         optionbutton = ttk.Button(bottom_frame, text="Close", width=20, command=optionsWindow.destroy)
         optionbutton.pack(anchor="center")
     
-        # Allow the window to size itself based on content
-        optionsWindow.update_idletasks()
-    
-        # Center the window on screen
-        window_width = optionsWindow.winfo_width()
-        window_height = optionsWindow.winfo_height()
-        screen_width = optionsWindow.winfo_screenwidth()
-        screen_height = optionsWindow.winfo_screenheight()
-    
-        x = max(0, min(parent.winfo_x() + parent.winfo_width() // 2 - window_width // 2,
-                       screen_width - window_width))
-        y = max(0, min(parent.winfo_y() + parent.winfo_height() // 2 - window_height // 2,
-                       screen_height - window_height))
-    
-        optionsWindow.geometry(f"{window_width}x{window_height}+{x}+{y}")
+        self._show_centered_over_parent(parent, optionsWindow)
+        optionsWindow.after_idle(optionsWindow.focus_force)
 
     def showFinalErrorsDialog(self, parent: tk.Tk, errors) -> None:
         error_window = tk.Toplevel(parent)
+        error_window.withdraw()
         error_window.title("Installation Errors")
         error_window.resizable(True, True)
         error_window.transient(parent)
-        error_window.grab_set()
 
         content_frame = ttk.Frame(error_window, padding=(18, 16, 18, 12))
         content_frame.pack(fill=tk.BOTH, expand=True)
@@ -166,9 +181,58 @@ class GuiManager:
         close_button = ttk.Button(button_frame, text="Close", width=18, command=error_window.destroy)
         close_button.pack(anchor="e")
 
-        error_window.update_idletasks()
+        self._show_centered_over_parent(parent, error_window)
         error_window.minsize(error_window.winfo_width(), error_window.winfo_height())
+        error_window.grab_set()
         error_window.wait_window()
+
+    def showDiagnosticsDialog(self, parent: tk.Tk, diagnostics) -> None:
+        diagnostic_window = tk.Toplevel(parent)
+        diagnostic_window.withdraw()
+        diagnostic_window.title("Diagnostics")
+        diagnostic_window.resizable(True, True)
+        diagnostic_window.transient(parent)
+
+        content_frame = ttk.Frame(diagnostic_window, padding=(18, 16, 18, 12))
+        content_frame.pack(fill=tk.BOTH, expand=True)
+
+        heading = ttk.Label(content_frame, text="Diagnostics", font=("Arial", 14, "bold"))
+        heading.pack(anchor="w")
+
+        subtitle = ttk.Label(
+            content_frame,
+            text="Post-install diagnostics results.",
+            justify="left",
+            wraplength=520,
+        )
+        subtitle.pack(anchor="w", pady=(2, 10))
+
+        results_frame = ttk.Frame(content_frame)
+        results_frame.pack(fill=tk.BOTH, expand=True)
+        results_frame.columnconfigure(1, weight=1)
+
+        for row, result in enumerate(diagnostics):
+            color = "#2e7d32" if result["status"] == "PASS" else "#c62828"
+            icon_canvas = tk.Canvas(results_frame, width=16, height=16, highlightthickness=0)
+            icon_canvas.grid(row=row, column=0, sticky="nw", padx=(0, 10), pady=4)
+            icon_canvas.create_oval(2, 2, 14, 14, fill=color, outline=color)
+
+            label = ttk.Label(results_frame, text=result["label"], justify="left", wraplength=360)
+            label.grid(row=row, column=1, sticky="w", pady=4)
+
+            status_label = ttk.Label(results_frame, text="[{}]".format(result["status"]), foreground=color)
+            status_label.grid(row=row, column=2, sticky="e", padx=(12, 0), pady=4)
+
+        button_frame = ttk.Frame(content_frame)
+        button_frame.pack(fill=tk.X, pady=(12, 0))
+
+        close_button = ttk.Button(button_frame, text="Close", width=18, command=diagnostic_window.destroy)
+        close_button.pack(anchor="e")
+
+        self._show_centered_over_parent(parent, diagnostic_window)
+        diagnostic_window.minsize(diagnostic_window.winfo_width(), diagnostic_window.winfo_height())
+        diagnostic_window.grab_set()
+        diagnostic_window.wait_window()
         
     def buildLeftFrame(self, window, functiontitle, ini_info: iniInfo, installfunc):
         # Left side: visible branding plus progress and current task status.
@@ -383,6 +447,12 @@ class GuiManager:
         window.geometry(geometrystr)
         window.title(ini_info.installtitle)
         window.resizable(False,False)
-        window.focusmodel(model="passive")
+        if platform.system() == "Darwin":
+            window.focusmodel(model="active")
+            window.after(0, window.deiconify)
+            window.after(0, window.lift)
+            window.after(0, window.focus_force)
+        else:
+            window.focusmodel(model="passive")
         self.buildLeftFrame(window, functiontitle, ini_info, installfunc)
         self.buildRightFrame(window, functiontitle, ini_info, installfunc)

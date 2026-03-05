@@ -20,6 +20,75 @@ class ActionManager:
         self.lock = threading.Lock()
         self.ssh = None
         self.hostname = ""
+
+    def _resolve_action_command(self, action_value: str, ini_info: iniInfo, window):
+        tarpLrtn = TarpLreturn()
+        finalstr = self.string_utilities.checkForUserVariable(action_value, ini_info)
+        skip_action = False
+
+        while finalstr is not None and self._tarpL.CheckForTarpL(finalstr):
+            tarpLrtn = self._tarpL.ExecuteTarpL(finalstr, ini_info, window)
+            if tarpLrtn.rtnstate is False:
+                skip_action = True
+                break
+
+            if tarpLrtn.rtnvar != "":
+                if tarpLrtn.tarpltype == TarpLAPIEnum.IFGOTO:
+                    finalstr = tarpLrtn.rtnvalue
+                else:
+                    ini_info.returnvars[tarpLrtn.rtnvar] = tarpLrtn.rtnvalue
+                    skip_action = True
+                    break
+            else:
+                finalstr = tarpLrtn.rtnvalue
+
+        return finalstr, skip_action, tarpLrtn
+
+    def _execute_local_command(self, finalstr: str, ini_info: iniInfo) -> int:
+        if self.logger.level == logging.DEBUG:
+            return self.process_manager.executeProcsDebug(finalstr, ini_info.watchdog, ini_info.process_timeout)
+        return self.process_manager.executeProcs(finalstr, ini_info.watchdog, ini_info.process_timeout)
+
+    def runDiagnosticsLocal(self, window, bar, taskitem, ini_info: iniInfo):
+        diagnostics = ini_info.diagnostics
+        results = []
+        count = 0
+
+        for key, action_value in diagnostics.items():
+            count += 1
+            set_bar_value(window, bar, (count / len(diagnostics.keys())) * 100 if diagnostics else 0)
+
+            if isinstance(action_value, str) and action_value.startswith("DIAG::"):
+                parts = action_value.split("::", 2)
+                if len(parts) < 3:
+                    self.logger.error("Invalid diagnostic definition for %s", key)
+                    results.append({"label": key, "status": "FAILED"})
+                    continue
+
+                label_text = parts[1].strip()
+                command_value = parts[2]
+                set_var(window, taskitem, "Running diagnostic {}".format(label_text))
+
+                try:
+                    finalstr, skip_action, _ = self._resolve_action_command(command_value, ini_info, window)
+                    passed = False
+                    if not skip_action and finalstr is not None:
+                        passed = (self._execute_local_command(finalstr, ini_info) == 0)
+                    results.append({"label": label_text, "status": "PASS" if passed else "FAILED"})
+                except Exception as ex:
+                    self.logger.error("Diagnostic %s failed: %s", label_text, ex)
+                    results.append({"label": label_text, "status": "FAILED"})
+                continue
+
+            try:
+                finalstr, skip_action, _ = self._resolve_action_command(action_value, ini_info, window)
+                if skip_action or finalstr is None:
+                    continue
+                set_var(window, taskitem, "Executing diagnostic action {} with {}".format(key, finalstr))
+                self._execute_local_command(finalstr, ini_info)
+            except Exception as ex:
+                self.logger.error("Error in diagnostic action %s: %s", key, ex)
+        return results
     
     def doActionsSSH(self, actions) -> None:
         for action in actions:
@@ -71,31 +140,16 @@ class ActionManager:
                 exec_option = '1'
                 
                 # check for user input otherwise it returns string in ini_info.actions[action]
-                finalstr = self.string_utilities.checkForUserVariable(ini_info.actions[action], ini_info)
+                finalstr = None
                 skip_action = False
 
                 if action in ini_info.options.keys():
                     exec_option = ini_info.optionvals[action].get()
                     
                 if(exec_option != '0'):
-                    while self._tarpL.CheckForTarpL(finalstr):
-                        tarpLrtn = self._tarpL.ExecuteTarpL(finalstr, ini_info, window)
-                        if tarpLrtn.rtnstate == False:
-                            skip_action = True
-                            break
-                        else:
-                            if tarpLrtn.rtnvar != "":
-                                if tarpLrtn.tarpltype == TarpLAPIEnum.IFGOTO:
-                                    finalstr = tarpLrtn.rtnvalue
-                                    gotoindex = tarpLrtn.rtnvar
-                                else: # This ends up setting a variable, so no execution is needed
-                                    ini_info.returnvars[tarpLrtn.rtnvar] = tarpLrtn.rtnvalue
-                                    skip_action = True
-                                    break
-                            else:
-                                finalstr = tarpLrtn.rtnvalue
-                                if finalstr is None:
-                                    break
+                    finalstr, skip_action, tarpLrtn = self._resolve_action_command(ini_info.actions[action], ini_info, window)
+                    if tarpLrtn.tarpltype == TarpLAPIEnum.IFGOTO and tarpLrtn.rtnvar != "":
+                        gotoindex = tarpLrtn.rtnvar
 
                     if skip_action:
                         self.lock.release()
@@ -105,10 +159,8 @@ class ActionManager:
                     set_var(window, taskitem, taskstr)
     
                     if(finalstr != None):
-                        if self.logger.level == logging.DEBUG:
-                            self.process_manager.executeProcsDebug(finalstr, ini_info.watchdog, ini_info.process_timeout)
-                        else:
-                            result = self.process_manager.executeProcs(finalstr, ini_info.watchdog, ini_info.process_timeout)
+                        result = self._execute_local_command(finalstr, ini_info)
+                        if self.logger.level != logging.DEBUG:
                             if tarpLrtn.tarpltype == TarpLAPIEnum.IFGOTO:
                                 if result == 0:
                                     enablegoto = True
