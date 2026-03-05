@@ -33,7 +33,7 @@ Nuitka is the primary release path. Each Nuitka build creates:
   - `sample-python-scripts/`
   - the non-build helper scripts from `useful_scripts/`
 
-Platform build scripts:
+Nuitka release script:
 
 - Linux: `useful_scripts/build_nuitka_linux.sh`
 - macOS: `useful_scripts/build_nuitka_macos.sh`
@@ -47,6 +47,11 @@ GitHub Actions release artifacts are currently built for:
 - RHEL 8-compatible `x86_64` via UBI 8 Python 3.11 container using PyInstaller `onefile`
 - RHEL 9-compatible `x86_64` via UBI 9 Python 3.11 container using PyInstaller `onefile`
 - Windows `x86_64` using PyInstaller `onefile`
+
+Release builder entrypoints:
+
+- Nuitka release packaging: `useful_scripts/build_nuitka_release.py`
+- PyInstaller release packaging: `useful_scripts/build_pyinstaller_release.py`
 
 Recommended GitHub workflow:
 

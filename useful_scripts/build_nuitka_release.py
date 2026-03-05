@@ -2,6 +2,7 @@
 import argparse
 import os
 import platform
+import re
 import shutil
 import subprocess
 import sys
@@ -72,7 +73,19 @@ def run_command(command: list[str]) -> None:
 
 
 def windows_version_tuple(version: str) -> tuple[int, int, int, int]:
-    parts = [int(part) for part in version.split(".")]
+    normalized = version.strip()
+    prerelease_match = re.fullmatch(r"(\d+)\.(\d+)\.(\d+)(?:a|b|rc)(\d+)", normalized, re.IGNORECASE)
+    if prerelease_match:
+        parts = [int(prerelease_match.group(index)) for index in range(1, 5)]
+        return tuple(parts)
+
+    stable_match = re.fullmatch(r"(\d+)\.(\d+)\.(\d+)(?:\.(\d+))?", normalized)
+    if stable_match:
+        parts = [int(stable_match.group(index)) for index in range(1, 5) if stable_match.group(index) is not None]
+    else:
+        # Fallback for uncommon version strings: keep only numeric components.
+        parts = [int(part) for part in re.findall(r"\d+", normalized)]
+
     while len(parts) < 4:
         parts.append(0)
     return tuple(parts[:4])
@@ -241,7 +254,7 @@ def assemble_release(binary_path: Path, version: str, platform_id: str) -> Path:
     return archive_path
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Build a packaged release zip for tarpon-installer."
     )
@@ -254,7 +267,7 @@ def main() -> int:
         "--build-mode",
         choices=["onefile", "standalone"],
         default="onefile",
-        help="Nuitka build mode for the packaged application.",
+        help="Build mode for the Nuitka backend (ignored when backend is pyinstaller).",
     )
     parser.add_argument(
         "--backend",
@@ -262,7 +275,7 @@ def main() -> int:
         default="nuitka",
         help="Packaging backend to use for the application binary.",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     version = read_version()
     build_root = OUTPUT_ROOT / "build" / args.platform_id
