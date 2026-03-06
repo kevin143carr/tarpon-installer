@@ -95,7 +95,7 @@ def create_pyinstaller_version_file(output_dir: Path, version: str) -> Path:
     version_file = output_dir / "pyinstaller_version_info.txt"
     version_tuple = windows_version_tuple(version)
     version_commas = ", ".join(str(part) for part in version_tuple)
-    version_dots = ".".join(str(part) for part in version_tuple)
+    version_display = version.strip()
     version_file.write_text(
         """VSVersionInfo(
   ffi=FixedFileInfo(
@@ -115,18 +115,18 @@ def create_pyinstaller_version_file(output_dir: Path, version: str) -> Path:
         [
           StringStruct('CompanyName', 'Tarpon Installer'),
           StringStruct('FileDescription', 'Tarpon Installer'),
-          StringStruct('FileVersion', '{version_dots}'),
+          StringStruct('FileVersion', '{version_display}'),
           StringStruct('InternalName', 'tarpon_installer'),
           StringStruct('OriginalFilename', 'tarpon_installer.exe'),
           StringStruct('ProductName', 'Tarpon Installer'),
-          StringStruct('ProductVersion', '{version_dots}')
+          StringStruct('ProductVersion', '{version_display}')
         ]
       )
     ]),
     VarFileInfo([VarStruct('Translation', [1033, 1200])])
   ]
 )
-""".format(version_commas=version_commas, version_dots=version_dots),
+""".format(version_commas=version_commas, version_display=version_display),
         encoding="utf-8",
     )
     return version_file

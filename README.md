@@ -100,6 +100,7 @@ watchdog = True
 process_timeout = 180
 adminrights = True
 displayfinalerrors = False
+continuewitherrors = False
 usediagnostics = False
 ```
 
@@ -113,6 +114,7 @@ buttontext = Run Install
 watchdog = False
 process_timeout = 180
 adminrights = False
+continuewitherrors = False
 usediagnostics = False
 ```
 
@@ -126,6 +128,7 @@ Notes:
 - `process_timeout` controls how long local RPM installs and local actions may run before Tarpon kills the process. The default is `180` seconds. Set it to `0` to disable the timeout for long-running installers such as PostgreSQL.
 - `adminrights` forces the application to run as a privileged user.
 - `displayfinalerrors` shows a final scrollable GUI popup with up to the first 3 logged errors from the run. If omitted, it defaults to `False`.
+- `continuewitherrors` continues per-step execution after errors in copy/modify stages when set to `True`. If omitted, it defaults to `False`.
 - `usediagnostics` enables the optional `[DIAGNOSTICS]` section after `[FINAL]`. If omitted, it defaults to `False`.
 - Diagnostics are currently local-only. Remote installs skip `[DIAGNOSTICS]` and log a warning.
 
@@ -226,7 +229,13 @@ optiondeleteolddata = rm -rf %userdatafolder%
 
 ### `[REPO]`
 
-No longer supported.
+Tarpon no longer executes repo-install behavior, but keep this section present as a compatibility placeholder. It is still required for installer profile discovery/validation (`--selectinstall`).
+
+Example:
+
+```
+[REPO]
+```
 
 ### `[RPM]` (Linux RPMs)
 
@@ -383,13 +392,13 @@ Note:
 Syntax:
 
 ```
-MSGBOX "string to display"
+MSGBOX::string to display
 ```
 
 Example:
 
 ```
-popupmessagetouser1 = MSGBOX "Please make sure this %hostIP% is the correct IP address."
+popupmessagetouser1 = MSGBOX::Please make sure this %hostIP% is the correct IP address.
 ```
 
 ### `[IF][THEN][ELSE]`
