@@ -7,7 +7,13 @@ from datetime import datetime
 from elevate import elevate
 from managers.rpmmanager import RpmManager
 from managers.guimanager import GuiManager
-from iniinfo import iniInfo, resolve_enabled_options
+from iniinfo import (
+    iniInfo,
+    resolve_enabled_options,
+    is_local_install_type,
+    is_remote_linux_install_type,
+    is_remote_windows_install_type,
+)
 from task import Task
 import os.path
 from os import path
@@ -186,19 +192,22 @@ class mainClass:
         task = Task(ini_info)
 
         # if Remote Type then login via SSH
-        if ini_info.installtype == 'REMOTE': 
+        if is_remote_windows_install_type(ini_info.installtype):
+            raise NotImplementedError("installtype REMOTEWINDOWS is not implemented yet.")
+
+        if is_remote_linux_install_type(ini_info.installtype):
             task.loginSSH()
 
         try:
             # Repos and RPMs are Linux only
  
-            # Remote Install
-            #if ini_info.buildtype == 'LINUX' and ini_info.installtype == 'REMOTE':
-                #task.installRemoteRepo(ini_info.resources, ini_info.repo)
-                #self.rpm_manager.installRPMsRemote(ini_info.resources, ini_info.rpms)
+            # Remote Linux install
+            #if ini_info.buildtype == 'LINUX' and is_remote_linux_install_type(ini_info.installtype):
+            #    task.installRemoteRepo(ini_info.resources, ini_info.repo)
+            #    self.rpm_manager.installRPMsRemote(ini_info.resources, ini_info.rpms)
 
             # Local Install
-            if ini_info.buildtype == 'LINUX' and ini_info.installtype == 'LOCAL':
+            if ini_info.buildtype == 'LINUX' and is_local_install_type(ini_info.installtype):
                 self._set_current_section(window, "RPM")
                 self.rpm_manager.installLocalRPMs(window, self.gui_manager.bar, self.gui_manager.taskitem, ini_info.resources, ini_info.rpms, ini_info.watchdog, ini_info.process_timeout)
 
@@ -756,10 +765,13 @@ def run_headless(ini_info: iniInfo, logger: logging.Logger) -> None:
         logger.info("ACTION PROMPT: %s", ini_info.buttontext)
 
     task = Task(ini_info)
-    if ini_info.installtype == "REMOTE":
+    if is_remote_windows_install_type(ini_info.installtype):
+        raise NotImplementedError("installtype REMOTEWINDOWS is not implemented yet.")
+
+    if is_remote_linux_install_type(ini_info.installtype):
         task.loginSSH()
 
-    if ini_info.buildtype == "LINUX" and ini_info.installtype == "LOCAL":
+    if ini_info.buildtype == "LINUX" and is_local_install_type(ini_info.installtype):
         logger.info("SECTION: INSTALLING RPMs")
         RpmManager().installLocalRPMs(
             window, bar, taskitem, ini_info.resources, ini_info.rpms, ini_info.watchdog, ini_info.process_timeout
@@ -825,6 +837,10 @@ def main(argv: List[str]) -> int:
 
     ini_info = iniInfo()
     ini_info.readConfigFile(args.configfile)
+    if is_remote_windows_install_type(ini_info.installtype):
+        print("ERROR: installtype REMOTEWINDOWS is not implemented yet.")
+        return 2
+
     setup_logging(args.configfile, args.debuglevel, liveviewlog=(ini_info.usegui is False and args.liveviewlog))
     logger = logging.getLogger("logger")
 

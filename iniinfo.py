@@ -4,6 +4,21 @@ import logging
 from typing import Dict, Mapping, Optional, Set
 
 logger = None
+LOCAL_INSTALL_TYPES = {"LOCAL"}
+REMOTE_LINUX_INSTALL_TYPES = {"REMOTELINUX"}
+REMOTE_WINDOWS_INSTALL_TYPES = {"REMOTEWINDOWS"}
+
+
+def is_local_install_type(installtype: str) -> bool:
+    return (installtype or "").strip().upper() in LOCAL_INSTALL_TYPES
+
+
+def is_remote_linux_install_type(installtype: str) -> bool:
+    return (installtype or "").strip().upper() in REMOTE_LINUX_INSTALL_TYPES
+
+
+def is_remote_windows_install_type(installtype: str) -> bool:
+    return (installtype or "").strip().upper() in REMOTE_WINDOWS_INSTALL_TYPES
 
 
 @dataclass

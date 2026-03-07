@@ -1,0 +1,15 @@
+Rocky Linux 9.7 / EPEL 9 RPM sources downloaded on 2026-03-07:
+
+httpd-2.4.62-7.el9_7.3.x86_64.rpm
+  https://dl.rockylinux.org/pub/rocky/9.7/AppStream/x86_64/os/Packages/h/httpd-2.4.62-7.el9_7.3.x86_64.rpm
+
+postgresql-13.23-1.el9_7.x86_64.rpm
+  https://dl.rockylinux.org/pub/rocky/9.7/AppStream/x86_64/os/Packages/p/postgresql-13.23-1.el9_7.x86_64.rpm
+
+activemq-cpp-3.9.5-1.el9.x86_64.rpm
+  https://download.fedoraproject.org/pub/epel/9/Everything/x86_64/Packages/a/activemq-cpp-3.9.5-1.el9.x86_64.rpm
+
+Note:
+- Rocky 9.7 BaseOS/AppStream/CRB do not provide a core "activemq" broker RPM.
+- BuildAdder can use external program archives from resources/externalprograms
+  for Apache ActiveMQ broker distributions (for example, apache-activemq-*.tar.gz/.zip).

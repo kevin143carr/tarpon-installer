@@ -22,7 +22,7 @@ else:
 from zipfile import ZipFile
 
 from fileutilities import FileUtilities
-from iniinfo import iniInfo
+from iniinfo import iniInfo, is_local_install_type, is_remote_linux_install_type
 from managers.actionmanager import ActionManager
 from stringutilities import StringUtilities
 from ui_thread import set_bar_value, set_var, update_idletasks
@@ -220,18 +220,18 @@ class Task:
         ftp.close()
 
     def copyFromResources(self, window, bar: ttk.Progressbar, taskitem, ini_info: iniInfo) -> None:
-        if(ini_info.installtype == 'REMOTE' and ini_info.buildtype == 'LINUX'):
+        if is_remote_linux_install_type(ini_info.installtype) and ini_info.buildtype == 'LINUX':
             self.copyFromResourcesSSH(ini_info.resources, ini_info.files, ini_info)
-        elif ini_info.installtype == 'LOCAL':
+        elif is_local_install_type(ini_info.installtype):
             self.copyFromResourcesLocal(window, bar, taskitem, ini_info)                                                                   
             
     def doActions(self, window, bar: ttk.Progressbar, taskitem: tk.StringVar, ini_info: iniInfo, actiontype: str = "action") -> None:
-        if(ini_info.installtype == 'REMOTE' and ini_info.buildtype == 'LINUX'):
+        if is_remote_linux_install_type(ini_info.installtype) and ini_info.buildtype == 'LINUX':
             self.action_manager.ssh = self.ssh
             self.action_manager.hostname = self.hostname
             actions = ini_info.finalactions if actiontype == "final" else ini_info.actions
             self.action_manager.doActionsSSH(window, bar, taskitem, actions, ini_info)
-        elif ini_info.installtype == 'LOCAL':
+        elif is_local_install_type(ini_info.installtype):
             try:                
                 if(actiontype == "action"):
                     self.action_manager.doActionsLocal(window, bar, taskitem, ini_info)
@@ -345,7 +345,7 @@ class Task:
                 continue
 
     def modifyFiles(self, window, bar, taskitem, ini_info: iniInfo) -> None:
-        if(ini_info.installtype == 'REMOTE' and ini_info.buildtype == 'LINUX'):
+        if is_remote_linux_install_type(ini_info.installtype) and ini_info.buildtype == 'LINUX':
             self.modifyFilesSSH(ini_info.modify, ini_info)
         else:
             self.modifyFilesLocal(window, bar, taskitem, ini_info)
@@ -356,7 +356,7 @@ class Task:
     def runDiagnostics(self, window, bar, taskitem, ini_info: iniInfo):
         if not getattr(ini_info, "usediagnostics", False):
             return []
-        if ini_info.installtype == 'REMOTE' and ini_info.buildtype == 'LINUX':
+        if is_remote_linux_install_type(ini_info.installtype) and ini_info.buildtype == 'LINUX':
             self.logger.warning("Diagnostics are not implemented for remote installs")
             return []
         return self.action_manager.runDiagnosticsLocal(window, bar, taskitem, ini_info)

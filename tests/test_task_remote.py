@@ -55,7 +55,7 @@ class FakeSSH:
 
 def test_do_actions_remote_uses_finalactions_for_final_phase(monkeypatch) -> None:
     info = iniInfo()
-    info.installtype = "REMOTE"
+    info.installtype = "REMOTELINUX"
     info.buildtype = "LINUX"
     info.actions = {"action_a": "echo action"}
     info.finalactions = {"final_a": "echo final"}
@@ -105,7 +105,7 @@ def test_action_manager_do_actions_ssh_applies_option_gating_and_tokens() -> Non
 
 def test_modify_files_ssh_supports_current_add_and_change_format() -> None:
     info = iniInfo()
-    info.installtype = "REMOTE"
+    info.installtype = "REMOTELINUX"
     info.buildtype = "LINUX"
     info.userinput = {"customer_name": DummyInput("acme"), "environment": DummyInput("qa")}
     info.variables = {"remote_stage": "/tmp/tarpon_remote"}
@@ -133,7 +133,7 @@ def test_run_headless_skips_local_rpm_install_for_remote(monkeypatch) -> None:
     info = iniInfo()
     info.usegui = False
     info.buildtype = "LINUX"
-    info.installtype = "REMOTE"
+    info.installtype = "REMOTELINUX"
     info.resources = str(Path("."))
     info.watchdog = False
     info.process_timeout = 180
@@ -153,7 +153,7 @@ def test_run_headless_skips_local_rpm_install_for_remote(monkeypatch) -> None:
 
     def fail_rpm(*args, **kwargs):
         rpm_called["value"] = True
-        raise AssertionError("RPM install should not run for REMOTE installs")
+        raise AssertionError("RPM install should not run for REMOTELINUX installs")
 
     monkeypatch.setattr("managers.rpmmanager.RpmManager.installLocalRPMs", fail_rpm)
     monkeypatch.setattr(Task, "loginSSH", lambda self: None)

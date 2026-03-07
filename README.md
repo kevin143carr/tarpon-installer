@@ -191,7 +191,7 @@ host = app-server-01.example.com
 ### `[BUILD]` (platform, install type, and resources)
 
 - `buildtype` must be `WINDOWS` or `LINUX`
-- `installtype` must be `LOCAL` or `REMOTE`
+- `installtype` should be `LOCAL`, `REMOTELINUX`, or `REMOTEWINDOWS`
 - `resources` is the resource directory path (absolute or relative)
 
 Example:
@@ -206,9 +206,12 @@ Remote Windows GUI to Linux example:
 
 ```
 buildtype = LINUX
-installtype = REMOTE
+installtype = REMOTELINUX
 resources = .
 ```
+
+`REMOTELINUX` is the current remote install mode.
+`REMOTEWINDOWS` is reserved for future remote Windows support and is not implemented yet.
 
 See `example-ini-files/extensive_functionality_test_windows_gui_remote_linux.ini` for a full remote profile.
 
