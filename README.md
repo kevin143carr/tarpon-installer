@@ -134,11 +134,12 @@ Notes:
 
 When `usegui = False`, you can still pass `--userinput KEY=VALUE`, `--option OPTION`, and `--strict-tokens` on the command line to control the non-GUI run.
 Add `--liveviewlog` if you want the non-GUI run to stream log output to the terminal while still writing the normal `.log` file.
+
 Use `--selectinstall --selectinstalldir <directory>` to scan a specific directory tree for valid Tarpon installer INI profiles and choose one from a popup list before execution starts.
 
 Profile selection window (`--selectinstall`):
 
-![Select install profile dialog](documents/presentation/public/screenshots/poplist-role-picker.png)
+![Select install profile dialog](assets/images/selectinstall.png)
 
 ### Command-line options (differences and usage)
 
