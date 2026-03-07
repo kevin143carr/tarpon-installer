@@ -136,6 +136,36 @@ When `usegui = False`, you can still pass `--userinput KEY=VALUE`, `--option OPT
 Add `--liveviewlog` if you want the non-GUI run to stream log output to the terminal while still writing the normal `.log` file.
 Use `--selectinstall --selectinstalldir <directory>` to scan a specific directory tree for valid Tarpon installer INI profiles and choose one from a popup list before execution starts.
 
+Profile selection window (`--selectinstall`):
+
+![Select install profile dialog](documents/presentation/public/screenshots/poplist-role-picker.png)
+
+### Command-line options (differences and usage)
+
+Base options:
+
+- `-t, --configfile <path>`: Run one specific INI file directly (default: `config.ini`).
+- `-d, --debuglevel INFO|DEBUG`: Controls logging verbosity.
+- `--version`: Prints the Tarpon Installer version and exits.
+
+Profile discovery options:
+
+- `--selectinstall`: Enables profile discovery mode and opens a GUI list picker before run start.
+- `--selectinstalldir <dir>`: Search root used by `--selectinstall`.
+- Difference: `--selectinstall` controls behavior, `--selectinstalldir` provides the search location. `--selectinstalldir` is invalid by itself.
+
+Headless-only run-control options (`[STARTUP] usegui = False`):
+
+- `--userinput KEY=VALUE`: Sets/overrides values from `[USERINPUT]`. Repeatable.
+- `--option OPTION`: Preselects an option key from `[OPTIONS]`. Repeatable.
+- `--strict-tokens`: Fails the run if unresolved `%token%` values remain.
+- `--liveviewlog`: Streams log output to stdout while still writing the normal `.log` file.
+- Difference: `--userinput` injects variable values, `--option` toggles optional branches/actions.
+
+Important behavior note:
+
+- If `[STARTUP] usegui = True`, `--userinput`, `--option`, `--strict-tokens`, and `--liveviewlog` are ignored.
+
 ### `[USERINFO]` (remote credentials)
 
 These fields are in plaintext. They are commonly used for remote installs or to update files that require authentication. If a value is blank, the field is hidden in the GUI.
