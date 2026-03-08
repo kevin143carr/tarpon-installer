@@ -32,9 +32,10 @@ class DummyInput:
 
 
 class FakeStream:
-    def __init__(self, lines=None) -> None:
+    def __init__(self, lines=None, exit_status: int = 0) -> None:
         self._lines = list(lines or [])
         self._index = 0
+        self.channel = type("Channel", (), {"recv_exit_status": lambda _self: exit_status})()
 
     def readline(self) -> str:
         if self._index >= len(self._lines):
@@ -45,12 +46,16 @@ class FakeStream:
 
 
 class FakeSSH:
-    def __init__(self) -> None:
+    def __init__(self, exit_status_by_command=None, stderr_by_command=None) -> None:
         self.commands = []
+        self.exit_status_by_command = dict(exit_status_by_command or {})
+        self.stderr_by_command = dict(stderr_by_command or {})
 
     def exec_command(self, command):
         self.commands.append(command)
-        return None, FakeStream(), FakeStream()
+        exit_status = self.exit_status_by_command.get(command, 0)
+        stderr_lines = self.stderr_by_command.get(command, [])
+        return None, FakeStream(exit_status=exit_status), FakeStream(lines=stderr_lines)
 
 
 def test_do_actions_remote_uses_finalactions_for_final_phase(monkeypatch) -> None:
@@ -101,6 +106,79 @@ def test_action_manager_do_actions_ssh_applies_option_gating_and_tokens() -> Non
     manager.doActionsSSH(DummyWindow(), {}, DummyVar(), actions, info)
 
     assert manager.ssh.commands == ["echo customer=acme host=10.0.0.5"]
+
+
+def test_action_manager_do_actions_ssh_ifgoto_branches_on_remote_exit_code() -> None:
+    info = iniInfo()
+    info.userinput = {}
+    info.variables = {}
+    info.returnvars = {}
+    info.options = {}
+    info.optionvals = {}
+    info.continuewitherrors = False
+
+    manager = ActionManager()
+    manager.ssh = FakeSSH(exit_status_by_command={"echo branch-check": 0, "echo target": 0})
+    manager.hostname = "10.0.0.5"
+
+    actions = {
+        "step1": "IFGOTO::echo branch-check::step3",
+        "step2": "echo should-not-run",
+        "step3": "echo target",
+    }
+
+    manager.doActionsSSH(DummyWindow(), {}, DummyVar(), actions, info)
+
+    assert manager.ssh.commands == ["echo branch-check", "echo target"]
+
+
+def test_action_manager_do_actions_ssh_raises_on_nonzero_when_continuewitherrors_false() -> None:
+    info = iniInfo()
+    info.userinput = {}
+    info.variables = {}
+    info.returnvars = {}
+    info.options = {}
+    info.optionvals = {}
+    info.continuewitherrors = False
+
+    manager = ActionManager()
+    manager.ssh = FakeSSH(exit_status_by_command={"echo fail": 2})
+    manager.hostname = "10.0.0.5"
+
+    actions = {
+        "bad_action": "echo fail",
+        "later_action": "echo should-not-run",
+    }
+
+    try:
+        manager.doActionsSSH(DummyWindow(), {}, DummyVar(), actions, info)
+        raise AssertionError("Expected RuntimeError for failed remote action")
+    except RuntimeError as ex:
+        assert "bad_action" in str(ex)
+        assert "exit code 2" in str(ex)
+
+
+def test_action_manager_do_actions_ssh_continues_on_nonzero_when_continuewitherrors_true() -> None:
+    info = iniInfo()
+    info.userinput = {}
+    info.variables = {}
+    info.returnvars = {}
+    info.options = {}
+    info.optionvals = {}
+    info.continuewitherrors = True
+
+    manager = ActionManager()
+    manager.ssh = FakeSSH(exit_status_by_command={"echo fail": 2, "echo later": 0})
+    manager.hostname = "10.0.0.5"
+
+    actions = {
+        "bad_action": "echo fail",
+        "later_action": "echo later",
+    }
+
+    manager.doActionsSSH(DummyWindow(), {}, DummyVar(), actions, info)
+
+    assert manager.ssh.commands == ["echo fail", "echo later"]
 
 
 def test_modify_files_ssh_supports_current_add_and_change_format() -> None:

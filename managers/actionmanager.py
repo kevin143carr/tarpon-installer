@@ -93,8 +93,16 @@ class ActionManager:
     def doActionsSSH(self, window, bar, taskitem, actions, ini_info: iniInfo) -> None:
         total = len(actions.keys())
         count = 0
+        enablegoto = False
+        gotoindex = ""
         for action_key, action_value in actions.items():
             try:
+                if enablegoto:
+                    if gotoindex != action_key:
+                        continue
+                    gotoindex = ""
+                    enablegoto = False
+
                 count += 1
                 set_bar_value(window, bar, (count / total) * 100 if total else 0)
 
@@ -104,7 +112,9 @@ class ActionManager:
                 if exec_option == "0":
                     continue
 
-                finalstr, skip_action, _ = self._resolve_action_command(action_value, ini_info, window)
+                finalstr, skip_action, tarpLrtn = self._resolve_action_command(action_value, ini_info, window)
+                if tarpLrtn.tarpltype == TarpLAPIEnum.IFGOTO and tarpLrtn.rtnvar != "":
+                    gotoindex = tarpLrtn.rtnvar
                 if skip_action or finalstr is None:
                     continue
                 if "%host%" in finalstr:
@@ -117,8 +127,24 @@ class ActionManager:
                     self.logger.info(line, end="")
                 for line in iter(stderr.readline, ""):
                     self.logger.error(line, end="")
+                result = stdout.channel.recv_exit_status()
+
+                if tarpLrtn.tarpltype == TarpLAPIEnum.IFGOTO:
+                    if result == 0:
+                        enablegoto = True
+                        continue
+                    enablegoto = False
+                    continue
+
+                if result != 0:
+                    message = "Remote action '{}' failed with exit code {}".format(action_key, result)
+                    self.logger.error(message)
+                    if not getattr(ini_info, "continuewitherrors", False):
+                        raise RuntimeError(message)
             except Exception as ex:
                 self.logger.error("Error in remote action %s: %s", action_key, ex)
+                if not getattr(ini_info, "continuewitherrors", False):
+                    raise
                 continue
 
 
