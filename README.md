@@ -170,6 +170,7 @@ Important behavior note:
 ### `[USERINFO]` (remote credentials)
 
 These fields are in plaintext. They are commonly used for remote installs or to update files that require authentication. If a value is blank, the field is hidden in the GUI.
+For `installtype = REMOTELINUX`, configure the remote `username` as a sudoer ahead of time.
 
 Example:
 
