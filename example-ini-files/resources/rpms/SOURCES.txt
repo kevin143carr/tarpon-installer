@@ -6,10 +6,30 @@ httpd-2.4.62-7.el9_7.3.x86_64.rpm
 postgresql-13.23-1.el9_7.x86_64.rpm
   https://dl.rockylinux.org/pub/rocky/9.7/AppStream/x86_64/os/Packages/p/postgresql-13.23-1.el9_7.x86_64.rpm
 
-activemq-cpp-3.9.5-1.el9.x86_64.rpm
-  https://download.fedoraproject.org/pub/epel/9/Everything/x86_64/Packages/a/activemq-cpp-3.9.5-1.el9.x86_64.rpm
+apr-1.7.0-12.el9_3.x86_64.rpm
+  https://dl.rockylinux.org/pub/rocky/9.7/AppStream/x86_64/os/Packages/a/apr-1.7.0-12.el9_3.x86_64.rpm
+
+apr-util-1.6.1-23.el9.x86_64.rpm
+  https://dl.rockylinux.org/pub/rocky/9.7/AppStream/x86_64/os/Packages/a/apr-util-1.6.1-23.el9.x86_64.rpm
+
+httpd-tools-2.4.62-7.el9_7.3.x86_64.rpm
+  https://dl.rockylinux.org/pub/rocky/9.7/AppStream/x86_64/os/Packages/h/httpd-tools-2.4.62-7.el9_7.3.x86_64.rpm
+
+mod_ssl-2.4.62-7.el9_7.3.x86_64.rpm
+  https://dl.rockylinux.org/pub/rocky/9.7/AppStream/x86_64/os/Packages/m/mod_ssl-2.4.62-7.el9_7.3.x86_64.rpm
+
+libpq-13.23-1.el9_7.x86_64.rpm
+  https://dl.rockylinux.org/pub/rocky/9.7/AppStream/x86_64/os/Packages/l/libpq-13.23-1.el9_7.x86_64.rpm
+
+postgresql-server-13.23-1.el9_7.x86_64.rpm
+  https://dl.rockylinux.org/pub/rocky/9.7/AppStream/x86_64/os/Packages/p/postgresql-server-13.23-1.el9_7.x86_64.rpm
+
+postgresql-contrib-13.23-1.el9_7.x86_64.rpm
+  https://dl.rockylinux.org/pub/rocky/9.7/AppStream/x86_64/os/Packages/p/postgresql-contrib-13.23-1.el9_7.x86_64.rpm
 
 Note:
 - Rocky 9.7 BaseOS/AppStream/CRB do not provide a core "activemq" broker RPM.
+- ActiveMQ broker archive (used from resources/externalprograms):
+  https://archive.apache.org/dist/activemq/5.18.7/apache-activemq-5.18.7-bin.tar.gz
 - BuildAdder can use external program archives from resources/externalprograms
   for Apache ActiveMQ broker distributions (for example, apache-activemq-*.tar.gz/.zip).
