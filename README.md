@@ -213,7 +213,7 @@ resources = .
 `REMOTELINUX` is the current remote install mode.
 `REMOTEWINDOWS` is reserved for future remote Windows support and is not implemented yet.
 
-See `example-ini-files/extensive_functionality_test_windows_gui_remote_linux.ini` for a full remote profile.
+See `example-ini-files/extensive_functionality_test_linux_gui_remote_linux.ini` for a full remote profile.
 
 ### `[USERINPUT]` (prompted inputs)
 
