@@ -2,7 +2,7 @@ from tkinter import messagebox as msgbox
 import logging
 import threading
 from managers.processmanager import ProcessManager
-from iniinfo import iniInfo
+from iniinfo import iniInfo, parse_option_definition
 from tarpl.tarplapi import TarpL
 from tarpl.tarplapi import TarpLreturn
 from tarpl.tarplclasses import TarpLAPIEnum
@@ -49,6 +49,28 @@ class ActionManager:
             return self.process_manager.executeProcsDebug(finalstr, ini_info.watchdog, ini_info.process_timeout)
         return self.process_manager.executeProcs(finalstr, ini_info.watchdog, ini_info.process_timeout)
 
+    def _execute_remote_command(self, finalstr: str) -> int:
+        stdin, stdout, stderr = self.ssh.exec_command("{}".format(finalstr))
+        for line in iter(stdout.readline, ""):
+            self.logger.info(line.rstrip())
+        for line in iter(stderr.readline, ""):
+            self.logger.error(line.rstrip())
+        return stdout.channel.recv_exit_status()
+
+    def _is_option_enabled(self, action_key: str, ini_info: iniInfo) -> bool:
+        if action_key not in ini_info.options:
+            return True
+
+        option_value = ini_info.optionvals.get(action_key)
+        if option_value is None:
+            raw_definition = ini_info.options.get(action_key, "")
+            return parse_option_definition(raw_definition).default_checked
+
+        if hasattr(option_value, "get"):
+            return option_value.get() != "0"
+
+        return str(option_value) != "0"
+
     def runDiagnosticsLocal(self, window, bar, taskitem, ini_info: iniInfo):
         diagnostics = ini_info.diagnostics
         results = []
@@ -89,6 +111,51 @@ class ActionManager:
             except Exception as ex:
                 self.logger.error("Error in diagnostic action %s: %s", key, ex)
         return results
+
+    def runDiagnosticsSSH(self, window, bar, taskitem, ini_info: iniInfo):
+        diagnostics = ini_info.diagnostics
+        results = []
+        count = 0
+
+        for key, action_value in diagnostics.items():
+            count += 1
+            set_bar_value(window, bar, (count / len(diagnostics.keys())) * 100 if diagnostics else 0)
+
+            if isinstance(action_value, str) and action_value.startswith("DIAG::"):
+                parts = action_value.split("::", 2)
+                if len(parts) < 3:
+                    self.logger.error("Invalid diagnostic definition for %s", key)
+                    results.append({"label": key, "status": "FAILED"})
+                    continue
+
+                label_text = parts[1].strip()
+                command_value = parts[2]
+                set_var(window, taskitem, "Running diagnostic {}".format(label_text))
+
+                try:
+                    finalstr, skip_action, _ = self._resolve_action_command(command_value, ini_info, window)
+                    passed = False
+                    if not skip_action and finalstr is not None:
+                        if "%host%" in finalstr:
+                            finalstr = finalstr.replace("%host%", self.hostname)
+                        passed = (self._execute_remote_command(finalstr) == 0)
+                    results.append({"label": label_text, "status": "PASS" if passed else "FAILED"})
+                except Exception as ex:
+                    self.logger.error("Diagnostic %s failed: %s", label_text, ex)
+                    results.append({"label": label_text, "status": "FAILED"})
+                continue
+
+            try:
+                finalstr, skip_action, _ = self._resolve_action_command(action_value, ini_info, window)
+                if skip_action or finalstr is None:
+                    continue
+                if "%host%" in finalstr:
+                    finalstr = finalstr.replace("%host%", self.hostname)
+                set_var(window, taskitem, "Executing diagnostic action {} with {}".format(key, finalstr))
+                self._execute_remote_command(finalstr)
+            except Exception as ex:
+                self.logger.error("Error in diagnostic action %s: %s", key, ex)
+        return results
     
     def doActionsSSH(self, window, bar, taskitem, actions, ini_info: iniInfo) -> None:
         total = len(actions.keys())
@@ -106,10 +173,7 @@ class ActionManager:
                 count += 1
                 set_bar_value(window, bar, (count / total) * 100 if total else 0)
 
-                exec_option = "1"
-                if action_key in ini_info.options:
-                    exec_option = ini_info.optionvals[action_key].get()
-                if exec_option == "0":
+                if not self._is_option_enabled(action_key, ini_info):
                     continue
 
                 finalstr, skip_action, tarpLrtn = self._resolve_action_command(action_value, ini_info, window)
@@ -124,9 +188,9 @@ class ActionManager:
                 self.logger.info("Executing Action %s with %s", action_key, finalstr)
                 stdin, stdout, stderr = self.ssh.exec_command("{}".format(finalstr))
                 for line in iter(stdout.readline, ""):
-                    self.logger.info(line, end="")
+                    self.logger.info(line.rstrip())
                 for line in iter(stderr.readline, ""):
-                    self.logger.error(line, end="")
+                    self.logger.error(line.rstrip())
                 result = stdout.channel.recv_exit_status()
 
                 if tarpLrtn.tarpltype == TarpLAPIEnum.IFGOTO:
@@ -185,16 +249,11 @@ class ActionManager:
     
                 count += 1;
                 set_bar_value(window, bar, (count/len(ini_info.actions.keys()))*100)
-                exec_option = '1'
-                
                 # check for user input otherwise it returns string in ini_info.actions[action]
                 finalstr = None
                 skip_action = False
 
-                if action in ini_info.options.keys():
-                    exec_option = ini_info.optionvals[action].get()
-                    
-                if(exec_option != '0'):
+                if self._is_option_enabled(action, ini_info):
                     finalstr, skip_action, tarpLrtn = self._resolve_action_command(ini_info.actions[action], ini_info, window)
                     if tarpLrtn.tarpltype == TarpLAPIEnum.IFGOTO and tarpLrtn.rtnvar != "":
                         gotoindex = tarpLrtn.rtnvar

@@ -108,6 +108,31 @@ def test_action_manager_do_actions_ssh_applies_option_gating_and_tokens() -> Non
     assert manager.ssh.commands == ["echo customer=acme host=10.0.0.5"]
 
 
+def test_action_manager_do_actions_ssh_uses_defaultchecked_when_option_value_missing() -> None:
+    info = iniInfo()
+    info.userinput = {}
+    info.variables = {}
+    info.returnvars = {}
+    info.options = {
+        "option_default_on": "DEFAULTCHECKED::Run by default",
+        "option_default_off": "Run only when selected",
+    }
+    info.optionvals = {}
+
+    manager = ActionManager()
+    manager.ssh = FakeSSH()
+    manager.hostname = "10.0.0.5"
+
+    actions = {
+        "option_default_on": "echo run_default_on",
+        "option_default_off": "echo should_not_run",
+    }
+
+    manager.doActionsSSH(DummyWindow(), {}, DummyVar(), actions, info)
+
+    assert manager.ssh.commands == ["echo run_default_on"]
+
+
 def test_action_manager_do_actions_ssh_ifgoto_branches_on_remote_exit_code() -> None:
     info = iniInfo()
     info.userinput = {}
@@ -228,12 +253,17 @@ def test_run_headless_skips_local_rpm_install_for_remote(monkeypatch) -> None:
     info.usediagnostics = False
 
     rpm_called = {"value": False}
+    remote_rpm_called = {"value": False}
 
     def fail_rpm(*args, **kwargs):
         rpm_called["value"] = True
         raise AssertionError("RPM install should not run for REMOTELINUX installs")
 
+    def mark_remote_rpm(*args, **kwargs):
+        remote_rpm_called["value"] = True
+
     monkeypatch.setattr("managers.rpmmanager.RpmManager.installLocalRPMs", fail_rpm)
+    monkeypatch.setattr("managers.rpmmanager.RpmManager.installRemoteRPMs", mark_remote_rpm)
     monkeypatch.setattr(Task, "loginSSH", lambda self: None)
     monkeypatch.setattr(Task, "copyFromResources", lambda self, *args, **kwargs: None)
     monkeypatch.setattr(Task, "doActions", lambda self, *args, **kwargs: None)
@@ -243,3 +273,4 @@ def test_run_headless_skips_local_rpm_install_for_remote(monkeypatch) -> None:
     run_headless(info, logging.getLogger("test"))
 
     assert rpm_called["value"] is False
+    assert remote_rpm_called["value"] is True

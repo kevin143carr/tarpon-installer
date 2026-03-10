@@ -53,6 +53,12 @@ class Task:
         set_bar_value(window, bar, (count / total) * 100)
         update_idletasks(window)
 
+    def _exec_ssh_checked(self, command: str):
+        stdin, stdout, stderr = self.ssh.exec_command(command)
+        rc = stdout.channel.recv_exit_status()
+        err = stderr.read().decode("utf-8", errors="replace").strip()
+        return rc, err
+
     def loginSSH(self) -> None:
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         self.ssh.connect(hostname = self.hostname, username = self.username, password = self.password)
@@ -176,7 +182,10 @@ class Task:
                                 shutil.copyfileobj(source, target)
                                 target.close()
                 else:
-                    self.logger.error("Error copying file {}/{}, it does not exist".format(ini_info.resources,key))
+                    self.logger.error(
+                        "Error copying file; source does not exist: %s",
+                        str(resources_path / key),
+                    )
             except Exception as ex:
                 self._handle_step_error(ini_info, "Error copying file {}".format(key), ex)
                 continue
@@ -187,36 +196,101 @@ class Task:
         if not resources_path.is_absolute():
             resources_path = Path.cwd() / resources_path
         for key in files:
-            destination = self.string_utilities.checkForUserVariable(files[key], ini_info)
-            if destination is None:
-                destination = files[key]
-            my_file = resources_path / key
-            if my_file.is_file():
-                self.logger.info('copying and extracting file {} to {}'.format(key, destination))
-                self.ssh.exec_command('mkdir -p {}'.format(destination))
-                dirtest = key.split('/')
-                src = str(resources_path / key)
-                if '.' in destination: # contains a file name, so do not append a filename from 'key'
-                    dst = "{}".format(destination)
-                else:
-                    if (len(dirtest) > 1):
-                        keyname = dirtest[1]
-                        dst = "{}/{}".format(destination,keyname)
+            src = None
+            dst = None
+            try:
+                destination = self.string_utilities.checkForUserVariable(files[key], ini_info)
+                if destination is None:
+                    destination = files[key]
+                my_file = resources_path / key
+                src = str(my_file)
+                if my_file.is_file():
+                    self.logger.info('copying and extracting file {} to {}'.format(key, destination))
+                    dirtest = key.split('/')
+                    if '.' in destination: # contains a file name, so do not append a filename from 'key'
+                        dst = "{}".format(destination)
+                        destination_dir = os.path.dirname(destination)
                     else:
-                        dst = "{}/{}".format(destination,key)
+                        if (len(dirtest) > 1):
+                            keyname = dirtest[1]
+                            dst = "{}/{}".format(destination,keyname)
+                        else:
+                            dst = "{}/{}".format(destination,key)
+                        destination_dir = destination
 
-                if(os.path.exists(src) == False):
-                    self.logger.error("Error could not find this file: {}".format(src))
-                    continue
+                    mkdir_rc, mkdir_err = self._exec_ssh_checked('mkdir -p {}'.format(shlex.quote(destination_dir)))
+                    if mkdir_rc != 0:
+                        self.logger.warning(
+                            "Remote mkdir failed (rc=%s) for destination '%s' (expected for protected paths; sudo fallback will be used if needed): %s",
+                            mkdir_rc,
+                            destination_dir,
+                            mkdir_err,
+                        )
 
-                ftp.put(src , dst)
+                    if(os.path.exists(src) == False):
+                        self.logger.error("Error could not find this file: {}".format(src))
+                        continue
 
-                if 'zip' in key:
-                    stdin, stdout, stderr = self.ssh.exec_command('unzip -o {}/{} -d {}'.format(destination,key,destination))
-                    for line in iter(stdout.readline,""):
-                        self.logger.info (line, end="")
-            else:
-                self.logger.error("Error copying file {}/{}, it does not exist".format(resources,key))
+                    try:
+                        ftp.put(src, dst)
+                    except Exception as put_ex:
+                        self.logger.warning(
+                            "Direct upload failed for '%s' -> '%s'; retrying with sudo staging: %s",
+                            src,
+                            dst,
+                            put_ex,
+                        )
+                        staging_dir = "/tmp/tarpon-installer-stage"
+                        staging_file = "{}/{}".format(staging_dir, os.path.basename(dst))
+                        staging_rc, staging_err = self._exec_ssh_checked(
+                            "mkdir -p {}".format(shlex.quote(staging_dir))
+                        )
+                        if staging_rc != 0:
+                            raise RuntimeError(
+                                "Could not create remote staging dir {}: {}".format(staging_dir, staging_err)
+                            )
+
+                        ftp.put(src, staging_file)
+
+                        sudo_dir_rc, sudo_dir_err = self._exec_ssh_checked(
+                            "sudo mkdir -p {}".format(shlex.quote(destination_dir))
+                        )
+                        if sudo_dir_rc != 0:
+                            raise RuntimeError(
+                                "Could not create remote destination dir with sudo {}: {}".format(destination_dir, sudo_dir_err)
+                            )
+
+                        install_rc, install_err = self._exec_ssh_checked(
+                            "sudo cp -f {} {} && sudo rm -f {}".format(
+                                shlex.quote(staging_file),
+                                shlex.quote(dst),
+                                shlex.quote(staging_file),
+                            )
+                        )
+                        if install_rc != 0:
+                            raise RuntimeError(
+                                "Could not copy staged file into destination {}: {}".format(dst, install_err)
+                            )
+
+                    if 'zip' in key:
+                        unzip_target = destination if '.' not in destination else os.path.dirname(destination)
+                        stdin, stdout, stderr = self.ssh.exec_command(
+                            'sudo unzip -o {} -d {}'.format(shlex.quote(dst), shlex.quote(unzip_target))
+                        )
+                        for line in iter(stdout.readline,""):
+                            self.logger.info(line.rstrip())
+                else:
+                    self.logger.error(
+                        "Error copying file; source does not exist: %s",
+                        str(resources_path / key),
+                    )
+            except Exception as ex:
+                self._handle_step_error(
+                    ini_info,
+                    "Error copying file {} (src={} dst={})".format(key, src, dst),
+                    ex,
+                )
+                continue
         ftp.close()
 
     def copyFromResources(self, window, bar: ttk.Progressbar, taskitem, ini_info: iniInfo) -> None:
@@ -337,9 +411,9 @@ class Task:
 
                 stdin, stdout, stderr = self.ssh.exec_command(command)
                 for line in iter(stdout.readline, ""):
-                    self.logger.info(line, end="")
+                    self.logger.info(line.rstrip())
                 for line in iter(stderr.readline, ""):
-                    self.logger.info(line, end="")
+                    self.logger.info(line.rstrip())
             except Exception as ex:
                 self._handle_step_error(ini_info, "Error modifying remote file {}".format(key), ex)
                 continue
@@ -357,8 +431,9 @@ class Task:
         if not getattr(ini_info, "usediagnostics", False):
             return []
         if is_remote_linux_install_type(ini_info.installtype) and ini_info.buildtype == 'LINUX':
-            self.logger.warning("Diagnostics are not implemented for remote installs")
-            return []
+            self.action_manager.ssh = self.ssh
+            self.action_manager.hostname = self.hostname
+            return self.action_manager.runDiagnosticsSSH(window, bar, taskitem, ini_info)
         return self.action_manager.runDiagnosticsLocal(window, bar, taskitem, ini_info)
 
  

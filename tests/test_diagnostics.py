@@ -18,6 +18,31 @@ class DummyVar:
         self.value = value
 
 
+class FakeStream:
+    def __init__(self, lines=None, exit_status: int = 0) -> None:
+        self._lines = list(lines or [])
+        self._index = 0
+        self.channel = type("Channel", (), {"recv_exit_status": lambda _self: exit_status})()
+
+    def readline(self) -> str:
+        if self._index >= len(self._lines):
+            return ""
+        line = self._lines[self._index]
+        self._index += 1
+        return line
+
+
+class FakeSSH:
+    def __init__(self, exit_status_by_command=None) -> None:
+        self.commands = []
+        self.exit_status_by_command = dict(exit_status_by_command or {})
+
+    def exec_command(self, command):
+        self.commands.append(command)
+        exit_status = self.exit_status_by_command.get(command, 0)
+        return None, FakeStream(exit_status=exit_status), FakeStream()
+
+
 def test_run_diagnostics_local_collects_pass_and_fail_results(monkeypatch) -> None:
     info = iniInfo()
     info.installtype = "LOCAL"
@@ -74,6 +99,35 @@ def test_run_diagnostics_local_supports_yesno_wrapped_diag(monkeypatch) -> None:
     results = manager.runDiagnosticsLocal(DummyWindow(), {}, DummyVar(), info)
 
     assert results == [{"label": "Prompted restart", "status": "PASS"}]
+
+
+def test_run_diagnostics_remote_collects_pass_and_fail_results() -> None:
+    info = iniInfo()
+    info.installtype = "REMOTELINUX"
+    info.buildtype = "LINUX"
+    info.userinput = {}
+    info.variables = {}
+    info.returnvars = {}
+    info.diagnostics = {
+        "check_pg": "DIAG::Checking PostgreSQL active::sudo systemctl is-active --quiet postgresql",
+        "check_httpd": "DIAG::Checking httpd active::sudo systemctl is-active --quiet httpd",
+    }
+
+    manager = ActionManager()
+    manager.hostname = "10.0.0.5"
+    manager.ssh = FakeSSH(
+        exit_status_by_command={
+            "sudo systemctl is-active --quiet postgresql": 0,
+            "sudo systemctl is-active --quiet httpd": 3,
+        }
+    )
+
+    results = manager.runDiagnosticsSSH(DummyWindow(), {}, DummyVar(), info)
+
+    assert results == [
+        {"label": "Checking PostgreSQL active", "status": "PASS"},
+        {"label": "Checking httpd active", "status": "FAILED"},
+    ]
 
 
 def test_run_headless_prints_diagnostics_results(monkeypatch, capsys) -> None:

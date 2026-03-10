@@ -18,6 +18,18 @@ httpd-tools-2.4.62-7.el9_7.3.x86_64.rpm
 mod_ssl-2.4.62-7.el9_7.3.x86_64.rpm
   https://dl.rockylinux.org/pub/rocky/9.7/AppStream/x86_64/os/Packages/m/mod_ssl-2.4.62-7.el9_7.3.x86_64.rpm
 
+mailcap-2.1.49-5.el9.0.2.noarch.rpm
+  https://dl.rockylinux.org/pub/rocky/9.7/BaseOS/x86_64/os/Packages/m/mailcap-2.1.49-5.el9.0.2.noarch.rpm
+
+httpd-filesystem-2.4.62-7.el9_7.3.noarch.rpm
+  https://dl.rockylinux.org/pub/rocky/9.7/AppStream/x86_64/os/Packages/h/httpd-filesystem-2.4.62-7.el9_7.3.noarch.rpm
+
+httpd-core-2.4.62-7.el9_7.3.x86_64.rpm
+  https://dl.rockylinux.org/pub/rocky/9.7/AppStream/x86_64/os/Packages/h/httpd-core-2.4.62-7.el9_7.3.x86_64.rpm
+
+rocky-logos-httpd-90.16-1.el9.noarch.rpm
+  https://dl.rockylinux.org/pub/rocky/9.7/AppStream/x86_64/os/Packages/r/rocky-logos-httpd-90.16-1.el9.noarch.rpm
+
 libpq-13.23-1.el9_7.x86_64.rpm
   https://dl.rockylinux.org/pub/rocky/9.7/AppStream/x86_64/os/Packages/l/libpq-13.23-1.el9_7.x86_64.rpm
 
@@ -26,6 +38,12 @@ postgresql-server-13.23-1.el9_7.x86_64.rpm
 
 postgresql-contrib-13.23-1.el9_7.x86_64.rpm
   https://dl.rockylinux.org/pub/rocky/9.7/AppStream/x86_64/os/Packages/p/postgresql-contrib-13.23-1.el9_7.x86_64.rpm
+
+uuid-1.6.2-55.el9.x86_64.rpm
+  https://dl.rockylinux.org/pub/rocky/9.7/AppStream/x86_64/os/Packages/u/uuid-1.6.2-55.el9.x86_64.rpm
+
+postgresql-private-libs-13.23-1.el9_7.x86_64.rpm
+  https://dl.rockylinux.org/pub/rocky/9.7/AppStream/x86_64/os/Packages/p/postgresql-private-libs-13.23-1.el9_7.x86_64.rpm
 
 Note:
 - Rocky 9.7 BaseOS/AppStream/CRB do not provide a core "activemq" broker RPM.

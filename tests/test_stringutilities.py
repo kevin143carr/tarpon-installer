@@ -15,8 +15,9 @@ def test_check_for_user_variable_replaces_all_sources() -> None:
     info.userinput = {"userdata": DummyVar("UVAL")}
     info.variables = {"var": "VVAL"}
     info.returnvars = {"ret": "RVAL"}
+    info.hostname = "10.0.0.5"
 
     util = StringUtilities()
-    result = util.checkForUserVariable("path %userdata% %var% %ret%", info)
+    result = util.checkForUserVariable("path %userdata% %var% %ret% %host%", info)
 
-    assert result == "path UVAL VVAL RVAL"
+    assert result == "path UVAL VVAL RVAL 10.0.0.5"

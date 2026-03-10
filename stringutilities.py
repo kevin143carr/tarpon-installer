@@ -20,6 +20,8 @@ class StringUtilities:
     def checkForUserVariable(self, text: str, ini_info) -> str:
         if "%username%" in text and getattr(ini_info, "username", ""):
             text = text.replace("%username%", ini_info.username)
+        if "%host%" in text and getattr(ini_info, "hostname", ""):
+            text = text.replace("%host%", ini_info.hostname)
         text = self._replace_tokens(text, ini_info.userinput, lambda v: v.get())
         text = self._replace_tokens(text, ini_info.variables, lambda v: v)
         text = self._replace_tokens(text, ini_info.returnvars, lambda v: v)

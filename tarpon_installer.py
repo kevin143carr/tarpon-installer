@@ -198,13 +198,16 @@ class mainClass:
         if is_remote_linux_install_type(ini_info.installtype):
             task.loginSSH()
 
+        diagnostics = []
+        diagnostics_ran = False
+
         try:
             # Repos and RPMs are Linux only
  
             # Remote Linux install
-            #if ini_info.buildtype == 'LINUX' and is_remote_linux_install_type(ini_info.installtype):
-            #    task.installRemoteRepo(ini_info.resources, ini_info.repo)
-            #    self.rpm_manager.installRPMsRemote(ini_info.resources, ini_info.rpms)
+            if ini_info.buildtype == 'LINUX' and is_remote_linux_install_type(ini_info.installtype):
+                self._set_current_section(window, "RPM")
+                self.rpm_manager.installRemoteRPMs(task.ssh, ini_info.resources, ini_info.rpms)
 
             # Local Install
             if ini_info.buildtype == 'LINUX' and is_local_install_type(ini_info.installtype):
@@ -229,16 +232,27 @@ class mainClass:
                 self._set_current_section(window, "DIAGNOSTICS")
                 set_var(window, self.gui_manager.taskitem, "")
                 diagnostics = task.runDiagnostics(window, self.gui_manager.bar, self.gui_manager.taskitem, ini_info)
-                if diagnostics:
-                    call_on_ui_thread(
-                        self.window,
-                        self.gui_manager.showDiagnosticsDialog,
-                        self.window,
-                        diagnostics,
-                    )
+                diagnostics_ran = True
         except Exception as ex:
             self.logger.error(ex)
         finally:
+            if ini_info.usediagnostics and not diagnostics_ran:
+                try:
+                    self._set_current_section(window, "DIAGNOSTICS")
+                    set_var(window, self.gui_manager.taskitem, "")
+                    diagnostics = task.runDiagnostics(window, self.gui_manager.bar, self.gui_manager.taskitem, ini_info)
+                    diagnostics_ran = True
+                except Exception as diag_ex:
+                    self.logger.error("Diagnostics failed: %s", diag_ex)
+
+            if diagnostics:
+                call_on_ui_thread(
+                    self.window,
+                    self.gui_manager.showDiagnosticsDialog,
+                    self.window,
+                    diagnostics,
+                )
+
             if ini_info.displayfinalerrors and self.final_error_collector is not None:
                 collected_errors = self.final_error_collector.get_messages()
                 if collected_errors:
@@ -776,6 +790,9 @@ def run_headless(ini_info: iniInfo, logger: logging.Logger) -> None:
         RpmManager().installLocalRPMs(
             window, bar, taskitem, ini_info.resources, ini_info.rpms, ini_info.watchdog, ini_info.process_timeout
         )
+    elif ini_info.buildtype == "LINUX" and is_remote_linux_install_type(ini_info.installtype):
+        logger.info("SECTION: INSTALLING RPMs (REMOTE)")
+        RpmManager().installRemoteRPMs(task.ssh, ini_info.resources, ini_info.rpms)
 
     logger.info("SECTION: COPYING FILES")
     task.copyFromResources(window, bar, taskitem, ini_info)

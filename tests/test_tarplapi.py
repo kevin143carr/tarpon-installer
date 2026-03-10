@@ -40,6 +40,21 @@ def test_headless_yesno_prompts_and_defaults_to_no(monkeypatch, capsys) -> None:
     assert prompts == ["Enter choice [y/N]: "]
 
 
+def test_headless_yesno_preserves_nested_tarpl_chain(monkeypatch, capsys) -> None:
+    monkeypatch.setenv("TARPL_HEADLESS", "1")
+    monkeypatch.setattr("builtins.input", lambda prompt: "yes")
+
+    result = TarpL().YESNO(
+        "YESNO::Proceed with uninstall on %host%?::IFGOTO::sh -c 'exit 0'::action_stop_services",
+        None,
+    )
+
+    _ = capsys.readouterr()
+    assert result.rtnstate is True
+    assert result.rtnvalue == "IFGOTO::sh -c 'exit 0'::action_stop_services"
+    assert result.tarpltype == TarpLAPIEnum.YESNO
+
+
 def test_headless_msgbox_prints_message_and_waits_for_enter(monkeypatch, capsys) -> None:
     prompts = []
     monkeypatch.setenv("TARPL_HEADLESS", "1")

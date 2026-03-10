@@ -130,7 +130,8 @@ Notes:
 - `displayfinalerrors` shows a final scrollable GUI popup with up to the first 3 logged errors from the run. If omitted, it defaults to `False`.
 - `continuewitherrors` continues per-step execution after errors in copy/modify stages when set to `True`. If omitted, it defaults to `False`.
 - `usediagnostics` enables the optional `[DIAGNOSTICS]` section after `[FINAL]`. If omitted, it defaults to `False`.
-- Diagnostics are currently local-only. Remote installs skip `[DIAGNOSTICS]` and log a warning.
+- Diagnostics run for both local installs and `REMOTELINUX` installs when `[STARTUP] usediagnostics = True`.
+- For `REMOTELINUX`, diagnostic commands execute on the target host over SSH and `DIAG::...` entries report pass/fail from the remote exit code.
 
 When `usegui = False`, you can still pass `--userinput KEY=VALUE`, `--option OPTION`, and `--strict-tokens` on the command line to control the non-GUI run.
 Add `--liveviewlog` if you want the non-GUI run to stream log output to the terminal while still writing the normal `.log` file.
@@ -355,6 +356,7 @@ Same format as `[ACTIONS]`, but executed last.
 ### `[DIAGNOSTICS]` (post-final checks and follow-up commands)
 
 This section runs after `[FINAL]` when `[STARTUP] usediagnostics = True`.
+For `REMOTELINUX`, commands in this section execute on the target host over SSH.
 
 It supports two kinds of entries:
 

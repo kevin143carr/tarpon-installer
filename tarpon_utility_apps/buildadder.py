@@ -14,7 +14,7 @@ baconfigfile = "buildadderconfig.ini"
 def PrintHelp():
     print("")
     print("buildadder adds latest builds in a folder to the Tarpon Installer Config.ini File.")
-    print("THE FOLDER MUST RESIDE UNDER THE [resources] FOLDER IN YOUR TARPON INSTALLER DIRECTORY")
+    print("FOLDERS CAN BE PASSED AS EXPLICIT PATHS OR AS NAMES UNDER [resources]")
     print("")
     print("This requires the following comments in your tarponconfig.ini file:")
     print("")
@@ -22,7 +22,7 @@ def PrintHelp():
     print("#BUILDS END HERE")
     print("")
     print("")
-    print("Usage: buildadder -d yes -t tarponconfig.ini -b buildadderconfig.ini -f buildfolder1,buildfolder2 <--[UNDER THE resources FOLDER]")
+    print("Usage: buildadder -d yes -t tarponconfig.ini -b buildadderconfig.ini -f buildfolder1,buildfolder2 -r rpms")
     print("")
     print("Required Arguments:")
     print("	-t     name of tarpon config file, such as win_local_config_3_2_7.ini")
@@ -70,27 +70,39 @@ class Task:
         if '\r' in builddir:
             builddir = builddir.strip('\r')          
         
-        if ',' in builddir:
-            dirs = builddir.split(',')
-            for dir in dirs:
-                files = os.listdir("resources/" + dir)
-                for file in files:
-                    self.builddirfiles.append("{}/{}".format(dir,file))
-        else:
-            files = os.listdir("resources/" + builddir)
-            for file in files:
-                self.builddirfiles.append("{}/{}".format(builddir,file))
+        self.builddirfiles = self._gather_files(builddir)
+        self.rpmdirfiles = self._gather_files(rpmdir)
 
-        if ',' in rpmdir:
-            dirs = rpmdir.split(',')
-            for dir in dirs:
-                files = os.listdir("resources/" + dir)
-                for file in files:
-                    self.rpmdirfiles.append("{}/{}".format(dir,file))
-        else:          
-            files = os.listdir("resources/" + rpmdir)            
-            for file in files:
-                self.rpmdirfiles.append("{}/{}".format(rpmdir,file))        
+    def _resolve_dir(self, raw_dir):
+        clean_dir = raw_dir.strip()
+        if not clean_dir:
+            return None
+
+        # New behavior: explicit paths are accepted directly.
+        if os.path.isdir(clean_dir):
+            return clean_dir, clean_dir
+
+        # Backward compatibility: resolve folder names under resources/.
+        legacy_dir = os.path.join("resources", clean_dir)
+        if os.path.isdir(legacy_dir):
+            return legacy_dir, clean_dir
+
+        return None
+
+    def _gather_files(self, dir_arg):
+        collected = []
+        dirs = [entry for entry in dir_arg.split(',') if entry.strip()]
+        for dir_entry in dirs:
+            resolved = self._resolve_dir(dir_entry)
+            if resolved is None:
+                print("Error finding directory '{}' (or resources/{})".format(dir_entry.strip(), dir_entry.strip()))
+                raise SystemExit
+
+            source_dir, output_prefix = resolved
+            for file in os.listdir(source_dir):
+                joined = os.path.join(output_prefix, file).replace("\\", "/")
+                collected.append(joined)
+        return collected
 
     def insertFilenamesFromResources(self, files):
         found = False
@@ -228,6 +240,7 @@ if __name__ == '__main__':
     skipImport = False
     builddir = ''
     rpmdir = ''
+    deletebuildsection = False
 
     for arg in sys.argv:
         if arg[0:1] == "-":

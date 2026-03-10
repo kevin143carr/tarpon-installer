@@ -1,0 +1,7 @@
+External program sources downloaded for offline installer payloads:
+
+apache-activemq-5.18.7-bin.tar.gz
+  https://archive.apache.org/dist/activemq/5.18.7/apache-activemq-5.18.7-bin.tar.gz
+
+amazon-corretto-17-x64-linux-jdk.tar.gz
+  https://corretto.aws/downloads/latest/amazon-corretto-17-x64-linux-jdk.tar.gz

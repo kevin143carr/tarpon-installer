@@ -191,8 +191,13 @@ class TarpL:
         tarpLrtn = TarpLreturn()        
         try:
             splitstr = instring.split('::');
+            if len(splitstr) < 3:
+                raise ValueError("YESNO requires format YESNO::prompt::command")
+            prompt_text = splitstr[1]
+            # Preserve nested TarPL directives such as IFGOTO::cmd::target.
+            next_action = "::".join(splitstr[2:])
             if self._is_headless():
-                prompt = splitstr[1].strip()
+                prompt = prompt_text.strip()
                 self._print_headless_prompt_block("USER CONFIRMATION REQUIRED", prompt)
                 while True:
                     try:
@@ -206,11 +211,11 @@ class TarpL:
                         tarpLrtn.rtnstate = False
                         break
                     print("Please answer yes or no.", file=sys.stderr)
-                tarpLrtn.rtnvalue = splitstr[2]
+                tarpLrtn.rtnvalue = next_action
                 tarpLrtn.tarpltype = TarpLAPIEnum.YESNO
                 return tarpLrtn
-            tarpLrtn.rtnstate = msgbox.askyesno("User Question", splitstr[1], parent = window);
-            tarpLrtn.rtnvalue = splitstr[2]
+            tarpLrtn.rtnstate = msgbox.askyesno("User Question", prompt_text, parent = window);
+            tarpLrtn.rtnvalue = next_action
             tarpLrtn.tarpltype = TarpLAPIEnum.YESNO
         except Exception as ex:
             print("Error in yes no {}".format(ex))
