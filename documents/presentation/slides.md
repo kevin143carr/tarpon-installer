@@ -625,7 +625,7 @@ layoutClass: gap-10
 Automatically selects another option when one option is chosen.
 
 ```ini
-optionmakeadirectory = ALSOCHECKOPTION::optionpopupmessagelater::Create a directory in your home folder
+optionmakeadirectory = ALSOCHECKOPTION||optionpopupmessagelater||Create a directory in your home folder
 ```
 
 ::right::

@@ -506,13 +506,13 @@ Automatically selects another option when an option is chosen.
 Syntax:
 
 ```
-ALSOCHECKOPTION::option_to_select::description
+ALSOCHECKOPTION||option_to_select||description
 ```
 
 Examples:
 
 ```
-optionmakeadirectory = ALSOCHECKOPTION::optionpopupmessagelater::Create a directory in your home folder
+optionmakeadirectory = ALSOCHECKOPTION||optionpopupmessagelater||Create a directory in your home folder
 optionpopupmessagelater = Popup a message to you later
 ```
 
@@ -524,13 +524,13 @@ headless mode it enables the option even when `--option` is not passed.
 Syntax:
 
 ```
-DEFAULTCHECKED::description
+DEFAULTCHECKED||description
 ```
 
 Examples:
 
 ```
-optionshowdiagnostics = DEFAULTCHECKED::Show diagnostics after install
+optionshowdiagnostics = DEFAULTCHECKED||Show diagnostics after install
 ```
 
 `DEFAULTCHECKED` can be combined with `ALSOCHECKOPTION` in either order. When
@@ -539,8 +539,8 @@ combined, the default-checked option also enables the dependent options.
 Examples:
 
 ```
-optionprepareworkspace = DEFAULTCHECKED::ALSOCHECKOPTION::optionshowsummary,optionexecpython::Prepare workspace
-optionprepareworkspace_alt = ALSOCHECKOPTION::optionshowsummary,optionexecpython::DEFAULTCHECKED::Prepare workspace
+optionprepareworkspace = DEFAULTCHECKED||ALSOCHECKOPTION||optionshowsummary,optionexecpython||Prepare workspace
+optionprepareworkspace_alt = ALSOCHECKOPTION||optionshowsummary,optionexecpython||DEFAULTCHECKED||Prepare workspace
 ```
 
 ### `EXEC_PYFUNC`

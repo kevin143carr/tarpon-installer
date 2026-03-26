@@ -260,7 +260,7 @@ resources = resources
 
 def test_parse_option_definition_supports_defaultchecked_and_alsocheckoption() -> None:
     definition = parse_option_definition(
-        "DEFAULTCHECKED::ALSOCHECKOPTION::option_show_summary,option_exec_python::Prepare workspace"
+        "DEFAULTCHECKED||ALSOCHECKOPTION||option_show_summary,option_exec_python||Prepare workspace"
     )
 
     assert definition.default_checked is True
@@ -271,7 +271,7 @@ def test_parse_option_definition_supports_defaultchecked_and_alsocheckoption() -
 def test_resolve_enabled_options_includes_defaultchecked_dependencies() -> None:
     enabled = resolve_enabled_options(
         {
-            "option_prepare_workspace": "DEFAULTCHECKED::ALSOCHECKOPTION::option_show_summary,option_exec_python::Prepare workspace",
+            "option_prepare_workspace": "DEFAULTCHECKED||ALSOCHECKOPTION||option_show_summary,option_exec_python||Prepare workspace",
             "option_show_summary": "Show completion summary",
             "option_exec_python": "Execute Python callback popup",
         }

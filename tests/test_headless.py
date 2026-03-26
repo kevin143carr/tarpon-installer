@@ -16,7 +16,7 @@ from tarpon_installer import (
 def test_setup_headless_inputs_applies_alsocheckoption_dependencies() -> None:
     info = iniInfo()
     info.options = {
-        "option_prepare_workspace": "ALSOCHECKOPTION::option_show_summary,option_exec_python::Prepare workspace",
+        "option_prepare_workspace": "ALSOCHECKOPTION||option_show_summary,option_exec_python||Prepare workspace",
         "option_show_summary": "Show completion summary",
         "option_exec_python": "Execute Python callback popup",
     }
@@ -38,7 +38,7 @@ def test_setup_headless_inputs_applies_alsocheckoption_dependencies() -> None:
 def test_setup_headless_inputs_applies_defaultchecked_and_alsocheckoption_dependencies() -> None:
     info = iniInfo()
     info.options = {
-        "option_prepare_workspace": "DEFAULTCHECKED::ALSOCHECKOPTION::option_show_summary,option_exec_python::Prepare workspace",
+        "option_prepare_workspace": "DEFAULTCHECKED||ALSOCHECKOPTION||option_show_summary,option_exec_python||Prepare workspace",
         "option_show_summary": "Show completion summary",
         "option_exec_python": "Execute Python callback popup",
     }

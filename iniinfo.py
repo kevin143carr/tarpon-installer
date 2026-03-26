@@ -17,7 +17,7 @@ def parse_option_definition(raw_value: str) -> OptionDefinition:
     if not isinstance(raw_value, str):
         return OptionDefinition(label=str(raw_value))
 
-    parts = raw_value.split("::")
+    parts = raw_value.split("||")
     cursor = 0
     default_checked = False
     also_check = []
