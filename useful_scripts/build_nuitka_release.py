@@ -82,6 +82,10 @@ def macos_app_binary_path(app_dir: Path) -> Path:
     return app_dir / "Contents" / "MacOS" / binary_stem()
 
 
+def macos_cli_launcher_path(release_dir: Path) -> Path:
+    return release_dir / binary_stem()
+
+
 def run_command(command: list[str]) -> None:
     subprocess.run(command, cwd=REPO_ROOT, check=True)
 
@@ -146,22 +150,27 @@ def create_pyinstaller_version_file(output_dir: Path, version: str) -> Path:
     return version_file
 
 
-def install_macos_launcher(app_dir: Path) -> None:
-    macos_dir = app_dir / "Contents" / "MacOS"
-    original_binary = macos_app_binary_path(app_dir)
-    wrapped_binary = macos_dir / "{}_real".format(binary_stem())
-    shutil.move(original_binary, wrapped_binary)
-
+def compile_macos_launcher(output_path: Path, target_relative_path: str) -> None:
     command = [
         "clang",
         str(MACOS_LAUNCHER_SOURCE),
         "-Wall",
         "-Wextra",
         "-O2",
+        "-DTARGET_RELATIVE_PATH=\"{}\"".format(target_relative_path),
         "-o",
-        str(original_binary),
+        str(output_path),
     ]
     run_command(command)
+
+
+def install_macos_app_launcher(app_dir: Path) -> None:
+    macos_dir = app_dir / "Contents" / "MacOS"
+    original_binary = macos_app_binary_path(app_dir)
+    wrapped_binary = macos_dir / "{}_real".format(binary_stem())
+    shutil.move(original_binary, wrapped_binary)
+
+    compile_macos_launcher(original_binary, "{}_real".format(binary_stem()))
 
     info_plist_path = app_dir / "Contents" / "Info.plist"
     with info_plist_path.open("rb") as plist_file:
@@ -169,6 +178,13 @@ def install_macos_launcher(app_dir: Path) -> None:
     plist_contents["CFBundleExecutable"] = binary_stem()
     with info_plist_path.open("wb") as plist_file:
         plistlib.dump(plist_contents, plist_file)
+
+
+def install_macos_cli_launcher(release_dir: Path) -> None:
+    compile_macos_launcher(
+        macos_cli_launcher_path(release_dir),
+        "{name}.app/Contents/MacOS/{name}_real".format(name=binary_stem()),
+    )
 
 
 def build_nuitka_binary(output_dir: Path, build_mode: str) -> Path:
@@ -195,7 +211,7 @@ def build_nuitka_binary(output_dir: Path, build_mode: str) -> Path:
     run_command(command)
     binary_path = nuitka_output_path(output_dir, build_mode)
     if build_mode == "app" and platform.system() == "Darwin":
-        install_macos_launcher(binary_path)
+        install_macos_app_launcher(binary_path)
     return binary_path
 
 
@@ -263,6 +279,9 @@ def assemble_release(binary_path: Path, version: str, platform_id: str) -> Path:
         copy_tree(binary_path, release_dir / binary_path.name)
     else:
         shutil.copy2(binary_path, release_dir / binary_path.name)
+
+    if platform_id.startswith("macos-") and binary_path.suffix == ".app":
+        install_macos_cli_launcher(release_dir)
 
     for relative_dir in INCLUDED_RELEASE_DIRS:
         copy_tree(REPO_ROOT / relative_dir, release_dir / relative_dir)

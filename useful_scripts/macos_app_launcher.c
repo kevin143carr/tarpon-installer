@@ -7,6 +7,10 @@
 #include <string.h>
 #include <unistd.h>
 
+#ifndef TARGET_RELATIVE_PATH
+#define TARGET_RELATIVE_PATH "tarpon_installer_real"
+#endif
+
 int main(int argc, char *argv[]) {
     uint32_t executable_path_size = 0;
     if (_NSGetExecutablePath(NULL, &executable_path_size) != -1) {
@@ -40,7 +44,7 @@ int main(int argc, char *argv[]) {
 
     char *dir_path = dirname(dir_buffer);
     char target_path[PATH_MAX];
-    if (snprintf(target_path, sizeof(target_path), "%s/%s", dir_path, "tarpon_installer_real") >= (int)sizeof(target_path)) {
+    if (snprintf(target_path, sizeof(target_path), "%s/%s", dir_path, TARGET_RELATIVE_PATH) >= (int)sizeof(target_path)) {
         fprintf(stderr, "Resolved launcher target path is too long.\n");
         return 1;
     }

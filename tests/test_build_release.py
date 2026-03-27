@@ -3,6 +3,7 @@ from pathlib import Path
 from useful_scripts.build_nuitka_release import (
     create_pyinstaller_version_file,
     macos_app_binary_path,
+    macos_cli_launcher_path,
     nuitka_output_path,
     windows_version_tuple,
 )
@@ -55,9 +56,13 @@ def test_release_workflow_remains_without_macos_entries() -> None:
 def test_macos_launcher_source_uses_nsgetexecutablepath() -> None:
     launcher_contents = Path("useful_scripts/macos_app_launcher.c").read_text(encoding="utf-8")
     assert "_NSGetExecutablePath" in launcher_contents
-    assert "tarpon_installer_real" in launcher_contents
+    assert "TARGET_RELATIVE_PATH" in launcher_contents
 
 
 def test_macos_app_binary_path_points_to_bundle_executable(tmp_path: Path) -> None:
     app_dir = tmp_path / "tarpon_installer.app"
     assert macos_app_binary_path(app_dir) == app_dir / "Contents" / "MacOS" / "tarpon_installer"
+
+
+def test_macos_cli_launcher_path_points_to_release_root_binary(tmp_path: Path) -> None:
+    assert macos_cli_launcher_path(tmp_path) == tmp_path / "tarpon_installer"
