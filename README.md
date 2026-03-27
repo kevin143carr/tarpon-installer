@@ -48,7 +48,7 @@ GitHub Actions release artifacts are currently built for:
 - RHEL 9-compatible `x86_64` via UBI 9 Python 3.11 container using PyInstaller `onefile`
 - Windows `x86_64` using PyInstaller `onefile`
 
-Experimental `build-artifacts` validation builds can also be added without changing the release workflow. macOS validation should use Nuitka `app` mode, which packages a `.app` bundle into the release zip.
+Experimental `build-artifacts` validation builds can also be added without changing the release workflow. macOS validation uses Nuitka `app` mode, which packages a `.app` bundle into the release zip. The macOS app bundle includes a native launcher in `Contents/MacOS/` so it can be invoked directly from scripts or with `open ... --args ...` while still avoiding onefile extraction overhead.
 
 Release builder entrypoints:
 

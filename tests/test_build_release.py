@@ -2,6 +2,7 @@ from pathlib import Path
 
 from useful_scripts.build_nuitka_release import (
     create_pyinstaller_version_file,
+    macos_app_binary_path,
     nuitka_output_path,
     windows_version_tuple,
 )
@@ -31,9 +32,9 @@ def test_nuitka_output_path_uses_app_bundle_on_macos(monkeypatch, tmp_path: Path
     assert nuitka_output_path(tmp_path, "app") == tmp_path / "tarpon_installer.app"
 
 
-def test_macos_nuitka_script_defaults_to_onefile_mode() -> None:
+def test_macos_nuitka_script_defaults_to_app_mode() -> None:
     script_contents = Path("useful_scripts/build_nuitka_macos.sh").read_text(encoding="utf-8")
-    assert "--build-mode onefile" in script_contents
+    assert "--build-mode app" in script_contents
 
 
 def test_build_artifacts_workflow_includes_experimental_macos_nuitka_jobs() -> None:
@@ -42,10 +43,21 @@ def test_build_artifacts_workflow_includes_experimental_macos_nuitka_jobs() -> N
     assert "platform_id: macos-x86_64" in workflow_contents
     assert "runner: macos-15" in workflow_contents
     assert "platform_id: macos-arm64" in workflow_contents
-    assert "build_mode: onefile" in workflow_contents
+    assert "build_mode: app" in workflow_contents
     assert "experimental: true" in workflow_contents
 
 
 def test_release_workflow_remains_without_macos_entries() -> None:
     workflow_contents = Path(".github/workflows/release.yml").read_text(encoding="utf-8")
     assert "macos-" not in workflow_contents
+
+
+def test_macos_launcher_source_uses_nsgetexecutablepath() -> None:
+    launcher_contents = Path("useful_scripts/macos_app_launcher.c").read_text(encoding="utf-8")
+    assert "_NSGetExecutablePath" in launcher_contents
+    assert "tarpon_installer_real" in launcher_contents
+
+
+def test_macos_app_binary_path_points_to_bundle_executable(tmp_path: Path) -> None:
+    app_dir = tmp_path / "tarpon_installer.app"
+    assert macos_app_binary_path(app_dir) == app_dir / "Contents" / "MacOS" / "tarpon_installer"

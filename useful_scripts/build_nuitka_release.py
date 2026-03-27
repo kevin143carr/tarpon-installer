@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import plistlib
 import os
 import platform
 import re
@@ -15,6 +16,7 @@ OUTPUT_ROOT = REPO_ROOT / "dist" / "nuitka"
 ENTRYPOINT = REPO_ROOT / "tarpon_installer.py"
 ICON_PNG = REPO_ROOT / "assets" / "icons" / "tarpon_installer_image.png"
 ICON_ICO = REPO_ROOT / "assets" / "icons" / "tarpon_installer.ico"
+MACOS_LAUNCHER_SOURCE = REPO_ROOT / "useful_scripts" / "macos_app_launcher.c"
 INCLUDED_RELEASE_DIRS = [
     "assets",
     "example-ini-files",
@@ -74,6 +76,10 @@ def nuitka_output_path(output_dir: Path, build_mode: str) -> Path:
     if build_mode == "app" and platform.system() == "Darwin":
         return output_dir / "{}.app".format(binary_stem())
     return output_dir / binary_name()
+
+
+def macos_app_binary_path(app_dir: Path) -> Path:
+    return app_dir / "Contents" / "MacOS" / binary_stem()
 
 
 def run_command(command: list[str]) -> None:
@@ -140,6 +146,31 @@ def create_pyinstaller_version_file(output_dir: Path, version: str) -> Path:
     return version_file
 
 
+def install_macos_launcher(app_dir: Path) -> None:
+    macos_dir = app_dir / "Contents" / "MacOS"
+    original_binary = macos_app_binary_path(app_dir)
+    wrapped_binary = macos_dir / "{}_real".format(binary_stem())
+    shutil.move(original_binary, wrapped_binary)
+
+    command = [
+        "clang",
+        str(MACOS_LAUNCHER_SOURCE),
+        "-Wall",
+        "-Wextra",
+        "-O2",
+        "-o",
+        str(original_binary),
+    ]
+    run_command(command)
+
+    info_plist_path = app_dir / "Contents" / "Info.plist"
+    with info_plist_path.open("rb") as plist_file:
+        plist_contents = plistlib.load(plist_file)
+    plist_contents["CFBundleExecutable"] = binary_stem()
+    with info_plist_path.open("wb") as plist_file:
+        plistlib.dump(plist_contents, plist_file)
+
+
 def build_nuitka_binary(output_dir: Path, build_mode: str) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
     command = [
@@ -160,12 +191,12 @@ def build_nuitka_binary(output_dir: Path, build_mode: str) -> Path:
     if os.name == "nt":
         command.append("--windows-icon-from-ico={}".format(ICON_ICO))
         command.append("--windows-console-mode=force")
-    elif platform.system() == "Darwin" and build_mode == "app":
-        command.append("--macos-app-icon={}".format(ICON_PNG))
-
     command.append(str(ENTRYPOINT))
     run_command(command)
-    return nuitka_output_path(output_dir, build_mode)
+    binary_path = nuitka_output_path(output_dir, build_mode)
+    if build_mode == "app" and platform.system() == "Darwin":
+        install_macos_launcher(binary_path)
+    return binary_path
 
 
 def pyinstaller_data_separator() -> str:
