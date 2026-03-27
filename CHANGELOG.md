@@ -1,5 +1,13 @@
 # Changelog
 
+## 5.0.4b1
+
+### Changed
+
+- Added experimental macOS Intel and Apple Silicon artifact builds to the manual `build-artifacts` workflow without changing the release workflow.
+- macOS Nuitka packaging now uses `.app` bundles with a sibling `tarpon_installer` CLI launcher in the release zip.
+- The macOS CLI launcher forwards arguments into the bundled app executable so shell usage remains `./tarpon_installer ...` without onefile extraction delays.
+
 ## 5.0.2
 
 ### Fixed
