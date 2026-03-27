@@ -31,9 +31,9 @@ def test_nuitka_output_path_uses_app_bundle_on_macos(monkeypatch, tmp_path: Path
     assert nuitka_output_path(tmp_path, "app") == tmp_path / "tarpon_installer.app"
 
 
-def test_macos_nuitka_script_defaults_to_app_mode() -> None:
+def test_macos_nuitka_script_defaults_to_onefile_mode() -> None:
     script_contents = Path("useful_scripts/build_nuitka_macos.sh").read_text(encoding="utf-8")
-    assert "--build-mode app" in script_contents
+    assert "--build-mode onefile" in script_contents
 
 
 def test_build_artifacts_workflow_includes_experimental_macos_nuitka_jobs() -> None:
@@ -42,7 +42,7 @@ def test_build_artifacts_workflow_includes_experimental_macos_nuitka_jobs() -> N
     assert "platform_id: macos-x86_64" in workflow_contents
     assert "runner: macos-15" in workflow_contents
     assert "platform_id: macos-arm64" in workflow_contents
-    assert "build_mode: app" in workflow_contents
+    assert "build_mode: onefile" in workflow_contents
     assert "experimental: true" in workflow_contents
 
 

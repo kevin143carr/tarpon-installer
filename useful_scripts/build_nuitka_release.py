@@ -160,7 +160,7 @@ def build_nuitka_binary(output_dir: Path, build_mode: str) -> Path:
     if os.name == "nt":
         command.append("--windows-icon-from-ico={}".format(ICON_ICO))
         command.append("--windows-console-mode=force")
-    elif platform.system() == "Darwin":
+    elif platform.system() == "Darwin" and build_mode == "app":
         command.append("--macos-app-icon={}".format(ICON_PNG))
 
     command.append(str(ENTRYPOINT))

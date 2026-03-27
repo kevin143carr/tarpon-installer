@@ -18,4 +18,4 @@ case "$PLATFORM_ID" in
   *) PLATFORM_ID="macos-$PLATFORM_ID" ;;
 esac
 
-"$PYTHON_CMD" useful_scripts/build_nuitka_release.py --platform-id "$PLATFORM_ID" --build-mode app
+"$PYTHON_CMD" useful_scripts/build_nuitka_release.py --platform-id "$PLATFORM_ID" --build-mode onefile

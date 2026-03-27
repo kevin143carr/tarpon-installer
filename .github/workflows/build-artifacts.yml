@@ -54,12 +54,12 @@ jobs:
           - runner: macos-15-intel
             platform_id: macos-x86_64
             release_script: useful_scripts/build_nuitka_release.py
-            build_mode: app
+            build_mode: onefile
             experimental: true
           - runner: macos-15
             platform_id: macos-arm64
             release_script: useful_scripts/build_nuitka_release.py
-            build_mode: app
+            build_mode: onefile
             experimental: true
     steps:
       - name: Checkout
