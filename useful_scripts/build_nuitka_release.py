@@ -68,6 +68,14 @@ def binary_stem() -> str:
     return "tarpon_installer"
 
 
+def nuitka_output_path(output_dir: Path, build_mode: str) -> Path:
+    if build_mode == "standalone":
+        return output_dir / "{}.dist".format(binary_name())
+    if build_mode == "app" and platform.system() == "Darwin":
+        return output_dir / "{}.app".format(binary_stem())
+    return output_dir / binary_name()
+
+
 def run_command(command: list[str]) -> None:
     subprocess.run(command, cwd=REPO_ROOT, check=True)
 
@@ -157,9 +165,7 @@ def build_nuitka_binary(output_dir: Path, build_mode: str) -> Path:
 
     command.append(str(ENTRYPOINT))
     run_command(command)
-    if build_mode == "standalone":
-        return output_dir / "{}.dist".format(binary_name())
-    return output_dir / binary_name()
+    return nuitka_output_path(output_dir, build_mode)
 
 
 def pyinstaller_data_separator() -> str:
@@ -265,7 +271,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--build-mode",
-        choices=["onefile", "standalone"],
+        choices=["onefile", "standalone", "app"],
         default="onefile",
         help="Build mode for the Nuitka backend (ignored when backend is pyinstaller).",
     )

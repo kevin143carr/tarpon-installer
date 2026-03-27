@@ -36,6 +36,7 @@ jobs:
   build-native:
     needs: tests
     runs-on: ${{ matrix.runner }}
+    continue-on-error: ${{ matrix.experimental }}
     strategy:
       fail-fast: false
       matrix:
@@ -44,10 +45,22 @@ jobs:
             platform_id: linux-x86_64
             release_script: useful_scripts/build_nuitka_release.py
             build_mode: onefile
+            experimental: false
           - runner: windows-latest
             platform_id: windows-x86_64
             release_script: useful_scripts/build_pyinstaller_release.py
             build_mode: onefile
+            experimental: false
+          - runner: macos-15-intel
+            platform_id: macos-x86_64
+            release_script: useful_scripts/build_nuitka_release.py
+            build_mode: app
+            experimental: true
+          - runner: macos-15
+            platform_id: macos-arm64
+            release_script: useful_scripts/build_nuitka_release.py
+            build_mode: app
+            experimental: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
