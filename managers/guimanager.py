@@ -14,9 +14,6 @@ from tkscrolledframe import ScrolledFrame
 from PIL import Image as Image, ImageTk as Itk
 import logging
 from iniinfo import iniInfo, parse_option_definition, resolve_enabled_options
-from tarpl.tarplapi import TarpL
-from tarpl.tarplapi import TarpLreturn
-from tarpl.tarplclasses import TarpLAPIEnum
 
 logger = None
 
@@ -28,7 +25,6 @@ class GuiManager:
         self.section = None
         self.startinfo = None
         self.themename = "superhero"
-        self._tarpL = TarpL()
         self.canvas = None
         self.entry_boxes = 0
 
@@ -52,14 +48,33 @@ class GuiManager:
         self._center_over_parent(parent, child)
         child.deiconify()
         child.lift(parent)
-    
-    def on_checkbox_toggle(self, changed_key, otheroption, ini_info):
-        print("{}, {}".format(changed_key, otheroption))
-        if ini_info.optionvals[changed_key].get() == '1':
-            ini_info.optionvals[otheroption].set('1')        
-        
-        # Example rule: if "OptionA" is checked, check "OptionB"
-        # You can add more logic here if needed    
+
+    def _apply_option_defaults(self, ini_info: iniInfo) -> None:
+        enabled_option_set = resolve_enabled_options(
+            ini_info.options,
+            {
+                key
+                for key, value in ini_info.optionvals.items()
+                if value.get() != '0'
+            },
+        )
+
+        for key in ini_info.options:
+            if key not in ini_info.optionvals:
+                ini_info.optionvals[key] = tk.StringVar(
+                    value='1' if key in enabled_option_set else '0'
+                )
+
+    def _apply_option_toggle(self, changed_key: str, ini_info: iniInfo) -> None:
+        if changed_key not in ini_info.optionvals:
+            return
+        if ini_info.optionvals[changed_key].get() != '1':
+            return
+
+        definition = parse_option_definition(ini_info.options.get(changed_key, ""))
+        for dependent_key in definition.also_check:
+            if dependent_key in ini_info.optionvals:
+                ini_info.optionvals[dependent_key].set('1')
     
     def optionsDialog(self, parent: tk.Tk, ini_info: iniInfo) -> None:
         # Pop up the options chooser and center it over the parent window.
@@ -95,46 +110,19 @@ class GuiManager:
         scrolledFrame.bind_scroll_wheel(functionFrame)
         inner_frame = scrolledFrame.display_widget(ttk.Frame)
 
-        enabled_option_set = resolve_enabled_options(
-            ini_info.options,
-            {
-                key
-                for key, value in ini_info.optionvals.items()
-                if value.get() != '0'
-            },
-        )
+        self._apply_option_defaults(ini_info)
 
         # Build the option list with optional Tarpl behaviors.
         for row, value in enumerate(ini_info.options):
-            initial_value = '1' if value in enabled_option_set else '0'
-            if value not in ini_info.optionvals:
-                ini_info.optionvals[value] = tk.StringVar(value=initial_value)
-            elif ini_info.optionvals[value].get() != initial_value:
-                ini_info.optionvals[value].set(initial_value)
-
             definition = parse_option_definition(ini_info.options[value])
-            if definition.also_check:
-                other_option_key = ",".join(definition.also_check)
-                lb = ttk.Label(inner_frame, text=definition.label, justify="left", wraplength=300)
-                cb = ttk.Checkbutton(
-                    inner_frame,
-                    variable=ini_info.optionvals[value],
-                    onvalue='1',
-                    offvalue='0',
-                    command=lambda actionstr=ini_info.options[value],
-                                   val=value,
-                                   other=other_option_key: self._tarpL.ExecuteTarpL(
-                        actionstr, ini_info, optionone=val, optiontwo=other
-                    )
-                )
-            else:
-                lb = ttk.Label(inner_frame, text=definition.label, justify="left", wraplength=300)
-                cb = ttk.Checkbutton(
-                    inner_frame,
-                    variable=ini_info.optionvals[value],
-                    onvalue='1',
-                    offvalue='0'
-                )
+            lb = ttk.Label(inner_frame, text=definition.label, justify="left", wraplength=300)
+            cb = ttk.Checkbutton(
+                inner_frame,
+                variable=ini_info.optionvals[value],
+                onvalue='1',
+                offvalue='0',
+                command=lambda key=value: self._apply_option_toggle(key, ini_info)
+            )
     
             cb.grid(row=row, column=0, sticky="nw", padx=(0, 8), pady=6)
             lb.grid(row=row, column=1, sticky="w", pady=6)

@@ -1,5 +1,13 @@
 # Changelog
 
+## 5.0.4b1
+
+### Fixed
+
+- GUI option dialogs now preserve checkbox state when reopened instead of recomputing from defaults.
+- `ALSOCHECKOPTION` now checks dependent options when the parent is selected without permanently locking child checkboxes.
+- `DEFAULTCHECKED` options can be manually unchecked after the dialog opens.
+
 ## 5.0.2
 
 ### Fixed
