@@ -1,6 +1,6 @@
 # Changelog
 
-## 5.0.4b1
+## 5.0.4
 
 ### Fixed
 
