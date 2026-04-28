@@ -1,5 +1,12 @@
 # Changelog
 
+## 5.0.5
+
+### Fixed
+
+- Option-backed local actions now honor `DEFAULTCHECKED` and execute correctly even when the Options dialog was never opened before install.
+- Added regression coverage for checked and unchecked option-backed local actions.
+
 ## 5.0.4
 
 ### Fixed

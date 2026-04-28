@@ -2,7 +2,7 @@ from tkinter import messagebox as msgbox
 import logging
 import threading
 from managers.processmanager import ProcessManager
-from iniinfo import iniInfo
+from iniinfo import iniInfo, parse_option_definition
 from tarpl.tarplapi import TarpL
 from tarpl.tarplapi import TarpLreturn
 from tarpl.tarplclasses import TarpLAPIEnum
@@ -48,6 +48,19 @@ class ActionManager:
         if self.logger.level == logging.DEBUG:
             return self.process_manager.executeProcsDebug(finalstr, ini_info.watchdog, ini_info.process_timeout)
         return self.process_manager.executeProcs(finalstr, ini_info.watchdog, ini_info.process_timeout)
+
+    def _is_option_enabled(self, action_key: str, ini_info: iniInfo) -> bool:
+        if action_key not in ini_info.options:
+            return True
+
+        option_value = ini_info.optionvals.get(action_key)
+        if option_value is None:
+            return parse_option_definition(ini_info.options.get(action_key, "")).default_checked
+
+        if hasattr(option_value, "get"):
+            return option_value.get() != "0"
+
+        return str(option_value) != "0"
 
     def runDiagnosticsLocal(self, window, bar, taskitem, ini_info: iniInfo):
         diagnostics = ini_info.diagnostics
@@ -137,16 +150,11 @@ class ActionManager:
     
                 count += 1;
                 set_bar_value(window, bar, (count/len(ini_info.actions.keys()))*100)
-                exec_option = '1'
-                
                 # check for user input otherwise it returns string in ini_info.actions[action]
                 finalstr = None
                 skip_action = False
 
-                if action in ini_info.options.keys():
-                    exec_option = ini_info.optionvals[action].get()
-                    
-                if(exec_option != '0'):
+                if self._is_option_enabled(action, ini_info):
                     finalstr, skip_action, tarpLrtn = self._resolve_action_command(ini_info.actions[action], ini_info, window)
                     if tarpLrtn.tarpltype == TarpLAPIEnum.IFGOTO and tarpLrtn.rtnvar != "":
                         gotoindex = tarpLrtn.rtnvar

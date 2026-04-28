@@ -238,6 +238,97 @@ def test_action_manager_yesno_command_can_return_shell_text_containing_yesno(mon
     assert tarpLrtn.tarpltype == TarpLAPIEnum.YESNO
 
 
+def test_action_manager_runs_defaultchecked_option_action_without_opening_options_dialog(monkeypatch) -> None:
+    class DummyWindow:
+        def update_idletasks(self) -> None:
+            return None
+
+    class DummyVar:
+        def set(self, value: str) -> None:
+            return None
+
+    info = iniInfo()
+    info.installtype = "LOCAL"
+    info.watchdog = False
+    info.variables = {}
+    info.userinput = {}
+    info.returnvars = {}
+    info.options = {
+        "option_prepare_workspace": "DEFAULTCHECKED||Prepare workspace",
+    }
+    info.actions = {
+        "option_prepare_workspace": "echo should_run",
+    }
+    info.optionvals = {}
+
+    manager = ActionManager()
+    calls = []
+    monkeypatch.setattr(
+        manager.process_manager,
+        "executeProcs",
+        lambda cmd, watchdog, timeout: calls.append(cmd) or 0,
+    )
+    monkeypatch.setattr(
+        manager.process_manager,
+        "executeProcsDebug",
+        lambda cmd, watchdog, timeout: calls.append(cmd) or 0,
+    )
+
+    manager.doActionsLocal(DummyWindow(), {}, DummyVar(), info)
+
+    assert calls == ["echo should_run"]
+
+
+def test_action_manager_skips_unchecked_option_action(monkeypatch) -> None:
+    class DummyWindow:
+        def update_idletasks(self) -> None:
+            return None
+
+    class DummyVar:
+        def set(self, value: str) -> None:
+            return None
+
+    class FakeVar:
+        def __init__(self, value: str) -> None:
+            self.value = value
+
+        def get(self) -> str:
+            return self.value
+
+    info = iniInfo()
+    info.installtype = "LOCAL"
+    info.watchdog = False
+    info.variables = {}
+    info.userinput = {}
+    info.returnvars = {}
+    info.options = {
+        "option_prepare_workspace": "Prepare workspace",
+    }
+    info.actions = {
+        "option_prepare_workspace": "echo should_not_run",
+    }
+    info.optionvals = {
+        "option_prepare_workspace": FakeVar("0"),
+    }
+
+    manager = ActionManager()
+    calls = []
+    monkeypatch.setattr(
+        manager.process_manager,
+        "executeProcs",
+        lambda cmd, watchdog, timeout: calls.append(cmd) or 0,
+    )
+    monkeypatch.setattr(
+        manager.process_manager,
+        "executeProcsDebug",
+        lambda cmd, watchdog, timeout: calls.append(cmd) or 0,
+    )
+
+    manager.doActionsLocal(DummyWindow(), {}, DummyVar(), info)
+
+    assert calls == []
+
+
 def test_exec_pyfunc_passes_window_keyword_when_supported(tmp_path, monkeypatch, capsys) -> None:
     script = tmp_path / "callback.py"
     script.write_text(
