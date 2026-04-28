@@ -1,5 +1,12 @@
 # Changelog
 
+## 5.1.0
+
+### Changed
+
+- Future releases now use PolyForm Noncommercial License 1.0.0 instead of MIT.
+- Added license transition notes clarifying that releases through `v5.0.5` remain MIT-licensed.
+
 ## 5.0.5
 
 ### Fixed

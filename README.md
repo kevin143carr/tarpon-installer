@@ -13,6 +13,19 @@ It uses a `config.ini` (name it anything you want) plus a `resources` folder.
 
 For release history and version-to-version changes, see `CHANGELOG.md`.
 
+## License
+
+Starting with `v5.1.0`, this repository is licensed under PolyForm Noncommercial
+License 1.0.0. Commercial use of `v5.1.0` and later is not permitted without a
+separate commercial license from the licensor.
+
+Versions through `v5.0.5` remain available under the MIT license that applied
+to those releases when they were published.
+
+Commercial licensing inquiries:
+- See [COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md)
+- Contact `kevin143carr@yahoo.com`
+
 ## Packaging
 
 For local packaging builds, install the runtime and build dependencies:
