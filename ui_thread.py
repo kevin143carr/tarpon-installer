@@ -18,7 +18,7 @@ def call_on_ui_thread(window, func, *args, wait: bool = True, **kwargs) -> None:
         def _runner() -> None:
             try:
                 func(*args, **kwargs)
-            except Exception as ex:  # pragma: no cover - defensive path
+            except BaseException as ex:  # pragma: no cover - defensive path
                 error["exc"] = ex
             finally:
                 done.set()
