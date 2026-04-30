@@ -415,3 +415,37 @@ def test_exec_pyfunc_keeps_legacy_signature_without_window(tmp_path, monkeypatch
 
     output = capsys.readouterr()
     assert "hello|world" in output.out
+
+
+def test_exec_pyfunc_preserves_blank_trailing_argument(tmp_path, monkeypatch, capsys) -> None:
+    script = tmp_path / "callback.py"
+    script.write_text(
+        "def capture(label, value, window=None):\n"
+        "    print(f'{label}|{value}|{window is not None}')\n",
+        encoding="utf-8",
+    )
+
+    tarpl = TarpL()
+    monkeypatch.chdir(tmp_path)
+
+    tarpl.EXEC_PYFUNC('EXEC_PYFUNC::callback.py::capture::HLA DX Files Location,', object())
+
+    output = capsys.readouterr()
+    assert "HLA DX Files Location||True" in output.out
+
+
+def test_exec_pyfunc_supports_quoted_arguments_with_commas(tmp_path, monkeypatch, capsys) -> None:
+    script = tmp_path / "callback.py"
+    script.write_text(
+        "def capture(label, value):\n"
+        "    print(f'{label}|{value}')\n",
+        encoding="utf-8",
+    )
+
+    tarpl = TarpL()
+    monkeypatch.chdir(tmp_path)
+
+    tarpl.EXEC_PYFUNC('EXEC_PYFUNC::callback.py::capture::\"HLA, DX Files Location\",/tmp/example', object())
+
+    output = capsys.readouterr()
+    assert "HLA, DX Files Location|/tmp/example" in output.out

@@ -1,9 +1,10 @@
 # Changelog
 
-## 5.1.1b2
+## 5.1.1b3
 
 - Linux POPLIST now centers more reliably and handles quoted inline `INPUTLIST` values cleanly.
 - `.tar.gz` resource archives now extract correctly during local installs.
+- `EXEC_PYFUNC` now preserves blank arguments and supports quoted comma-containing arguments.
 
 ## 5.1.0
 

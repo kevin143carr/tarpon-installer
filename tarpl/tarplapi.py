@@ -1,4 +1,5 @@
 
+import csv
 import os
 import sys
 import inspect
@@ -257,6 +258,16 @@ class TarpL:
             except ValueError:
                 continue
         return val      
+
+    def _parse_exec_pyfunc_args(self, args_string: str):
+        if not args_string:
+            return []
+
+        reader = csv.reader([args_string], skipinitialspace=True)
+        try:
+            return [arg.strip() for arg in next(reader)]
+        except StopIteration:
+            return []
         
     def EXEC_PYFUNC (self, instring, window=None):
         tarpLrtn = TarpLreturn()
@@ -275,10 +286,7 @@ class TarpL:
             print(f"Error: Script file '{script_filename}' not found.")
             return tarpLrtn
     
-        # Split the string into a list of raw strings
-        args = []
-        if args_string:
-            args = [arg.strip() for arg in args_string.split(',') if arg.strip()]
+        args = self._parse_exec_pyfunc_args(args_string)
     
         namespace = {}
         try:
