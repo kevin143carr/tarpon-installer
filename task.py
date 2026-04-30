@@ -104,7 +104,7 @@ class Task:
 
                     elif 'tar.gz' in key:
                         filetype = 'tar.gz'
-                        tf = TarFile.open(dst)
+                        tf = tarfile.open(dst)
                         files = tf.getnames()
                     else:
                         files = None                    

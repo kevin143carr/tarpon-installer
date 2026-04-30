@@ -1,8 +1,9 @@
 # Changelog
 
-## 5.1.1b1
+## 5.1.1b2
 
 - Linux POPLIST now centers more reliably and handles quoted inline `INPUTLIST` values cleanly.
+- `.tar.gz` resource archives now extract correctly during local installs.
 
 ## 5.1.0
 

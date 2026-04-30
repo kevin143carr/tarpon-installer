@@ -1,3 +1,5 @@
+import io
+import tarfile
 from pathlib import Path
 
 import pytest
@@ -91,6 +93,46 @@ def test_copy_from_resources_local_expands_tokens_for_linux(tmp_path: Path) -> N
     dest_file = tmp_path / "out" / "acme" / "qa" / "file.txt"
     assert dest_file.exists()
     assert dest_file.read_text(encoding="utf-8") == "hello"
+
+
+def test_copy_from_resources_local_extracts_tar_gz(tmp_path: Path) -> None:
+    resources_dir = tmp_path / "resources"
+    resources_dir.mkdir()
+
+    archive_path = resources_dir / "bundle.tar.gz"
+    payload_bytes = b"hello from tar"
+    with tarfile.open(archive_path, "w:gz") as archive:
+        info_member = tarfile.TarInfo(name="bundle/nested/file.txt")
+        info_member.size = len(payload_bytes)
+        archive.addfile(info_member, io.BytesIO(payload_bytes))
+
+    dest_dir = tmp_path / "out"
+
+    info = iniInfo()
+    info.resources = "resources"
+    info.buildtype = "LINUX"
+    info.installtype = "LOCAL"
+    info.files = {"bundle.tar.gz": str(dest_dir)}
+
+    task = Task(info)
+    bar = {}
+    taskitem = DummyVar()
+    window = DummyWindow()
+
+    cwd = Path.cwd()
+    try:
+        import os
+        os.chdir(tmp_path)
+        task.copyFromResourcesLocal(window, bar, taskitem, info)
+    finally:
+        os.chdir(cwd)
+
+    extracted_file = dest_dir / "nested" / "file.txt"
+    copied_archive = dest_dir / "bundle.tar.gz"
+
+    assert copied_archive.exists()
+    assert extracted_file.exists()
+    assert extracted_file.read_bytes() == payload_bytes
 
 
 def test_modify_files_local_add_expands_returnvars_for_existing_file(tmp_path: Path) -> None:
