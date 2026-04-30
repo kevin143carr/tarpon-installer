@@ -85,6 +85,16 @@ class TarpL:
                     return selectlist[selection_index - 1]
             print("Please enter a valid selection number.", file=sys.stderr)
 
+    def _parse_poplist_items(self, raw_items: str):
+        if not isinstance(raw_items, str):
+            return []
+
+        normalized = raw_items.strip()
+        if len(normalized) >= 2 and normalized[0] == normalized[-1] and normalized[0] in {'"', "'"}:
+            normalized = normalized[1:-1]
+
+        return [item.strip() for item in normalized.split(',') if item.strip()]
+
     def POPLIST (self, instring, window):
         tarpLrtn = TarpLreturn()
         rtnval = None
@@ -94,16 +104,14 @@ class TarpL:
             titletext = splitstr[1]
             if self._is_headless():
                 if inputype == 'INPUTLIST':
-                    selectlist = splitstr[3].split(',')
+                    selectlist = self._parse_poplist_items(splitstr[3])
                 elif inputype == 'INPUTFILE':
                     fp = open(splitstr[3], "r")
                     fromfile = fp.readline()
                     fp.close()
-                    selectlist = fromfile.split(',')
+                    selectlist = self._parse_poplist_items(fromfile)
                 else:
                     selectlist = []
-
-                selectlist = [item.strip() for item in selectlist if item.strip()]
                 if selectlist:
                     rtnval = self._prompt_headless_poplist_selection(titletext, selectlist)
                     if rtnval != "":
@@ -120,7 +128,7 @@ class TarpL:
                 return tarpLrtn
 
             if inputype == 'INPUTLIST':
-                selectlist = splitstr[3].split(',')
+                selectlist = self._parse_poplist_items(splitstr[3])
                 rtnval = self.pop_listbox.showPopListbox(selectlist, window, titletext)
                 if rtnval != "":
                     tarpLrtn.rtnstate = True
@@ -132,7 +140,7 @@ class TarpL:
                 fp =  open(splitstr[3],"r")
                 fromfile = fp.readline()
                 print(fromfile)
-                selectlist = fromfile.split(',')
+                selectlist = self._parse_poplist_items(fromfile)
                 rtnval = self.pop_listbox.showPopListbox(selectlist, window, titletext)
                 if rtnval != "":
                     tarpLrtn.rtnstate = True

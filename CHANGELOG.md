@@ -1,5 +1,9 @@
 # Changelog
 
+## 5.1.1b1
+
+- Linux POPLIST now centers more reliably and handles quoted inline `INPUTLIST` values cleanly.
+
 ## 5.1.0
 
 ### Changed

@@ -128,6 +128,23 @@ def test_headless_poplist_reads_options_from_file(monkeypatch, capsys, tmp_path)
     assert result.tarpltype == TarpLAPIEnum.POPLIST
 
 
+def test_headless_poplist_strips_quotes_and_whitespace_from_inputlist(monkeypatch, capsys) -> None:
+    prompts = []
+    monkeypatch.setenv("TARPL_HEADLESS", "1")
+    monkeypatch.setattr("builtins.input", lambda prompt: prompts.append(prompt) or "2")
+
+    result = TarpL().POPLIST('POPLIST::Pick cluster::INPUTLIST::" ecs, ecds "::selected_value', None)
+
+    output = capsys.readouterr()
+    assert "1. ecs" in output.out
+    assert "2. ecds" in output.out
+    assert prompts == ["Enter selection number (blank to cancel): "]
+    assert result.rtnstate is True
+    assert result.rtnvalue == "ecds"
+    assert result.rtnvar == "selected_value"
+    assert result.tarpltype == TarpLAPIEnum.POPLIST
+
+
 def test_if_then_else_returns_then_branch_when_condition_matches() -> None:
     info = iniInfo()
     info.variables = {"host": "127.0.0.1"}
