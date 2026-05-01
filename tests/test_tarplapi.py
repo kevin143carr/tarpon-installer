@@ -161,6 +161,7 @@ def test_gui_poplist_dispatches_dialog_via_ui_thread(monkeypatch) -> None:
         dispatch["title"] = titletext
         return "PowerUser"
 
+    monkeypatch.delenv("TARPL_HEADLESS", raising=False)
     monkeypatch.setattr("tarpl.tarplapi.call_on_ui_thread", fake_call_on_ui_thread)
     monkeypatch.setattr(tarpl.pop_listbox, "showPopListbox", fake_show_poplist)
 
