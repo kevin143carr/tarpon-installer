@@ -96,6 +96,15 @@ class TarpL:
 
         return [item.strip() for item in normalized.split(',') if item.strip()]
 
+    def _run_gui_on_ui_thread(self, window, func):
+        result = {"value": None}
+
+        def _runner() -> None:
+            result["value"] = func()
+
+        call_on_ui_thread(window, _runner)
+        return result["value"]
+
     def POPLIST (self, instring, window):
         tarpLrtn = TarpLreturn()
         rtnval = None
@@ -130,7 +139,10 @@ class TarpL:
 
             if inputype == 'INPUTLIST':
                 selectlist = self._parse_poplist_items(splitstr[3])
-                rtnval = self.pop_listbox.showPopListbox(selectlist, window, titletext)
+                rtnval = self._run_gui_on_ui_thread(
+                    window,
+                    lambda: self.pop_listbox.showPopListbox(selectlist, window, titletext),
+                )
                 if rtnval != "":
                     tarpLrtn.rtnstate = True
                     tarpLrtn.rtnvalue = rtnval
@@ -142,7 +154,10 @@ class TarpL:
                 fromfile = fp.readline()
                 print(fromfile)
                 selectlist = self._parse_poplist_items(fromfile)
-                rtnval = self.pop_listbox.showPopListbox(selectlist, window, titletext)
+                rtnval = self._run_gui_on_ui_thread(
+                    window,
+                    lambda: self.pop_listbox.showPopListbox(selectlist, window, titletext),
+                )
                 if rtnval != "":
                     tarpLrtn.rtnstate = True
                     tarpLrtn.rtnvalue = rtnval
@@ -218,7 +233,10 @@ class TarpL:
                 tarpLrtn.rtnvalue = splitstr[2]
                 tarpLrtn.tarpltype = TarpLAPIEnum.YESNO
                 return tarpLrtn
-            tarpLrtn.rtnstate = msgbox.askyesno("User Question", splitstr[1], parent = window);
+            tarpLrtn.rtnstate = self._run_gui_on_ui_thread(
+                window,
+                lambda: msgbox.askyesno("User Question", splitstr[1], parent=window),
+            )
             tarpLrtn.rtnvalue = splitstr[2]
             tarpLrtn.tarpltype = TarpLAPIEnum.YESNO
         except Exception as ex:
@@ -240,7 +258,10 @@ class TarpL:
                 tarpLrtn.rtnstate = False
                 tarpLrtn.tarpltype = TarpLAPIEnum.MSGBOX
                 return tarpLrtn
-            answer = msgbox.showinfo("Information", splitstr[1], parent = window);
+            answer = self._run_gui_on_ui_thread(
+                window,
+                lambda: msgbox.showinfo("Information", splitstr[1], parent=window),
+            )
             tarpLrtn.rtnstate = False
             tarpLrtn.tarpltype = TarpLAPIEnum.MSGBOX
         except Exception as ex:

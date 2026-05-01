@@ -145,6 +145,102 @@ def test_headless_poplist_strips_quotes_and_whitespace_from_inputlist(monkeypatc
     assert result.tarpltype == TarpLAPIEnum.POPLIST
 
 
+def test_gui_poplist_dispatches_dialog_via_ui_thread(monkeypatch) -> None:
+    tarpl = TarpL()
+    window = object()
+    dispatch = {}
+
+    def fake_call_on_ui_thread(ui_window, func, *args, **kwargs):
+        dispatch["window"] = ui_window
+        dispatch["kwargs"] = kwargs
+        func(*args, **kwargs)
+
+    def fake_show_poplist(items, parent, titletext):
+        dispatch["items"] = items
+        dispatch["parent"] = parent
+        dispatch["title"] = titletext
+        return "PowerUser"
+
+    monkeypatch.setattr("tarpl.tarplapi.call_on_ui_thread", fake_call_on_ui_thread)
+    monkeypatch.setattr(tarpl.pop_listbox, "showPopListbox", fake_show_poplist)
+
+    result = tarpl.POPLIST(
+        "POPLIST::Pick deployment role::INPUTLIST::Admin,PowerUser,Viewer::selected_role",
+        window,
+    )
+
+    assert dispatch["window"] is window
+    assert dispatch["kwargs"] == {}
+    assert dispatch["items"] == ["Admin", "PowerUser", "Viewer"]
+    assert dispatch["parent"] is window
+    assert dispatch["title"] == "Pick deployment role"
+    assert result.rtnstate is True
+    assert result.rtnvalue == "PowerUser"
+    assert result.rtnvar == "selected_role"
+
+
+def test_gui_yesno_dispatches_messagebox_via_ui_thread(monkeypatch) -> None:
+    tarpl = TarpL()
+    window = object()
+    dispatch = {}
+
+    def fake_call_on_ui_thread(ui_window, func, *args, **kwargs):
+        dispatch["window"] = ui_window
+        dispatch["kwargs"] = kwargs
+        func(*args, **kwargs)
+
+    def fake_askyesno(title, message, parent=None):
+        dispatch["title"] = title
+        dispatch["message"] = message
+        dispatch["parent"] = parent
+        return True
+
+    monkeypatch.delenv("TARPL_HEADLESS", raising=False)
+    monkeypatch.setattr("tarpl.tarplapi.call_on_ui_thread", fake_call_on_ui_thread)
+    monkeypatch.setattr("tarpl.tarplapi.msgbox.askyesno", fake_askyesno)
+
+    result = tarpl.YESNO("YESNO::Proceed with install?::echo go", window)
+
+    assert dispatch["window"] is window
+    assert dispatch["kwargs"] == {}
+    assert dispatch["title"] == "User Question"
+    assert dispatch["message"] == "Proceed with install?"
+    assert dispatch["parent"] is window
+    assert result.rtnstate is True
+    assert result.rtnvalue == "echo go"
+
+
+def test_gui_msgbox_dispatches_messagebox_via_ui_thread(monkeypatch) -> None:
+    tarpl = TarpL()
+    window = object()
+    dispatch = {}
+
+    def fake_call_on_ui_thread(ui_window, func, *args, **kwargs):
+        dispatch["window"] = ui_window
+        dispatch["kwargs"] = kwargs
+        func(*args, **kwargs)
+
+    def fake_showinfo(title, message, parent=None):
+        dispatch["title"] = title
+        dispatch["message"] = message
+        dispatch["parent"] = parent
+        return "ok"
+
+    monkeypatch.delenv("TARPL_HEADLESS", raising=False)
+    monkeypatch.setattr("tarpl.tarplapi.call_on_ui_thread", fake_call_on_ui_thread)
+    monkeypatch.setattr("tarpl.tarplapi.msgbox.showinfo", fake_showinfo)
+
+    result = tarpl.MSGBOX("MSGBOX::Important maintenance notice", window)
+
+    assert dispatch["window"] is window
+    assert dispatch["kwargs"] == {}
+    assert dispatch["title"] == "Information"
+    assert dispatch["message"] == "Important maintenance notice"
+    assert dispatch["parent"] is window
+    assert result.rtnstate is False
+    assert result.tarpltype == TarpLAPIEnum.MSGBOX
+
+
 def test_if_then_else_returns_then_branch_when_condition_matches() -> None:
     info = iniInfo()
     info.variables = {"host": "127.0.0.1"}
