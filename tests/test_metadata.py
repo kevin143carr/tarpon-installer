@@ -1,4 +1,5 @@
 import re
+from configparser import ConfigParser
 from pathlib import Path
 
 from tarpon_installer_metadata import VERSION, resource_path, runtime_base_path
@@ -19,3 +20,10 @@ def test_resource_path_resolves_repo_relative_assets() -> None:
     icon_path = Path(resource_path("assets/icons/tarpon_installer.ico"))
 
     assert icon_path.is_file()
+
+
+def test_setup_cfg_python_requires_matches_supported_source_version() -> None:
+    config = ConfigParser()
+    config.read("setup.cfg", encoding="utf-8")
+
+    assert config["options"]["python_requires"].strip() == ">= 3.9"

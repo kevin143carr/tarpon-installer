@@ -1,6 +1,14 @@
 # Changelog
 
-## 5.1.1b3
+## 5.1.1
+
+### Changed
+
+- Updated runtime banner text to reflect the PolyForm Noncommercial license transition introduced in `v5.1.0`.
+- Clarified README packaging requirements and corrected TarpL example syntax/documentation for `MSGBOX`, `POPLIST`, and `EXEC_PYFUNC`.
+- Tightened packaging metadata to require Python `3.9+`, which matches the current source syntax and build tooling.
+
+### Fixed
 
 - Linux POPLIST now centers more reliably and handles quoted inline `INPUTLIST` values cleanly.
 - `.tar.gz` resource archives now extract correctly during local installs.

@@ -13,6 +13,8 @@ It uses a `config.ini` (name it anything you want) plus a `resources` folder.
 
 For release history and version-to-version changes, see `CHANGELOG.md`.
 
+Current application version in this repository: `5.1.1`.
+
 ## License
 
 Starting with `v5.1.0`, this repository is licensed under PolyForm Noncommercial
@@ -33,6 +35,8 @@ For local packaging builds, install the runtime and build dependencies:
 ```bash
 python3 -m pip install -r requirements.txt -r requirements-build.txt
 ```
+
+Source installs and local build tooling currently target Python `3.9+`.
 
 ### Nuitka Release Builds
 
@@ -80,7 +84,7 @@ Example manual release input:
 
 ```bash
 git_ref=main
-tag_name=v5.0.2
+tag_name=v5.1.1
 ```
 
 ### PyInstaller Builds
@@ -473,8 +477,8 @@ Examples:
 getusernames1 = POPLIST::Please choose a username::INPUTFILE::c:\path\usernames.txt::getusernamesfilevariable
 getusernames2 = POPLIST::Please choose a username::INPUTLIST::"JAMES, FRED, MARY, JOHN"::getusernameslistvariable
 
-dothisactionnext1 = MSGBOX "You chose %getusernamesfilevariable%"
-dothisactionnext2 = MSGBOX "You chose %getusernameslistvariable%"
+dothisactionnext1 = MSGBOX::You chose %getusernamesfilevariable%
+dothisactionnext2 = MSGBOX::You chose %getusernameslistvariable%
 ```
 
 ### `IFGOTO`
@@ -558,7 +562,12 @@ optionprepareworkspace_alt = ALSOCHECKOPTION||optionshowsummary,optionexecpython
 
 ### `EXEC_PYFUNC`
 
-Runs a function from a Python file, even if Python is not installed. Only string parameters are supported.
+Runs a function from a Python file bundled with the installer. Only string parameters are supported.
+
+Notes:
+
+- The target script path is resolved from the local runtime context, so ship the script in your installer resources or release payload.
+- Quoted comma-containing arguments and blank trailing arguments are preserved.
 
 Syntax:
 
